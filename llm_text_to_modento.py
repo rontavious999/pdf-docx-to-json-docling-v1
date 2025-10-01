@@ -1211,7 +1211,23 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if not cand.strip(): break
             o = option_from_bullet_line(cand)
             if o: opts_block.append(o); j += 1; continue
-            else: break
+            # NEW: Also collect inline checkbox options from following lines (Fix 1 enhancement)
+            inline_opts = options_from_inline_line(cand)
+            if inline_opts:  # Any checkboxes found
+                if len(inline_opts) >= 2:  # Multiple options on this line - definitely collect
+                    opts_block.extend(inline_opts)
+                    j += 1
+                    continue
+                elif len(inline_opts) == 1 and opts_block:  # Single option but we already have options - continue collecting
+                    opts_block.extend(inline_opts)
+                    j += 1
+                    continue
+            # No valid options found on this line - check if it's a continuation or break
+            if not re.search(CHECKBOX_ANY, cand):  # No checkboxes at all
+                break
+            # Has checkboxes but no valid labels - might be orphaned checkboxes, continue
+            j += 1
+            continue
 
         title = line.rstrip(":").strip()
         is_hear = bool(HEAR_ABOUT_RE.search(title))
