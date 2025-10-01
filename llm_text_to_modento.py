@@ -1,26 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.8
+llm_text_to_modento.py — v2.9
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What’s new vs v2.7 (focused changes):
-  • Parent/Guardian routing for SSN/phone/name + safe aliases; block generic SSN when parent tokens present
-  • Composite splitter de-dupes repeated labels on one line (e.g., "Insured's Name Insured's Name")
-  • SSN scoping within Insurance (__primary/__secondary) + smarter context routing
-  • Token-boundary alias_contains hardened further; avoid SSN aliasing when parent/guardian present
-  • Insurance fan-out for lines containing both ID and SS tokens (always produce two controls)
-  • Patient-first employer mapping; only route to insurance_employer under Insurance context
-  • Conditions multi-selects fully immunized from alias/fuzzy; consolidated + typo normalization
-  • “How did you hear…” collector widened (same line + next two lines), with referred_by companion
-  • Stricter letterhead/boilerplate removal at file start
-  • Semantic de-dupe before key suffixing
-  • Signature + Date pairing normalized to "Date Signed"
-  • Extra --debug "gate" logs for the above behaviors
-
-Run:
-  python llm_text_to_modento.py --in output --out JSONs --debug
+What’s new vs v2.8 (focused changes):
+  • "If yes, please explain" now creates a separate follow-up input field for details.
+  • Medical/Dental History sections are now parsed into a single multi-select dropdown.
+  • Expanded aliases for better matching of common fields like "Spouse's Name" and "Date Signed".
 """
 
 from __future__ import annotations
@@ -62,7 +50,7 @@ DATE_LABEL_RE  = re.compile(r"\b(date|dob|birth)\b", re.I)
 INITIALS_RE    = re.compile(r"\binitials?\b", re.I)
 WITNESS_RE     = re.compile(r"\bwitness\b", re.I)
 
-IF_GUIDANCE_RE = re.compile(r"\b(if\s+(yes|no)[^)]*|if\s+applicable|explain below|please explain)\b", re.I)
+IF_GUIDANCE_RE = re.compile(r"\b(if\s+(yes|no)[^)]*|if\s+so|if\s+applicable|explain below|please explain|please list)\b", re.I)
 
 PAGE_NUM_RE = re.compile(r"^\s*(?:page\s*\d+(?:\s*/\s*\d+)?|\d+\s*/\s*\d+)\s*$", re.I)
 ADDRESS_LIKE_RE = re.compile(
@@ -565,6 +553,9 @@ EXTRA_ALIASES = {
     "person responsible for account": "responsible_party_name",
     "responsible party": "responsible_party_name",
     "occupation": "occupation",
+    "spouse's name": "spouse_name", "name of spouse": "spouse_name",
+    "date": "date_signed",
+    "patient name": "full_name",
     # Parent/Guardian
     "parent ssn": "parent_ssn", "guardian ssn": "parent_ssn",
     "parent phone": "parent_phone", "guardian phone": "parent_phone",
@@ -880,6 +871,27 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 insurance_scope = None
             i += 1; continue
 
+        # --- NEW: Medical History Multi-select block ---
+        if cur_section in {"Medical History", "Dental History"}:
+            if re.search(r"\b(have you ever had|do you have|are you taking)\b", line, re.I) and not extract_compound_yn_prompts(line):
+                main_prompt_title = line
+                options: List[Tuple[str, Optional[bool]]] = []
+                k = i + 1
+                while k < len(lines) and lines[k].strip() and not is_heading(lines[k]):
+                    option_line = lines[k]
+                    prompts = extract_compound_yn_prompts(option_line)
+                    if prompts:
+                        for p in prompts:
+                            options.append((p, None))
+                    k += 1
+
+                if len(options) >= 3: # Threshold to be considered a conditions block
+                    control = {"options": [make_option(n, b) for n,b in options], "multi": True}
+                    key = "medical_conditions" if cur_section == "Medical History" else "dental_conditions"
+                    questions.append(Question(key, main_prompt_title, cur_section, "dropdown", control=control))
+                    i = k
+                    continue
+
         # Drop witness
         if WITNESS_RE.search(line):
             i += 1; continue
@@ -1027,6 +1039,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 control = {"options":[make_option("Yes",True),make_option("No",False)]}
                 if re.search(IF_GUIDANCE_RE, line):
                     control["extra"] = {"type":"Input","hint":"If yes, please explain"}
+                    # --- NEW: Add separate input for "if yes" ---
+                    if i + 1 < len(lines):
+                        next_line = collapse_spaced_caps(lines[i+1].strip())
+                        if re.search(r"\b(list|explain|if so|name of)\b", next_line, re.I):
+                            follow_up_title = f"{ptxt} - Details"
+                            follow_up_key = slugify(follow_up_title)
+                            questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
                 questions.append(Question(key, ptxt, cur_section, "radio", control=control))
                 emitted_compound = True
             if re.search(r"name\s+of\s+school", line, re.I):
@@ -1091,6 +1110,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 control = {"options":[make_option("Yes",True), make_option("No",False)]}
                 if re.search(IF_GUIDANCE_RE, title):
                     control["extra"] = {"type":"Input","hint":"If yes, please explain"}
+                    # --- NEW: Add separate input for "if yes" ---
+                    if j < len(lines):
+                        next_line = collapse_spaced_caps(lines[j].strip())
+                        if re.search(r"\b(list|explain|if so|name of)\b", next_line, re.I):
+                            follow_up_title = f"{title} - Details"
+                            follow_up_key = slugify(follow_up_title)
+                            questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
                 key = slugify(title)
                 if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
                 questions.append(Question(key, title, cur_section, "radio", control=control))
