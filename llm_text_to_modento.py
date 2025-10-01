@@ -382,6 +382,10 @@ def option_from_bullet_line(ln: str) -> Optional[Tuple[str, Optional[bool]]]:
     s = ln.strip()
     if not BULLET_RE.match(s):
         return None
+    # Check if there are multiple checkboxes on this line (grid format, not bullet)
+    checkbox_count = len(re.findall(CHECKBOX_ANY, s))
+    if checkbox_count > 1:
+        return None  # This is inline grid format, not a bullet
     s = CHECKBOX_MARK_RE.sub("", s, count=1)
     s = re.sub(r"^\s*[-*•·]\s+", "", s)
     name = clean_token(s)
