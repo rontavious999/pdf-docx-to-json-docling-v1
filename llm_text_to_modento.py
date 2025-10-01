@@ -230,6 +230,17 @@ def scrub_headers_footers(text: str) -> List[str]:
     for b in kept_blocks:
         lines.extend(b); lines.append("")
 
+    # Enhanced junk text filtering patterns (Fix 3)
+    MULTI_LOCATION_RE = re.compile(
+        r'.*\b(Ave|Avenue|St|Street|Rd|Road|Blvd|Boulevard)\.?\b.*\b(Ave|Avenue|St|Street|Rd|Road|Blvd|Boulevard)\.?\b',
+        re.I
+    )
+    CITY_STATE_ZIP_RE = re.compile(r',\s*[A-Z]{2}\s+\d{5}')
+    OFFICE_NAMES_RE = re.compile(
+        r'\b(dental|care|center|clinic|office|practice)\b.*\b(dental|care|center|clinic|office|practice)\b',
+        re.I
+    )
+
     repeats = detect_repeated_lines(lines)
     keep = []
     first_block = True
@@ -252,6 +263,25 @@ def scrub_headers_footers(text: str) -> List[str]:
         if not s:
             keep.append(ln); continue
         if s in repeats or PAGE_NUM_RE.match(s): continue
+        
+        # NEW FILTERS (Fix 3):
+        # Filter out lines with multiple street addresses
+        if MULTI_LOCATION_RE.search(s):
+            continue
+        
+        # Filter out lines with multiple city-state-zip patterns
+        if len(CITY_STATE_ZIP_RE.findall(s)) >= 2:
+            continue
+        
+        # Filter out lines that look like multiple office names
+        if OFFICE_NAMES_RE.search(s) and len(s) > 80:
+            continue
+        
+        # Filter out lines with multiple zip codes
+        if len(re.findall(r'\b\d{5}\b', s)) >= 2:
+            continue
+        
+        # Existing filters
         if re.search(r"\bcontinued on back side\b", s, re.I): continue
         if re.search(r"\brev\s*\d{1,2}\s*/\s*\d{2}\b", s, re.I): continue
         if s in {"<<<", ">>>"} or re.search(r"\bOC\d+\b", s): continue
@@ -275,7 +305,14 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
             a_end = merged[-1] if merged else ""
             starts_lower = bool(re.match(r"^[a-z(]", b_str))
             small_word  = bool(re.match(r"^(and|or|if|but|then|with|of|for|to)\b", b_str, re.I))
-            if a_end in "-/" or ((a_end not in ".:;?!" ) and (starts_lower or small_word)):
+            
+            # Enhanced line coalescing (Fix 5):
+            # More aggressive continuation for incomplete questions
+            ends_with_question = a_end == "?"
+            starts_with_paren = b_str.startswith("(")
+            
+            # Join if: hyphen/slash at end, OR (not sentence-ending punctuation AND (starts lowercase OR small word OR starts with paren OR ends with ?))
+            if a_end in "-/" or (not ends_with_question and a_end not in ".:;?!" and (starts_lower or small_word or starts_with_paren)):
                 merged = (merged.rstrip("- ") + " " + b_str).strip()
                 i += 1; continue
             break
@@ -284,6 +321,52 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
     return out
 
 # ---------- Options & typing
+
+def extract_orphaned_checkboxes_and_labels(current_line: str, next_line: str) -> List[Tuple[str, Optional[bool]]]:
+    """
+    Fix 2: When current line has checkboxes but minimal text,
+    and next line has label text, associate them by column position.
+    
+    Example:
+      Current: "[ ]           [ ]           [ ]"
+      Next:    "Anemia        Diabetes      Cancer"
+      Returns: [("Anemia", None), ("Diabetes", None), ("Cancer", None)]
+    """
+    # Count checkboxes on current line
+    checkbox_matches = list(re.finditer(CHECKBOX_ANY, current_line))
+    if len(checkbox_matches) < 2:
+        return []
+    
+    # Check if current line has minimal text (mostly just checkboxes)
+    text_after_boxes = re.sub(CHECKBOX_ANY, '', current_line).strip()
+    if len(text_after_boxes) > 50:  # Has substantial text, not orphaned
+        return []
+    
+    # Check if next line has no checkboxes but has text
+    if re.search(CHECKBOX_ANY, next_line):
+        return []  # Next line also has checkboxes, not the label line
+    
+    next_stripped = next_line.strip()
+    if not next_stripped or len(next_stripped) < 3:
+        return []
+    
+    # Split next line into words/phrases by whitespace
+    # Assume labels align roughly with checkbox positions
+    words = re.split(r'\s{2,}', next_stripped)  # Split on 2+ spaces
+    words = [w.strip() for w in words if w.strip()]
+    
+    # Match count: ideally num_words == num_checkboxes
+    num_boxes = len(checkbox_matches)
+    if len(words) < 2 or len(words) > num_boxes + 2:  # Some tolerance
+        return []
+    
+    # Associate words with checkboxes
+    options = []
+    for word in words[:num_boxes]:  # Take up to num_boxes words
+        if len(word) > 1:
+            options.append((word, None))
+    
+    return options if len(options) >= 2 else []
 
 def clean_token(s: str) -> str:
     s = collapse_spaced_caps(s).strip(" -–—:\t")
@@ -299,6 +382,10 @@ def option_from_bullet_line(ln: str) -> Optional[Tuple[str, Optional[bool]]]:
     s = ln.strip()
     if not BULLET_RE.match(s):
         return None
+    # Check if there are multiple checkboxes on this line (grid format, not bullet)
+    checkbox_count = len(re.findall(CHECKBOX_ANY, s))
+    if checkbox_count > 1:
+        return None  # This is inline grid format, not a bullet
     s = CHECKBOX_MARK_RE.sub("", s, count=1)
     s = re.sub(r"^\s*[-*•·]\s+", "", s)
     name = clean_token(s)
@@ -310,7 +397,13 @@ def option_from_bullet_line(ln: str) -> Optional[Tuple[str, Optional[bool]]]:
     return (name, None)
 
 def options_from_inline_line(ln: str) -> List[Tuple[str, Optional[bool]]]:
+    """
+    Enhanced to handle grid/multi-column layouts (Fix 1).
+    Splits checkboxes that appear in columns with significant spacing.
+    """
     s_norm = normalize_glyphs_line(ln)
+    
+    # First try: existing inline choice regex
     items: List[Tuple[str, Optional[bool]]] = []
     for m in INLINE_CHOICE_RE.finditer(s_norm):
         label = clean_token(m.group(1))
@@ -319,7 +412,42 @@ def options_from_inline_line(ln: str) -> List[Tuple[str, Optional[bool]]]:
         if low in ("yes", "y"): items.append(("Yes", True))
         elif low in ("no", "n"): items.append(("No", False))
         else: items.append((label, None))
-    return items
+    
+    # If we found options with existing method, use it (unless it looks like grid layout)
+    if items and len(items) < 3:
+        return items
+    
+    # NEW: Grid detection - look for multiple checkboxes with wide spacing (Fix 1)
+    checkbox_positions = []
+    for m in re.finditer(CHECKBOX_ANY, s_norm):
+        checkbox_positions.append(m.start())
+    
+    if len(checkbox_positions) >= 3:  # Multiple checkboxes suggest grid
+        # Split line into segments based on checkbox positions
+        options = []
+        for i, start_pos in enumerate(checkbox_positions):
+            # Extract text after this checkbox until next checkbox or EOL
+            if i + 1 < len(checkbox_positions):
+                end_pos = checkbox_positions[i + 1]
+            else:
+                end_pos = len(s_norm)
+            
+            segment = s_norm[start_pos:end_pos]
+            # Remove checkbox token and extract label
+            label = re.sub(CHECKBOX_ANY, '', segment).strip()
+            
+            # Clean up common artifacts
+            label = re.sub(r'\s{3,}', ' ', label)  # Collapse wide spaces
+            label = label.strip('[]')
+            label = clean_token(label)
+            
+            if label and len(label) > 1 and label.lower() not in YESNO_SET:
+                options.append((label, None))
+        
+        if len(options) >= 3:  # Only use grid parsing if we got enough options
+            return options
+    
+    return items  # Fall back to existing method
 
 def classify_input_type(label: str) -> Optional[str]:
     l = label.lower()
@@ -985,6 +1113,30 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if debug: print(f"  [debug] gate: bool_single_box -> '{line}' -> radio Yes/No")
             i += 1; continue
 
+        # NEW: Check for orphaned checkboxes (Fix 2)
+        if i + 1 < len(lines):
+            orphaned_opts = extract_orphaned_checkboxes_and_labels(line, lines[i+1])
+            if orphaned_opts:
+                # Check if in medical/dental history section for condition collection
+                is_condition_block = cur_section in {"Medical History", "Dental History"}
+                
+                if is_condition_block:
+                    # Add to a medical conditions dropdown
+                    control = {"options": [make_option(n, b) for n, b in orphaned_opts], "multi": True}
+                    key = "medical_conditions" if cur_section == "Medical History" else "dental_conditions"
+                    title = "Please select all that apply:"
+                    questions.append(Question(key, title, cur_section, "dropdown", control=control))
+                else:
+                    # Create standalone dropdown
+                    title = "Please select all that apply:"
+                    key = slugify(title)
+                    control = {"options": [make_option(n, b) for n, b in orphaned_opts], "multi": True}
+                    questions.append(Question(key, title, cur_section, "dropdown", control=control))
+                
+                if debug: print(f"  [debug] gate: orphaned_checkboxes -> found {len(orphaned_opts)} options")
+                i += 2  # Skip both current and next line
+                continue
+
         # Bullet -> terms (explanatory lists)
         if line.lstrip().startswith(("•","·")):
             terms_lines = [line]; k = i+1
@@ -1063,7 +1215,23 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if not cand.strip(): break
             o = option_from_bullet_line(cand)
             if o: opts_block.append(o); j += 1; continue
-            else: break
+            # NEW: Also collect inline checkbox options from following lines (Fix 1 enhancement)
+            inline_opts = options_from_inline_line(cand)
+            if inline_opts:  # Any checkboxes found
+                if len(inline_opts) >= 2:  # Multiple options on this line - definitely collect
+                    opts_block.extend(inline_opts)
+                    j += 1
+                    continue
+                elif len(inline_opts) == 1 and opts_block:  # Single option but we already have options - continue collecting
+                    opts_block.extend(inline_opts)
+                    j += 1
+                    continue
+            # No valid options found on this line - check if it's a continuation or break
+            if not re.search(CHECKBOX_ANY, cand):  # No checkboxes at all
+                break
+            # Has checkboxes but no valid labels - might be orphaned checkboxes, continue
+            j += 1
+            continue
 
         title = line.rstrip(":").strip()
         is_hear = bool(HEAR_ABOUT_RE.search(title))
