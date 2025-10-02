@@ -179,6 +179,11 @@ def is_heading(line: str) -> bool:
     t = collapse_spaced_caps(line.strip())
     if not t:
         return False
+    
+    # Fix 1: Don't treat lines with checkboxes as headings
+    if re.search(CHECKBOX_ANY, t):
+        return False
+    
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
             return True
@@ -875,27 +880,21 @@ def create_yn_question_with_followup(
     
     # Main Yes/No question
     main_q = Question(
-        key=key_base,
-        qtype="radio",
-        title=question_text,
-        section=section,
-        optional=False
+        key_base,
+        question_text,
+        section,
+        "radio",
+        control={"options": [make_option("Yes", True), make_option("No", False)]}
     )
-    main_q.options = [
-        ("Yes", None),
-        ("No", None)
-    ]
     
     # Follow-up input field
     followup_q = Question(
-        key=f"{key_base}_explanation",
-        qtype="input",
-        title="Please explain",
-        section=section,
-        optional=False
+        f"{key_base}_explanation",
+        "Please explain",
+        section,
+        "input",
+        control={"input_type": "text", "hint": "Please provide details"}
     )
-    followup_q.input_type = "text"
-    followup_q.hint = "Please provide details"
     
     # Add conditional - only show if main question is "yes"
     followup_q.conditional_on = [(key_base, "yes")]
@@ -1809,11 +1808,18 @@ def questions_to_json(questions: List[Question]) -> List[Dict]:
     errs = validate_form(questions)
     if errs:
         print("Validation warnings:", *errs, sep="\n  ", file=sys.stderr)
-    payload = [
-        {"key": q.key, "title": q.title, "section": q.section,
-         "optional": q.optional, "type": q.type, "control": q.control or {}}
-        for q in questions
-    ]
+    payload = []
+    for q in questions:
+        item = {"key": q.key, "title": q.title, "section": q.section,
+                "optional": q.optional, "type": q.type, "control": q.control or {}}
+        
+        # Fix 2: Add conditional "if" property for follow-up fields
+        if hasattr(q, 'conditional_on') and q.conditional_on:
+            # Convert conditional_on to "if" array format
+            item["if"] = [{"key": cond_key, "value": cond_val} for cond_key, cond_val in q.conditional_on]
+        
+        payload.append(item)
+    
     payload = _semantic_dedupe(payload)
     return payload
 
