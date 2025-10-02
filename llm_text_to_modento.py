@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.11
+llm_text_to_modento.py — v2.12
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.10 (Archivev9 fixes continued):
-  • Fix 2: Multi-line section header detection after page breaks - aggregates consecutive headers
-  • Fix 3: Category header detection - skips category headers in medical/dental grids
-  • Previous: Fix 8 (section inference), Fix 6 (duplicate consolidation), Fix 1 (enhanced condition consolidation)
+What's new vs v2.11 (Archivev10 fixes):
+  • Archivev10 Fix 1: Enhanced multi-column checkbox grid detection and parsing
+  • Archivev10 Fix 2: Improved category header detection in multi-column grids
+  • Archivev10 Fix 4: Grid consolidation post-processor for malformed fields
+  • Previous: Multi-line headers, category headers, section inference, duplicate consolidation
 """
 
 from __future__ import annotations
@@ -205,15 +206,15 @@ def is_heading(line: str) -> bool:
 
 def is_category_header(line: str, next_line: str = "") -> bool:
     """
-    Fix 3: Detect if a line is a category header in a medical/dental grid.
+    Archivev10 Fix 2: Enhanced category header detection in medical/dental grids.
     Category headers are short lines without checkboxes that precede lines with checkboxes.
     
-    Examples: "Cancer", "Cardiovascular", "Endocrinology"
+    Examples: "Cancer", "Cardiovascular", "Endocrinology", "Pain/Discomfort", "Appearance"
     """
     cleaned = collapse_spaced_caps(line.strip())
     
-    # Must be short (category headers are typically 1-3 words)
-    if not cleaned or len(cleaned) > 50:
+    # Must be reasonably short (category headers or multi-column grid headers)
+    if not cleaned or len(cleaned) > 80:
         return False
     
     # Must NOT have checkboxes
@@ -224,12 +225,34 @@ def is_category_header(line: str, next_line: str = "") -> bool:
     if cleaned.endswith("?"):
         return False
     
+    # Must NOT end with a colon followed by content (that's a field label)
+    if re.search(r':\s*\S', cleaned):
+        return False
+    
+    # Known category header patterns in medical/dental forms
+    category_keywords = [
+        'cancer', 'cardiovascular', 'endocrinology', 'musculoskeletal', 
+        'respiratory', 'gastrointestinal', 'neurological', 'hematologic',
+        'appearance', 'function', 'habits', 'social', 'periodontal',
+        'pain', 'discomfort', 'comfort', 'allergies', 'women', 'type',
+        'viral infections', 'medical allergies', 'sleep pattern'
+    ]
+    
+    cleaned_lower = cleaned.lower()
+    is_known_category = any(kw in cleaned_lower for kw in category_keywords)
+    
     # Next line should have checkboxes (indicates this is a header for checkbox items)
     if next_line and re.search(CHECKBOX_ANY, next_line):
-        # Check word count - category headers are usually 1-3 words
+        # Check word count - category headers are usually 1-6 words (or multiple short phrases)
+        # E.g., "Appearance Function Habits Previous Comfort Options" = 5 words but valid
         word_count = len(cleaned.split())
-        if word_count <= 3:
+        if word_count <= 6 or is_known_category:
             return True
+    
+    # Also consider it a category header if it's a known category even without next line check
+    # (some grids have category headers that span columns)
+    if is_known_category and len(cleaned.split()) <= 3:
+        return True
     
     return False
 
@@ -1106,6 +1129,212 @@ def chunk_by_columns(line: str, ncols: int) -> List[str]:
     if len(parts) < ncols: parts += [""] * (ncols - len(parts))
     return parts[:ncols]
 
+
+# ---------- Archivev10 Fix 1: Enhanced Multi-Column Checkbox Grid Detection
+
+def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: str, max_rows: int = 20) -> Optional[dict]:
+    """
+    Detect multi-column checkbox grids (3+ checkboxes per line with significant spacing).
+    
+    This handles the common dental/medical form pattern where checkboxes are arranged
+    in multiple columns across the page:
+    
+    [ ] Item1        [ ] Item4        [ ] Item7
+    [ ] Item2        [ ] Item5        [ ] Item8
+    [ ] Item3        [ ] Item6        [ ] Item9
+    
+    Returns dict with grid info or None if not detected.
+    """
+    if start_idx >= len(lines):
+        return None
+    
+    # Look for lines with 3+ checkboxes separated by significant whitespace (8+ spaces)
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    # Check if first line has multiple checkboxes with spacing
+    # If not, look ahead a few lines (might have category headers first)
+    first_data_line_idx = start_idx
+    first_line = lines[start_idx]
+    checkboxes = list(checkbox_pattern.finditer(first_line))
+    
+    # If first line doesn't have checkboxes, look ahead (skip category headers)
+    if len(checkboxes) < 3 and start_idx + 3 < len(lines):
+        for look_ahead in range(1, min(4, len(lines) - start_idx)):
+            candidate_line = lines[start_idx + look_ahead]
+            candidate_checkboxes = list(checkbox_pattern.finditer(candidate_line))
+            if len(candidate_checkboxes) >= 3:
+                first_line = candidate_line
+                checkboxes = candidate_checkboxes
+                first_data_line_idx = start_idx + look_ahead
+                break
+    
+    if len(checkboxes) < 3:
+        return None
+    
+    # Check spacing between checkboxes - should be 8+ spaces for multi-column
+    checkbox_positions = [cb.start() for cb in checkboxes]
+    min_spacing = min(checkbox_positions[i+1] - checkbox_positions[i] 
+                     for i in range(len(checkbox_positions)-1))
+    
+    if min_spacing < 8:
+        return None
+    
+    # Found a multi-column line! Now find all consecutive lines with similar pattern
+    data_lines = []
+    column_positions = checkbox_positions  # Use first line to establish columns
+    
+    for i in range(first_data_line_idx, min(start_idx + max_rows, len(lines))):
+        line = lines[i]
+        
+        # Skip empty lines
+        if not line.strip():
+            break
+        
+        # Skip category headers (lines without checkboxes that look like headers)
+        if not re.search(CHECKBOX_ANY, line):
+            # Check if it's a category header (short, no colon, not a question)
+            cleaned = collapse_spaced_caps(line.strip())
+            if cleaned and len(cleaned.split()) <= 4 and not cleaned.endswith('?') and not cleaned.endswith(':'):
+                # Likely a category header, skip
+                continue
+            else:
+                # Not a checkbox line and not a category header, end of grid
+                break
+        
+        # Count checkboxes
+        line_checkboxes = list(checkbox_pattern.finditer(line))
+        
+        # Line should have at least 2 checkboxes (some rows may have fewer)
+        if len(line_checkboxes) >= 2:
+            data_lines.append(i)
+    
+    # Valid grid if we found at least 3 data lines
+    if len(data_lines) >= 3:
+        return {
+            'start_line': start_idx,
+            'first_data_line': first_data_line_idx,
+            'data_lines': data_lines,
+            'num_columns': len(column_positions),
+            'column_positions': column_positions,
+            'section': section
+        }
+    
+    return None
+
+
+def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bool = False) -> Optional['Question']:
+    """
+    Parse a multi-column checkbox grid into a single multi-select field.
+    
+    Extracts all checkbox items across all rows and columns, creating clean option names.
+    """
+    data_lines = grid_info['data_lines']
+    column_positions = grid_info['column_positions']
+    section = grid_info['section']
+    
+    # Collect all options
+    all_options = []
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    for line_idx in data_lines:
+        line = lines[line_idx]
+        
+        # Find all checkboxes in this line
+        checkboxes = list(checkbox_pattern.finditer(line))
+        
+        for checkbox in checkboxes:
+            cb_pos = checkbox.start()
+            cb_end = checkbox.end()
+            
+            # Extract text after this checkbox up to the next checkbox or significant gap
+            # Find the end of this item's text
+            text_after = line[cb_end:]
+            
+            # Look for next checkbox or large gap
+            next_cb = checkbox_pattern.search(text_after)
+            if next_cb:
+                # Text up to next checkbox
+                item_text = text_after[:next_cb.start()]
+            else:
+                # Text to end of line or next large gap
+                # Split by 8+ spaces to find column boundary
+                parts = re.split(r'\s{8,}', text_after, maxsplit=1)
+                item_text = parts[0] if parts else text_after
+            
+            # Clean up the item text
+            item_text = item_text.strip()
+            
+            # Remove any trailing partial text that looks like it's from next column
+            # (e.g., remove single letters, parentheticals from other columns)
+            item_text = re.sub(r'\s+[A-Z]\s*$', '', item_text)  # Remove trailing single caps
+            item_text = re.sub(r'\s*\([^)]{0,5}\s*$', '', item_text)  # Remove incomplete parentheticals
+            
+            # Skip if too short or looks like junk
+            if len(item_text) < 2:
+                continue
+            
+            # Skip common noise patterns
+            if item_text.lower() in ['', 'n/a', 'none', 'other', 'and', 'or']:
+                continue
+            
+            # Skip if it's just a category name (single capitalized word with no descriptors)
+            words = item_text.split()
+            if len(words) == 1 and item_text[0].isupper() and item_text.lower() in [
+                'cancer', 'cardiovascular', 'endocrinology', 'musculoskeletal', 
+                'respiratory', 'gastrointestinal', 'neurological', 'hematologic',
+                'appearance', 'function', 'habits', 'social', 'women', 'type'
+            ]:
+                continue
+            
+            all_options.append((item_text, None))
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_options = []
+    for opt, checked in all_options:
+        opt_lower = opt.lower()
+        if opt_lower not in seen:
+            seen.add(opt_lower)
+            unique_options.append((opt, checked))
+    
+    # Create question if we have enough options
+    if len(unique_options) >= 5:
+        # Determine title based on section
+        if section == "Medical History":
+            title = "Medical History - Please mark any conditions that apply"
+        elif section == "Dental History":
+            title = "Dental History - Please mark any conditions that apply"
+        else:
+            title = "Please mark any that apply"
+        
+        # Look back a few lines for a better title
+        if grid_info['start_line'] > 0:
+            for i in range(max(0, grid_info['start_line'] - 3), grid_info['start_line']):
+                potential_title = collapse_spaced_caps(lines[i].strip())
+                if potential_title and not re.search(CHECKBOX_ANY, potential_title):
+                    # Check if it looks like a section title (has "please mark" or similar)
+                    if re.search(r'\b(please mark|indicate|select|check|do you have)\b', potential_title, re.I):
+                        if len(potential_title) < 150:
+                            title = potential_title.rstrip(':?.')
+                            break
+        
+        key = slugify(title) if len(title) < 50 else (
+            "medical_conditions" if section == "Medical History" else "dental_conditions"
+        )
+        
+        if debug:
+            print(f"  [debug] multicolumn_grid -> '{title}' with {len(unique_options)} options from {len(data_lines)} lines")
+        
+        return Question(
+            key,
+            title,
+            section,
+            "dropdown",
+            control={"options": [make_option(n, b) for n, b in unique_options], "multi": True}
+        )
+    
+    return None
+
 # ---------- Compound Yes/No
 
 COMPOUND_YN_RE = re.compile(
@@ -1713,10 +1942,29 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 insurance_scope = None
             i += 1; continue
         
-        # Fix 3: Skip category headers in medical/dental grids
+        # Archivev10 Fix 2: Enhanced category header detection
+        # Check if this is a category header that precedes a multi-column grid
         if i + 1 < len(lines):
             next_line = lines[i + 1]
             if is_category_header(line, next_line):
+                # Before skipping, check if this is actually a multi-column grid header
+                # (e.g., "Appearance    Function    Habits")
+                if cur_section in {"Medical History", "Dental History"}:
+                    # Check if line has multiple column-like parts and next line has multiple checkboxes
+                    parts = re.split(r'\s{5,}', line.strip())
+                    next_checkboxes = len(list(re.finditer(CHECKBOX_ANY, next_line)))
+                    
+                    if len(parts) >= 3 and next_checkboxes >= 3:
+                        # This is a multi-column grid header! Try to detect and parse the grid
+                        multicolumn_grid = detect_multicolumn_checkbox_grid(lines, i, cur_section)
+                        if multicolumn_grid:
+                            grid_question = parse_multicolumn_checkbox_grid(lines, multicolumn_grid, debug)
+                            if grid_question:
+                                questions.append(grid_question)
+                                i = max(multicolumn_grid['data_lines']) + 1
+                                continue
+                
+                # If not a grid header, skip as before
                 if debug:
                     print(f"  [debug] skipping category header: '{line}'")
                 i += 1
@@ -1815,6 +2063,38 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     i += 1
             i += 1; continue
 
+        # Archivev10 Fix 1: Try multi-column checkbox grid detection first
+        # This handles grids with 3+ checkboxes per line (common in medical/dental forms)
+        if cur_section in {"Medical History", "Dental History"}:
+            # Check if this line or upcoming lines form a multi-column checkbox grid
+            multicolumn_grid = detect_multicolumn_checkbox_grid(lines, i, cur_section)
+            if multicolumn_grid:
+                grid_question = parse_multicolumn_checkbox_grid(lines, multicolumn_grid, debug)
+                if grid_question:
+                    questions.append(grid_question)
+                    # Skip past the grid
+                    i = max(multicolumn_grid['data_lines']) + 1
+                    continue
+            
+            # Also check if this is a category header line followed by a grid
+            # (e.g., "Appearance    Function    Habits    Previous Comfort Options")
+            if not re.search(CHECKBOX_ANY, line):
+                # Check if it looks like multiple column headers
+                parts = re.split(r'\s{5,}', line.strip())
+                if len(parts) >= 3 and all(len(p.split()) <= 4 for p in parts):
+                    # Might be category headers, check if next line has multiple checkboxes
+                    if i + 1 < len(lines):
+                        next_checkboxes = len(list(re.finditer(CHECKBOX_ANY, lines[i + 1])))
+                        if next_checkboxes >= 3:
+                            # This is a category header line before a grid!
+                            multicolumn_grid = detect_multicolumn_checkbox_grid(lines, i, cur_section)
+                            if multicolumn_grid:
+                                grid_question = parse_multicolumn_checkbox_grid(lines, multicolumn_grid, debug)
+                                if grid_question:
+                                    questions.append(grid_question)
+                                    i = max(multicolumn_grid['data_lines']) + 1
+                                    continue
+        
         # Fix 4: Enhanced Table/Grid Detection - try multi-row table first
         table_info = detect_table_layout(lines, i)
         if table_info:
@@ -2754,6 +3034,138 @@ def postprocess_consolidate_duplicates(payload: List[dict], dbg: Optional[DebugL
     
     return payload
 
+
+def postprocess_consolidate_malformed_grids(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Archivev10 Fix 4: Consolidate malformed multi-column checkbox fields.
+    
+    Detects fields with concatenated condition names in titles (e.g.,
+    "Radiation Therapy Jaundice Jaw Joint Pain") and consolidates them
+    into cleaner multi-select fields.
+    """
+    # Identify malformed fields in Medical/Dental History
+    malformed_indices = []
+    
+    for i, item in enumerate(payload):
+        section = item.get('section', '')
+        title = item.get('title', '')
+        item_type = item.get('type', '')
+        
+        # Only check dropdown fields in Medical/Dental History
+        if section not in {'Medical History', 'Dental History'}:
+            continue
+        
+        if item_type != 'dropdown':
+            continue
+        
+        # Check if title looks malformed (3+ medical/dental terms concatenated)
+        # Split title into words and count capitalized medical terms
+        words = title.split()
+        capitalized_words = [w for w in words if w and w[0].isupper() and len(w) > 2]
+        
+        # Check for medical/dental keywords
+        medical_keywords = [
+            'therapy', 'disease', 'disorder', 'condition', 'illness', 'syndrome',
+            'pain', 'fever', 'bleeding', 'valve', 'joint', 'respiratory',
+            'cardiovascular', 'hematologic', 'psychiatric', 'gastrointestinal',
+            'arthritis', 'diabetes', 'asthma', 'seizure', 'allergy', 'nursing',
+            'teeth', 'grinding', 'clenching', 'sucking', 'biting', 'chewing',
+            'discolored', 'worn', 'crooked', 'spaces', 'overbite', 'sensitivity'
+        ]
+        
+        title_lower = title.lower()
+        keyword_count = sum(1 for kw in medical_keywords if kw in title_lower)
+        
+        # Malformed if: 4+ capitalized words OR 3+ keywords
+        if len(capitalized_words) >= 4 or keyword_count >= 3:
+            # Also check that options exist and are reasonable
+            options = item.get('control', {}).get('options', [])
+            if len(options) >= 2:
+                malformed_indices.append(i)
+                if dbg:
+                    dbg.gate(f"malformed_grid_detected -> '{title[:60]}...' with {len(options)} options")
+    
+    # If we found malformed fields, consolidate them by section
+    if not malformed_indices:
+        return payload
+    
+    # Group malformed fields by section
+    by_section = {}
+    for idx in malformed_indices:
+        section = payload[idx].get('section', 'General')
+        if section not in by_section:
+            by_section[section] = []
+        by_section[section].append(idx)
+    
+    # Consolidate each section's malformed fields
+    to_remove = []
+    new_fields = []
+    
+    for section, indices in by_section.items():
+        # Skip if only 1 field (not worth consolidating)
+        if len(indices) <= 1:
+            continue
+        
+        # Collect all options from malformed fields
+        all_options = []
+        for idx in indices:
+            options = payload[idx].get('control', {}).get('options', [])
+            all_options.extend(options)
+            to_remove.append(idx)
+        
+        # Remove duplicates
+        seen = set()
+        unique_options = []
+        for opt in all_options:
+            opt_name = opt.get('name', '') if isinstance(opt, dict) else opt
+            if opt_name and opt_name.lower() not in seen:
+                seen.add(opt_name.lower())
+                unique_options.append(opt)
+        
+        # Create consolidated field
+        if len(unique_options) >= 5:
+            if section == "Medical History":
+                title = "Medical History - Please mark any conditions that apply"
+                key = "medical_conditions_consolidated"
+            elif section == "Dental History":
+                title = "Dental History - Please mark any conditions that apply"
+                key = "dental_conditions_consolidated"
+            else:
+                title = f"{section} - Please mark any that apply"
+                key = slugify(title)
+            
+            new_field = {
+                'key': key,
+                'title': title,
+                'section': section,
+                'type': 'dropdown',
+                'optional': False,
+                'control': {
+                    'options': unique_options,
+                    'multi': True
+                }
+            }
+            
+            new_fields.append((indices[0], new_field))  # Insert at position of first malformed field
+            
+            if dbg:
+                dbg.gate(f"malformed_grid_consolidated -> {len(indices)} fields into '{title}' with {len(unique_options)} options")
+    
+    # Remove malformed fields in reverse order
+    for idx in sorted(set(to_remove), reverse=True):
+        payload.pop(idx)
+    
+    # Insert consolidated fields
+    for insert_pos, new_field in sorted(new_fields, reverse=True):
+        # Adjust insert position if we've already removed items
+        adjusted_pos = insert_pos
+        for removed_idx in sorted(to_remove):
+            if removed_idx < insert_pos:
+                adjusted_pos -= 1
+        payload.insert(adjusted_pos, new_field)
+    
+    return payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -2857,6 +3269,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     # New post-processing steps (Archivev9 fixes)
     payload = postprocess_infer_sections(payload, dbg=dbg)
     payload = postprocess_consolidate_duplicates(payload, dbg=dbg)
+    
+    # Archivev10 Fix 4: Consolidate malformed grid fields
+    payload = postprocess_consolidate_malformed_grids(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
