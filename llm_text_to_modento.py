@@ -368,6 +368,44 @@ def extract_orphaned_checkboxes_and_labels(current_line: str, next_line: str) ->
     
     return options if len(options) >= 2 else []
 
+def extract_title_from_inline_checkboxes(line: str) -> str:
+    """
+    Extract the question/prompt text before the first checkbox marker (Fix 1).
+    
+    Example:
+        "How did you hear? [ ] Google [ ] Friend" -> "How did you hear?"
+        "Gender: [ ] Male [ ] Female" -> "Gender:"
+    """
+    # Pattern to match text before first checkbox
+    match = re.match(r'^(.*?)(?:\[\s*\]|\[x\]|☐|☑|□|■|❒|◻)', line)
+    if match:
+        title = match.group(1).strip()
+        # Clean up trailing colons, question marks, etc
+        title = title.rstrip(':? ').strip()
+        if title:
+            return title
+    # Fallback: return cleaned line
+    return re.sub(CHECKBOX_ANY, '', line).strip()
+
+def clean_field_title(title: str) -> str:
+    """
+    Clean field title by removing checkbox markers and artifacts (Fix 5).
+    Apply this to all field titles before creating Questions.
+    """
+    # Remove checkbox markers
+    cleaned = re.sub(CHECKBOX_ANY, '', title)
+    
+    # Remove multiple spaces
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned)
+    
+    # Trim whitespace
+    cleaned = cleaned.strip()
+    
+    # Remove trailing colons if followed by nothing
+    cleaned = re.sub(r':\s*$', '', cleaned)
+    
+    return cleaned
+
 def clean_token(s: str) -> str:
     s = collapse_spaced_caps(s).strip(" -–—:\t")
     return SPELL_FIX.get(s, s)
@@ -1113,22 +1151,29 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if debug: print(f"  [debug] gate: bool_single_box -> '{line}' -> radio Yes/No")
             i += 1; continue
 
-        # NEW: Check for orphaned checkboxes (Fix 2)
+        # Fix 4: Check for orphaned checkboxes (enhanced)
         if i + 1 < len(lines):
             orphaned_opts = extract_orphaned_checkboxes_and_labels(line, lines[i+1])
             if orphaned_opts:
                 # Check if in medical/dental history section for condition collection
                 is_condition_block = cur_section in {"Medical History", "Dental History"}
                 
+                # Try to find a better title from previous line
+                title = "Please select all that apply:"
+                if i > 0:
+                    prev_line = collapse_spaced_caps(lines[i-1].strip())
+                    if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                        # Use previous line as title if it looks like a question
+                        if prev_line.endswith('?') or prev_line.endswith(':') or len(prev_line) > 20:
+                            title = prev_line.rstrip(':').strip()
+                
                 if is_condition_block:
                     # Add to a medical conditions dropdown
                     control = {"options": [make_option(n, b) for n, b in orphaned_opts], "multi": True}
                     key = "medical_conditions" if cur_section == "Medical History" else "dental_conditions"
-                    title = "Please select all that apply:"
                     questions.append(Question(key, title, cur_section, "dropdown", control=control))
                 else:
                     # Create standalone dropdown
-                    title = "Please select all that apply:"
                     key = slugify(title)
                     control = {"options": [make_option(n, b) for n, b in orphaned_opts], "multi": True}
                     questions.append(Question(key, title, cur_section, "dropdown", control=control))
@@ -1189,15 +1234,31 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 if insurance_scope and "insurance" in cur_section.lower():
                     key = f"{key}{insurance_scope}"
                 control = {"options":[make_option("Yes",True),make_option("No",False)]}
+                
+                # Fix 2: Enhanced follow-up field detection
+                create_follow_up = False
                 if re.search(IF_GUIDANCE_RE, line):
                     control["extra"] = {"type":"Input","hint":"If yes, please explain"}
-                    # --- NEW: Add separate input for "if yes" ---
-                    if i + 1 < len(lines):
-                        next_line = collapse_spaced_caps(lines[i+1].strip())
-                        if re.search(r"\b(list|explain|if so|name of)\b", next_line, re.I):
-                            follow_up_title = f"{ptxt} - Details"
-                            follow_up_key = slugify(follow_up_title)
-                            questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
+                    create_follow_up = True
+                
+                # Check same line for "if yes, please explain"
+                if re.search(r'\b(if\s+yes|please\s+explain|if\s+so|explain\s+below)\b', line, re.I):
+                    create_follow_up = True
+                
+                # Check next line for follow-up indicators
+                if i + 1 < len(lines):
+                    next_line = collapse_spaced_caps(lines[i+1].strip())
+                    if re.search(r'^\s*(if\s+yes|please\s+explain|explain|comment|list|details?)', next_line, re.I):
+                        create_follow_up = True
+                
+                # Create follow-up field if needed
+                if create_follow_up:
+                    follow_up_key = slugify(ptxt + "_details")
+                    # Check if not already created
+                    if not any(q.key == follow_up_key for q in questions):
+                        follow_up_title = f"{ptxt} - Please explain"
+                        questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
+                
                 questions.append(Question(key, ptxt, cur_section, "radio", control=control))
                 emitted_compound = True
             if re.search(r"name\s+of\s+school", line, re.I):
@@ -1235,9 +1296,31 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         title = line.rstrip(":").strip()
         is_hear = bool(HEAR_ABOUT_RE.search(title))
+        
+        # Fix 1: If current line starts with checkbox and we have opts_block, look back for title
+        if opts_block and re.match(r'^\s*' + CHECKBOX_ANY, line):
+            if i > 0:
+                prev_line = collapse_spaced_caps(lines[i-1].strip())
+                if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                    title = prev_line.rstrip(':').strip()
+                    is_hear = bool(HEAR_ABOUT_RE.search(title))
 
         # “How did you hear...” — aggressively collect same line + next two non-heading lines
         if is_hear and not (opts_inline or opts_block):
+            # Fix 1: Check if next line has inline checkboxes - if so, skip and let next line handle it
+            # Fix 1: Check if next line(s) have inline checkboxes - skip blanks
+            check_idx = i + 1
+            while check_idx < len(lines) and not lines[check_idx].strip():
+                check_idx += 1  # Skip blank lines
+            if check_idx < len(lines):
+                next_line_check = lines[check_idx].strip()
+                if next_line_check and re.search(CHECKBOX_ANY, next_line_check):
+                    next_opts_check = options_from_inline_line(next_line_check)
+                    if len(next_opts_check) >= 2:
+                        # Next line will handle this, skip for now
+                        i += 1
+                        continue
+            
             # same line split
             for tok in re.split(r"[,/;]", title):
                 tok = clean_token(tok)
@@ -1273,26 +1356,55 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         collected = opts_inline or opts_block
         if collected:
+            # Fix 1: Clean title if it has inline checkboxes or concatenated options
+            clean_title = title
+            
+            # If we have inline options (especially multiple ones), check if title needs cleaning
+            if opts_inline and len(opts_inline) >= 2:
+                # Title likely includes the options. Look back for a better title.
+                if i > 0:
+                    prev_line = collapse_spaced_caps(lines[i-1].strip())
+                    if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                        # Use previous line if it looks like a question/prompt
+                        if len(prev_line) >= 5:
+                            clean_title = prev_line.rstrip(':').strip()
+            
+            # If title still has checkbox markers, try to extract clean text
+            if re.search(CHECKBOX_ANY, clean_title):
+                extracted = extract_title_from_inline_checkboxes(clean_title)
+                if extracted and len(extracted) > 3:
+                    clean_title = extracted
+                else:
+                    # Couldn't extract - fallback to looking back or generic title
+                    if i > 0 and clean_title == title:  # Haven't already looked back
+                        prev_line = collapse_spaced_caps(lines[i-1].strip())
+                        if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                            clean_title = prev_line.rstrip(':').strip()
+                        else:
+                            clean_title = "Please select"
+                    else:
+                        clean_title = "Please select"
+            
             lowset = {n.lower() for (n,_b) in collected}
             if {"yes","no"} <= lowset or lowset <= YESNO_SET:
                 control = {"options":[make_option("Yes",True), make_option("No",False)]}
-                if re.search(IF_GUIDANCE_RE, title):
+                if re.search(IF_GUIDANCE_RE, clean_title):
                     control["extra"] = {"type":"Input","hint":"If yes, please explain"}
-                    # --- NEW: Add separate input for "if yes" ---
+                    # --- Fix 2: Add separate input for "if yes" (enhanced) ---
                     if j < len(lines):
                         next_line = collapse_spaced_caps(lines[j].strip())
                         if re.search(r"\b(list|explain|if so|name of)\b", next_line, re.I):
-                            follow_up_title = f"{title} - Details"
+                            follow_up_title = f"{clean_title} - Details"
                             follow_up_key = slugify(follow_up_title)
                             questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
-                key = slugify(title)
+                key = slugify(clean_title)
                 if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
-                questions.append(Question(key, title, cur_section, "radio", control=control))
+                questions.append(Question(key, clean_field_title(clean_title), cur_section, "radio", control=control))
             else:
-                make_radio = bool(SINGLE_SELECT_TITLES_RE.search(title))
+                make_radio = bool(SINGLE_SELECT_TITLES_RE.search(clean_title))
                 options = [make_option(n, b) for (n,b) in collected]
-                if not options and ("," in title or "/" in title or ";" in title):
-                    for tok in re.split(r"[,/;]", title):
+                if not options and ("," in clean_title or "/" in clean_title or ";" in clean_title):
+                    for tok in re.split(r"[,/;]", clean_title):
                         tok = clean_token(tok)
                         if tok: options.append(make_option(tok, None))
                 control: Dict = {"options": options}
@@ -1300,12 +1412,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     control["multi"] = True
                 if is_hear:
                     control["extra"] = {"type":"Input","hint":"Other (please specify)"}
-                    if (REFERRED_BY_RE.search(title) or (j < len(lines) and REFERRED_BY_RE.search(lines[j]))):
+                    if (REFERRED_BY_RE.search(clean_title) or (j < len(lines) and REFERRED_BY_RE.search(lines[j]))):
                         questions.append(Question("referred_by","Referred by",cur_section,"input",control={"input_type":"text"}))
-                key = slugify(title)
+                key = slugify(clean_title)
                 if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
                 qtype = "radio" if make_radio else "dropdown"
-                questions.append(Question(key, title, cur_section, qtype, control=control))
+                questions.append(Question(key, clean_field_title(clean_title), cur_section, qtype, control=control))
             i = j if not opts_inline else i + 1
             continue
 
@@ -1336,6 +1448,17 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             i = k; continue
 
         # Default: input
+        # Fix 1: Skip if next line has inline options that will use this as title
+        if i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+            if next_line and re.search(CHECKBOX_ANY, next_line):
+                # Check if next line has inline options
+                next_opts = options_from_inline_line(next_line)
+                if len(next_opts) >= 2:
+                    # Next line will create a field using this line as title, so skip
+                    i += 1
+                    continue
+        
         itype = classify_input_type(title)
         key = slugify(title)
         # parent/guardian routing
