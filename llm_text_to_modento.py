@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.10
+llm_text_to_modento.py — v2.11
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.9 (Archivev9 fixes):
-  • Fix 8: Section inference - automatically moves medical/dental fields from "General" to proper sections
-  • Fix 6: Duplicate consolidation - removes duplicate DOB, phone, email, address fields
-  • Improved section categorization with keyword-based inference (2+ matching keywords required)
+What's new vs v2.10 (Archivev9 fixes continued):
+  • Fix 2: Multi-line section header detection after page breaks - aggregates consecutive headers
+  • Fix 3: Category header detection - skips category headers in medical/dental grids
+  • Previous: Fix 8 (section inference), Fix 6 (duplicate consolidation), Fix 1 (enhanced condition consolidation)
 """
 
 from __future__ import annotations
@@ -202,6 +202,36 @@ def is_heading(line: str) -> bool:
         if not t.endswith("?"):
             return True
     return t.endswith(":") and len(t) <= 120
+
+def is_category_header(line: str, next_line: str = "") -> bool:
+    """
+    Fix 3: Detect if a line is a category header in a medical/dental grid.
+    Category headers are short lines without checkboxes that precede lines with checkboxes.
+    
+    Examples: "Cancer", "Cardiovascular", "Endocrinology"
+    """
+    cleaned = collapse_spaced_caps(line.strip())
+    
+    # Must be short (category headers are typically 1-3 words)
+    if not cleaned or len(cleaned) > 50:
+        return False
+    
+    # Must NOT have checkboxes
+    if re.search(CHECKBOX_ANY, cleaned):
+        return False
+    
+    # Must NOT be a question
+    if cleaned.endswith("?"):
+        return False
+    
+    # Next line should have checkboxes (indicates this is a header for checkbox items)
+    if next_line and re.search(CHECKBOX_ANY, next_line):
+        # Check word count - category headers are usually 1-3 words
+        word_count = len(cleaned.split())
+        if word_count <= 3:
+            return True
+    
+    return False
 
 def normalize_section_name(raw: str) -> str:
     t = collapse_spaced_caps(raw).strip().lower()
@@ -1647,9 +1677,33 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if INSURANCE_SECONDARY_RE.search(line):
             cur_section = "Insurance"; insurance_scope = "__secondary"
 
-        # Section heading
+        # Fix 2: Section heading with multi-line header detection
         if is_heading(line):
-            cur_section = normalize_section_name(line)
+            # Look ahead to see if the next line is also a heading (multi-line header)
+            potential_headers = [line]
+            j = i + 1
+            while j < len(lines) and j < i + 3:  # Look ahead up to 2 lines
+                next_raw = lines[j]
+                next_line = collapse_spaced_caps(next_raw.strip())
+                if not next_line:
+                    break
+                if is_heading(next_line):
+                    potential_headers.append(next_line)
+                    j += 1
+                else:
+                    break
+            
+            # If we found multiple consecutive headings, combine them
+            if len(potential_headers) > 1:
+                combined = " ".join(potential_headers)
+                cur_section = normalize_section_name(combined)
+                if debug:
+                    print(f"  [debug] multi-line header: {potential_headers} -> {cur_section}")
+                i = j  # Skip past all the header lines
+                continue
+            else:
+                cur_section = normalize_section_name(line)
+            
             low = line.lower()
             if "insurance" in low:
                 if "primary" in low: insurance_scope = "__primary"
@@ -1658,6 +1712,15 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             else:
                 insurance_scope = None
             i += 1; continue
+        
+        # Fix 3: Skip category headers in medical/dental grids
+        if i + 1 < len(lines):
+            next_line = lines[i + 1]
+            if is_category_header(line, next_line):
+                if debug:
+                    print(f"  [debug] skipping category header: '{line}'")
+                i += 1
+                continue
 
         # Archivev8 Fix 1: Check for orphaned checkbox pattern
         # Use raw line (not collapsed) to preserve spacing
@@ -1702,6 +1765,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 k = i + 1
                 while k < len(lines) and lines[k].strip() and not is_heading(lines[k]):
                     option_line = lines[k]
+                    
+                    # Fix 3: Skip category headers within medical blocks
+                    if k + 1 < len(lines) and is_category_header(option_line, lines[k + 1]):
+                        k += 1
+                        continue
                     
                     # Archivev8 Fix 1: Check for orphaned checkboxes within the medical history block
                     if has_orphaned_checkboxes(lines[k]) and k + 1 < len(lines):
