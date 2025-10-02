@@ -444,7 +444,20 @@ def options_from_inline_line(ln: str) -> List[Tuple[str, Optional[bool]]]:
     # First try: existing inline choice regex
     items: List[Tuple[str, Optional[bool]]] = []
     for m in INLINE_CHOICE_RE.finditer(s_norm):
-        label = clean_token(m.group(1))
+        raw_label = m.group(1)
+        
+        # Fix 3: Split on excessive spacing BEFORE clean_token (which collapses spaces)
+        parts = re.split(r'\s{5,}', raw_label)
+        if len(parts) > 1:
+            # Take only first part (the actual checkbox label)
+            original = raw_label
+            raw_label = next((p.strip() for p in parts if p.strip()), raw_label)
+            # DEBUG
+            if 'Bad Bite' in original and 'Please list' in original:
+                import sys
+                print(f"DEBUG: Split '{original[:60]}...' -> '{raw_label}'", file=sys.stderr)
+        
+        label = clean_token(raw_label)
         if not label: continue
         low = label.lower()
         if low in ("yes", "y"): items.append(("Yes", True))
@@ -474,15 +487,56 @@ def options_from_inline_line(ln: str) -> List[Tuple[str, Optional[bool]]]:
             # Remove checkbox token and extract label
             label = re.sub(CHECKBOX_ANY, '', segment).strip()
             
-            # Clean up common artifacts
-            label = re.sub(r'\s{3,}', ' ', label)  # Collapse wide spaces
+            # Fix 3: Better cleaning for grid layouts
+            # 1. Split on excessive spacing (5+ spaces = likely column boundary)
+            parts = re.split(r'\s{5,}', label)
+            if len(parts) > 1:
+                # Take the first non-empty part (the actual label)
+                label = next((p.strip() for p in parts if p.strip()), label)
+            
+            # 2. Split on category headers that appear mid-text (Fix 3 enhancement)
+            # Pattern: text followed by category name followed by more text
+            category_pattern = r'\b(Cardiovascular|Gastrointestinal|Neurological|Viral|Hematologic|Lymphatic|Infections?)\b'
+            # Check if category appears in middle of text
+            match = re.search(category_pattern, label, re.I)
+            if match:
+                # Split before the category and take the first part
+                label = label[:match.start()].strip()
+            
+            # 3. Handle merged medical terms (Fix 3 - complex case)
+            # Pattern: "Word1 Word2 (parenthetical) Word3" where Word3 looks unrelated
+            # Example: "Artificial Angina (chest pain) Valve" should become "Artificial Heart Valve" or just "Artificial Valve"
+            # If we have pattern like "X Y (...) Z" where Y and Z are both medical terms, keep only first part
+            paren_match = re.search(r'^(.+?)\s+\w+\s*\([^)]+\)\s+(\w+)$', label)
+            if paren_match:
+                # This looks like merged terms. Try to clean it up.
+                first_part = paren_match.group(1).strip()
+                last_word = paren_match.group(2).strip()
+                # If first part is short (1-2 words), combine with last word
+                if len(first_part.split()) <= 2:
+                    label = f"{first_part} {last_word}"
+                else:
+                    # Keep first part only
+                    label = first_part
+            
+            # 4. Collapse remaining multiple spaces
+            label = re.sub(r'\s{2,}', ' ', label)
+            
+            # 5. Remove trailing checkbox artifacts
             label = label.strip('[]')
+            
+            # 6. Filter out standalone category headers
+            category_headers = r'^(Type|Cardiovascular|Gastrointestinal|Neurological|Viral|Women|Hematologic|Lymphatic|Infections?|Additional)$'
+            if re.match(category_headers, label.strip(), re.I):
+                continue
+            
+            # 7. Apply standard token cleaning
             label = clean_token(label)
             
             if label and len(label) > 1 and label.lower() not in YESNO_SET:
                 options.append((label, None))
         
-        if len(options) >= 3:  # Only use grid parsing if we got enough options
+        if len(options) >= 2:  # Changed from >= 3 to be more permissive (Fix 3)
             return options
     
     return items  # Fall back to existing method
