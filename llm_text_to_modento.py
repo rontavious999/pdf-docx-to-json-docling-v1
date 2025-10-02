@@ -787,6 +787,175 @@ def looks_like_grid_header(s: str) -> Optional[List[str]]:
     parts = [p.strip() for p in re.split(r"\s{3,}", line) if p.strip()]
     return parts if len(parts) >= 3 else None
 
+# ---------- Fix 4: Enhanced Table/Grid Detection
+
+def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) -> Optional[dict]:
+    """
+    Detect if lines starting at start_idx form a table layout.
+    
+    Returns:
+        dict with table info if detected, None otherwise
+        {
+            'header_line': int,  # index of header line
+            'data_lines': List[int],  # indices of data lines
+            'num_columns': int,
+            'column_positions': List[int],  # approximate column start positions
+            'headers': List[str]  # column headers
+        }
+    """
+    if start_idx >= len(lines):
+        return None
+    
+    # Look for header line: multiple capitalized words, evenly spaced
+    header_line = lines[start_idx].strip()
+    
+    # Don't treat as table if it has checkboxes (it's data, not a header)
+    if re.search(CHECKBOX_ANY, header_line):
+        return None
+    
+    # Split by significant spacing (5+ spaces) to find potential headers
+    parts = re.split(r'\s{5,}', header_line)
+    
+    # Filter to keep only capitalized parts that look like headers
+    potential_headers = []
+    header_positions = []
+    
+    current_pos = 0
+    for part in parts:
+        # Find position of this part in original line
+        pos = header_line.find(part, current_pos)
+        part = part.strip()
+        
+        # Check if part looks like a header (starts with capital, not too long)
+        if part and part[0].isupper() and 3 <= len(part) <= 30:
+            potential_headers.append(part)
+            header_positions.append(pos)
+        
+        current_pos = pos + len(part)
+    
+    # Need at least 3 columns to be considered a table
+    if len(potential_headers) < 3:
+        return None
+    
+    headers = potential_headers
+    column_positions = header_positions
+    
+    # Check if next few lines have checkboxes aligned with these columns
+    data_lines = []
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    for i in range(start_idx + 1, min(start_idx + max_rows, len(lines))):
+        line = lines[i]
+        
+        # Count checkboxes
+        checkboxes = list(checkbox_pattern.finditer(line))
+        
+        if len(checkboxes) >= 3:  # Need at least 3 checkboxes to indicate table row (stricter)
+            # Check if checkboxes align roughly with column positions
+            checkbox_positions = [cb.start() for cb in checkboxes]
+            
+            # Allow ±15 char tolerance for alignment
+            aligned = 0
+            for cb_pos in checkbox_positions:
+                for col_pos in column_positions:
+                    if abs(cb_pos - col_pos) <= 15:
+                        aligned += 1
+                        break
+            
+            if aligned >= 3:  # At least 3 checkboxes align (stricter)
+                data_lines.append(i)
+        elif not line.strip():
+            # Empty line might signal end of table
+            break
+        elif len(checkboxes) == 0 and data_lines:
+            # No checkboxes and we've seen data lines = end of table
+            break
+    
+    # Valid table if we found at least 3 data lines (stricter requirement)
+    if len(data_lines) >= 3:
+        return {
+            'header_line': start_idx,
+            'data_lines': data_lines,
+            'num_columns': len(column_positions),
+            'column_positions': column_positions,
+            'headers': headers
+        }
+    
+    return None
+
+
+def parse_table_to_questions(
+    lines: List[str],
+    table_info: dict,
+    section: str
+) -> List['Question']:
+    """
+    Parse a detected table into separate questions, one per column.
+    
+    Each column becomes a multi-select dropdown with the column header as title.
+    """
+    questions = []
+    
+    headers = table_info['headers']
+    column_positions = table_info['column_positions']
+    data_lines = table_info['data_lines']
+    
+    # Create one question per column
+    for col_idx, header in enumerate(headers):
+        col_pos = column_positions[col_idx]
+        
+        # Determine column width (to next column or EOL)
+        if col_idx + 1 < len(column_positions):
+            col_width = column_positions[col_idx + 1] - col_pos
+        else:
+            col_width = None  # Last column goes to EOL
+        
+        # Extract items for this column
+        options = []
+        
+        for line_idx in data_lines:
+            line = lines[line_idx]
+            
+            # Extract this column's segment
+            if col_width:
+                segment = line[col_pos:col_pos + col_width]
+            else:
+                segment = line[col_pos:]
+            
+            # Check if segment has a checkbox
+            if not re.search(CHECKBOX_ANY, segment):
+                continue
+            
+            # Extract label (remove checkbox)
+            label = re.sub(CHECKBOX_ANY, '', segment).strip()
+            
+            # Clean up extra whitespace
+            label = re.sub(r'\s{3,}', ' ', label)
+            
+            # Skip if too short or empty
+            if len(label) < 2:
+                continue
+            
+            # Skip common junk patterns
+            if label.lower() in {'', 'n/a', 'none', 'other'}:
+                continue
+            
+            options.append((label, None))
+        
+        # Create question if we found options
+        if len(options) >= 2:
+            q = Question(
+                slugify(header),
+                f"{header} - Please mark any that apply",
+                section,
+                "dropdown",
+                control={"options": [make_option(n, b) for n, b in options], "multi": True}
+            )
+            
+            questions.append(q)
+    
+    return questions
+
 def chunk_by_columns(line: str, ncols: int) -> List[str]:
     line = collapse_spaced_caps(line.strip())
     if "|" in line:
@@ -1297,7 +1466,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     i += 1
             i += 1; continue
 
-        # Grid
+        # Fix 4: Enhanced Table/Grid Detection - try multi-row table first
+        table_info = detect_table_layout(lines, i)
+        if table_info:
+            # Parse entire table at once
+            table_questions = parse_table_to_questions(lines, table_info, cur_section)
+            questions.extend(table_questions)
+            
+            # Skip past the table
+            i = max(table_info['data_lines']) + 1
+            continue
+
+        # Grid (existing logic for simpler cases)
         hdr_cols = looks_like_grid_header(line)
         if hdr_cols:
             ncols = len(hdr_cols)
