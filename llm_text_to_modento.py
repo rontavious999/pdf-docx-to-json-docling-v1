@@ -68,6 +68,20 @@ ADDRESS_LIKE_RE = re.compile(
     re.I,
 )
 
+# Enhanced header filtering patterns (Archivev8 Fix 2)
+DENTAL_PRACTICE_EMAIL_RE = re.compile(
+    r'@.*?(?:dental|dentistry|orthodontics|smiles).*?\.(com|net|org)',
+    re.I
+)
+BUSINESS_WITH_ADDRESS_RE = re.compile(
+    r'(?:dental|dentistry|orthodontics|family|cosmetic|implant).{20,}?(?:suite|ste\.?|ave|avenue|rd|road|st\.?|street)',
+    re.I
+)
+PRACTICE_NAME_PATTERN = re.compile(
+    r'^(?:.*?(?:dental|dentistry|orthodontics|family|cosmetic|implant).*?){1,3}$',
+    re.I
+)
+
 INSURANCE_PRIMARY_RE   = re.compile(r"\bprimary\b.*\binsurance\b", re.I)
 INSURANCE_SECONDARY_RE = re.compile(r"\bsecondary\b.*\binsurance\b", re.I)
 INSURANCE_BLOCK_RE     = re.compile(r"(dental\s+benefit\s+plan|insurance\s+information|insurance\s+details)", re.I)
@@ -295,6 +309,34 @@ def scrub_headers_footers(text: str) -> List[str]:
         # Filter out lines with multiple zip codes
         if len(re.findall(r'\b\d{5}\b', s)) >= 2:
             continue
+        
+        # Archivev8 Fix 2: Enhanced Header/Business Information Filtering
+        # Get the line index for top-of-document check
+        idx = lines.index(ln) if ln in lines else 999
+        
+        # Filter lines with dental practice email addresses + business keywords
+        if DENTAL_PRACTICE_EMAIL_RE.search(s):
+            # Check if line also has practice/business keywords
+            if re.search(r'\b(?:dental|dentistry|family|cosmetic|implant|orthodontics)\b', s, re.I):
+                continue
+        
+        # Filter long lines combining business name with address
+        if BUSINESS_WITH_ADDRESS_RE.search(s):
+            # Additional check: line is quite long (likely a header)
+            if len(s) > 50:
+                continue
+        
+        # Filter lines at top of document (first 20 lines) that look like practice headers
+        if idx < 20:
+            # Check for practice name + address pattern
+            has_practice_keyword = bool(re.search(r'\b(?:dental|dentistry|orthodontics|family|cosmetic|implant)\b', s, re.I))
+            has_address_keyword = bool(re.search(r'\b(?:suite|ste\.?|ave|avenue|rd|road|st|street|blvd)\b', s, re.I))
+            has_contact = bool(re.search(r'(?:@|phone|tel|fax|\d{3}[-.\s]?\d{3}[-.\s]?\d{4})', s, re.I))
+            
+            # If it has 2+ of these indicators and is long, likely a header
+            score = sum([has_practice_keyword, has_address_keyword, has_contact])
+            if score >= 2 and len(s) > 40:
+                continue
         
         # Existing filters
         if re.search(r"\bcontinued on back side\b", s, re.I): continue
@@ -662,9 +704,77 @@ def slugify(s: str, maxlen: int = 64) -> str:
         s = "q_" + s
     return (s[:maxlen] or "q")
 
+# ---------- Archivev8 Fix 4: Clean Malformed Option Text
+
+def clean_option_text(text: str) -> str:
+    """
+    Clean malformed option text.
+    
+    Fixes:
+    1. Repeated words: "Blood Blood Transfusion" -> "Blood Transfusion"
+    2. Slash-separated malformed: "Epilepsy/ Excessive Seizers Bleeding" -> "Epilepsy"
+    
+    Args:
+        text: Raw option text
+    
+    Returns:
+        Cleaned option text
+    """
+    if not text:
+        return text
+    
+    # Fix 1: Remove consecutive duplicate words
+    words = text.split()
+    cleaned_words = []
+    prev_word_lower = None
+    
+    for word in words:
+        word_normalized = word.lower().strip('.,;:')
+        
+        # Skip if this word is same as previous (case-insensitive)
+        if word_normalized != prev_word_lower:
+            cleaned_words.append(word)
+        
+        prev_word_lower = word_normalized
+    
+    text = ' '.join(cleaned_words)
+    
+    # Fix 2: Handle malformed slash-separated conditions
+    # Pattern: "ConditionA/ random text that doesn't make sense"
+    if '/' in text:
+        parts = [p.strip() for p in text.split('/')]
+        
+        # Check if we have a clean first part and a messy second part
+        if len(parts) >= 2:
+            first_part = parts[0]
+            second_part = parts[1]
+            
+            # Heuristics for "messy" second part:
+            # - More than 2 words (likely run-on text, medical conditions are usually 1-2 words)
+            # - Contains multiple spaces (formatting artifact)
+            # - Doesn't start with capital (incomplete/malformed)
+            # - Contains typos or strange patterns (like "Seizers" instead of "Seizures")
+            is_messy_second = (
+                len(second_part.split()) > 2 or
+                '  ' in second_part or
+                (len(second_part) > 0 and not second_part[0].isupper())
+            )
+            
+            # If first part looks complete and second is messy, use just first
+            if len(first_part) >= 3 and first_part[0].isupper() and is_messy_second:
+                text = first_part
+    
+    # Fix 3: Clean extra whitespace
+    text = re.sub(r'\s+', ' ', text)
+    
+    return text.strip()
+
+
 def make_option(name: str, bool_value: Optional[bool]) -> Dict:
     if bool_value is True:  return {"name": "Yes", "value": True}
     if bool_value is False: return {"name": "No",  "value": False}
+    # Archivev8 Fix 4: Apply text cleaning
+    name = clean_option_text(name)
     return {"name": name, "value": slugify(name, 80)}
 
 # ---------- Composite / multi-label fan-out
@@ -989,6 +1099,126 @@ def extract_compound_yn_prompts(line: str) -> List[str]:
         if p not in seen:
             out.append(p); seen.add(p)
     return out
+
+# ---------- Archivev8 Fix 1: Orphaned Checkbox Labels Detection
+
+def has_orphaned_checkboxes(line: str) -> bool:
+    """
+    Detect if a line has multiple checkboxes but very little text (orphaned checkboxes).
+    
+    Example: "[ ]                       [ ]                               [ ]"
+    
+    Returns:
+        True if checkboxes appear orphaned (labels likely on next line)
+    """
+    checkbox_count = len(re.findall(CHECKBOX_ANY, line))
+    if checkbox_count < 2:
+        return False
+    
+    # Remove checkboxes and see how much text remains
+    text_without_checkboxes = re.sub(CHECKBOX_ANY, '', line).strip()
+    
+    # Split by whitespace to count words
+    words = [w for w in text_without_checkboxes.split() if w.strip()]
+    
+    # Heuristic: If we have many checkboxes but very few words, labels are likely orphaned
+    # Allow 1-2 short words per checkbox (like "Sickle Cell Disease" at the end)
+    # But if most checkboxes have no adjacent text, they're orphaned
+    if checkbox_count >= 3 and len(words) <= 2:
+        return True
+    
+    # Alternative check: very sparse text density
+    if len(text_without_checkboxes) < (checkbox_count * 5):
+        return True
+    
+    return False
+
+
+def extract_orphaned_labels(label_line: str) -> List[str]:
+    """
+    Extract labels from a line that appears to contain orphaned labels.
+    
+    A label line may have some checkboxes at the end, but should have
+    labels without checkboxes at the beginning/middle.
+    
+    Returns:
+        List of label strings
+    """
+    stripped = label_line.strip()
+    if not stripped:
+        return []
+    
+    # Split by 3+ spaces to get individual labels
+    # This is a common pattern in grid layouts
+    parts = re.split(r'\s{3,}', stripped)
+    
+    # Clean and filter labels
+    cleaned_labels = []
+    for part in parts:
+        part = part.strip()
+        # Skip if this part starts with a checkbox (it's properly paired)
+        if re.match(CHECKBOX_ANY, part):
+            # This part has a checkbox, extract the label after it
+            label = re.sub(CHECKBOX_ANY, '', part).strip()
+            if label and len(label) >= 2 and not label.isdigit():
+                cleaned_labels.append(label)
+        else:
+            # This part has no checkbox - it's an orphaned label
+            if len(part) >= 2 and not part.isdigit():
+                cleaned_labels.append(part)
+    
+    return cleaned_labels
+
+
+def associate_orphaned_labels_with_checkboxes(
+    checkbox_line: str,
+    label_line: str
+) -> List[Tuple[str, Optional[bool]]]:
+    """
+    Associate orphaned labels with checkboxes based on occurrence order.
+    
+    Args:
+        checkbox_line: Line with checkboxes but minimal text
+        label_line: Next line with labels (may have some checkboxes at end)
+    
+    Returns:
+        List of (label, checked_state) tuples
+    """
+    # Check if this actually looks like orphaned pattern
+    if not has_orphaned_checkboxes(checkbox_line):
+        return []
+    
+    labels = extract_orphaned_labels(label_line)
+    if not labels:
+        return []
+    
+    # Count checkboxes in the checkbox line
+    checkbox_matches = list(re.finditer(CHECKBOX_ANY, checkbox_line))
+    num_checkboxes = len(checkbox_matches)
+    
+    if num_checkboxes == 0:
+        return []
+    
+    # Also check if checkbox line has any labels at the end
+    # e.g., "[ ]  [ ]  [ ]  [ ]  [ ] Sickle Cell Disease"
+    text_after_last_checkbox = checkbox_line[checkbox_matches[-1].end():].strip()
+    checkbox_line_labels = []
+    if text_after_last_checkbox and len(text_after_last_checkbox) > 3:
+        # There's a label on the checkbox line itself
+        checkbox_line_labels.append(text_after_last_checkbox)
+    
+    # If we have orphaned labels and checkboxes, associate them
+    options = []
+    
+    # Add all labels from the label line
+    for label in labels:
+        options.append((label, None))
+    
+    # Then add any label from the checkbox line itself
+    for label in checkbox_line_labels:
+        options.append((label, None))
+    
+    return options
 
 # ---------- Fix 2: Enhanced "If Yes" Detection
 
@@ -1429,6 +1659,41 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 insurance_scope = None
             i += 1; continue
 
+        # Archivev8 Fix 1: Check for orphaned checkbox pattern
+        # Use raw line (not collapsed) to preserve spacing
+        if has_orphaned_checkboxes(raw) and i + 1 < len(lines):
+            next_line = lines[i + 1]
+            orphaned_options = associate_orphaned_labels_with_checkboxes(raw, next_line)
+            
+            if orphaned_options and len(orphaned_options) >= 2:
+                # Found orphaned labels! Create a medical conditions question
+                # Look back for a title
+                title = None
+                if i > 0 and len(lines[i-1].strip()) < 100:
+                    prev_stripped = collapse_spaced_caps(lines[i-1].strip())
+                    if prev_stripped and not re.search(CHECKBOX_ANY, prev_stripped):
+                        title = prev_stripped.rstrip(':?.')
+                
+                if not title:
+                    title = "Medical Conditions"
+                
+                key = slugify(title)
+                q = Question(
+                    key,
+                    title,
+                    cur_section,
+                    "dropdown",
+                    control={"options": [make_option(name, checked) for name, checked in orphaned_options], "multi": True}
+                )
+                questions.append(q)
+                
+                if debug:
+                    print(f"  [debug] gate: orphaned_labels -> '{title}' with {len(orphaned_options)} options")
+                
+                # Skip the next line since we consumed it
+                i += 2
+                continue
+
         # --- NEW: Medical History Multi-select block ---
         if cur_section in {"Medical History", "Dental History"}:
             if re.search(r"\b(have you ever had|do you have|are you taking)\b", line, re.I) and not extract_compound_yn_prompts(line):
@@ -1437,10 +1702,26 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 k = i + 1
                 while k < len(lines) and lines[k].strip() and not is_heading(lines[k]):
                     option_line = lines[k]
+                    
+                    # Archivev8 Fix 1: Check for orphaned checkboxes within the medical history block
+                    if has_orphaned_checkboxes(lines[k]) and k + 1 < len(lines):
+                        orphaned_opts = associate_orphaned_labels_with_checkboxes(lines[k], lines[k + 1])
+                        if orphaned_opts:
+                            options.extend(orphaned_opts)
+                            k += 2  # Skip both the checkbox line and label line
+                            continue
+                    
+                    # Try compound Y/N prompts first (e.g., "Question? [ ] Yes [ ] No")
                     prompts = extract_compound_yn_prompts(option_line)
                     if prompts:
                         for p in prompts:
                             options.append((p, None))
+                    else:
+                        # Try inline options (e.g., "[ ] Option1 [ ] Option2")
+                        inline_opts = options_from_inline_line(option_line)
+                        if inline_opts:
+                            options.extend(inline_opts)
+                    
                     k += 1
 
                 if len(options) >= 3: # Threshold to be considered a conditions block
@@ -1943,11 +2224,20 @@ def fill_missing_option_values(q: Question) -> None:
     q.control["options"] = fixed
 
 def _semantic_dedupe(payload: List[dict]) -> List[dict]:
-    """Remove duplicate simple inputs that are identical semantically (same title/section/type/input_type)."""
+    """
+    Remove duplicate simple inputs that are identical semantically (same title/section/type/input_type).
+    
+    Archivev8 Fix 3: Skip deduplication for conditional fields (they can have same title).
+    """
     seen: Set[Tuple[str,str,str,str]] = set()
     out: List[dict] = []
     for q in payload:
         if q.get("type") == "input":
+            # Archivev8 Fix 3: Don't dedupe conditional fields
+            if q.get("if") or "conditional" in q.get("key", "").lower() or "_explanation" in q.get("key", "").lower():
+                out.append(q)
+                continue
+            
             itype = (q.get("control") or {}).get("input_type","text")
             sig = (q.get("title","").strip().lower(), q.get("section",""), "input", itype)
             if sig in seen:
@@ -2237,11 +2527,36 @@ class Stats:
     near_misses: List[MatchEvent]
 
 def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCatalog], dbg: DebugLogger) -> Tuple[List[dict], int]:
+    """
+    Apply template matching and count matches.
+    
+    Enhanced to preserve conditional follow-up fields (Archivev8 Fix 3).
+    """
     if not catalog:
         return payload, 0
+    
     used = 0
     out: List[dict] = []
+    
     for q in payload:
+        # Archivev8 Fix 3: Check if this is a conditional/explanation field
+        # These should not have templates applied to avoid breaking conditional relationships
+        is_conditional_field = (
+            bool(q.get("conditional_on")) or
+            "_explanation" in q.get("key", "") or
+            "_followup" in q.get("key", "") or
+            "_details" in q.get("key", "") or
+            (q.get("title", "").lower().strip() in ["please explain", "explanation", "details", "comments"])
+        )
+        
+        if is_conditional_field:
+            # Skip template matching for conditional fields
+            out.append(q)
+            if dbg.enabled:
+                print(f"  [debug] template: skipping conditional field '{q.get('key')}' to preserve relationship")
+            continue
+        
+        # Normal template matching for non-conditional fields
         fr = catalog.find(q.get("key"), q.get("title"), parsed_q=q)
         if fr.tpl:
             used += 1
@@ -2252,6 +2567,7 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
             out.append(q)
             if fr.reason == "near":
                 dbg.log_near(MatchEvent(q.get("title",""), q.get("key",""), q.get("section",""), fr.best_key, "near", fr.score, fr.coverage))
+    
     out = _dedupe_keys_dicts(out)
     return out, used
 
