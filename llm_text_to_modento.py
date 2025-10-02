@@ -195,8 +195,16 @@ def is_heading(line: str) -> bool:
     if not t:
         return False
     
-    # Fix 1: Don't treat lines with checkboxes as headings
+    # Archivev10 Fix 1: Don't treat lines with checkboxes as headings
     if re.search(CHECKBOX_ANY, t):
+        return False
+    
+    # Archivev10 Fix 1: Don't treat multi-column grid headers as headings
+    # (e.g., "Appearance    Function    Habits    Previous Comfort Options")
+    # These have 3+ words/phrases separated by significant spacing
+    parts = re.split(r'\s{3,}', t)
+    if len(parts) >= 3 and all(len(p.split()) <= 4 for p in parts):
+        # Looks like a multi-column grid header, not a section heading
         return False
     
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
@@ -1307,15 +1315,29 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
         else:
             title = "Please mark any that apply"
         
-        # Look back a few lines for a better title
-        if grid_info['start_line'] > 0:
-            for i in range(max(0, grid_info['start_line'] - 3), grid_info['start_line']):
+        # Look back a few lines for a better title (including the start line itself)
+        if grid_info['start_line'] >= 0:
+            # Check from 3 lines back up to and including the start line
+            for i in range(max(0, grid_info['start_line'] - 3), grid_info['start_line'] + 1):
+                if i >= len(lines):
+                    break
                 potential_title = collapse_spaced_caps(lines[i].strip())
+                if debug:
+                    print(f"    [debug] checking line {i} for title: '{potential_title[:60]}'")
                 if potential_title and not re.search(CHECKBOX_ANY, potential_title):
                     # Check if it looks like a section title (has "please mark" or similar)
                     if re.search(r'\b(please mark|indicate|select|check|do you have)\b', potential_title, re.I):
                         if len(potential_title) < 150:
                             title = potential_title.rstrip(':?.')
+                            # Archivev10 Fix: Infer section from title if it mentions Medical/Dental History
+                            if 'medical history' in title.lower():
+                                section = "Medical History"
+                                if debug:
+                                    print(f"    [debug] inferred section=Medical History from title")
+                            elif 'dental history' in title.lower():
+                                section = "Dental History"
+                                if debug:
+                                    print(f"    [debug] inferred section=Dental History from title")
                             break
         
         key = slugify(title) if len(title) < 50 else (
@@ -1895,6 +1917,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     while i < len(lines):
         raw = lines[i]
         line = collapse_spaced_caps(raw.strip())
+        
+        # Debug specific lines
+        if debug and 'Appearance' in raw and 'Function' in raw:
+            print(f"  [debug] PROCESSING line {i}: '{raw[:80]}' (section={cur_section})")
+        
         if not line:
             i += 1; continue
 
@@ -1925,13 +1952,22 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             # If we found multiple consecutive headings, combine them
             if len(potential_headers) > 1:
                 combined = " ".join(potential_headers)
-                cur_section = normalize_section_name(combined)
+                new_section = normalize_section_name(combined)
+                cur_section = new_section
                 if debug:
                     print(f"  [debug] multi-line header: {potential_headers} -> {cur_section}")
                 i = j  # Skip past all the header lines
                 continue
             else:
-                cur_section = normalize_section_name(line)
+                new_section = normalize_section_name(line)
+                # Archivev10 Fix: Don't override Medical/Dental History sections with "General"
+                # This prevents random headings within those sections from changing the section
+                # But DO allow changing between specific sections
+                if cur_section in {"Medical History", "Dental History"} and new_section == "General":
+                    # Keep the current specific section, don't change to General
+                    pass
+                else:
+                    cur_section = new_section
             
             low = line.lower()
             if "insurance" in low:
@@ -1946,7 +1982,10 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Check if this is a category header that precedes a multi-column grid
         if i + 1 < len(lines):
             next_line = lines[i + 1]
-            if is_category_header(line, next_line):
+            is_cat_header = is_category_header(line, next_line)
+            if debug and is_cat_header:
+                print(f"  [debug] is_category_header=True for line {i}: '{line[:60]}' (section={cur_section})")
+            if is_cat_header:
                 # Before skipping, check if this is actually a multi-column grid header
                 # (e.g., "Appearance    Function    Habits")
                 if cur_section in {"Medical History", "Dental History"}:
@@ -1954,8 +1993,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     parts = re.split(r'\s{5,}', line.strip())
                     next_checkboxes = len(list(re.finditer(CHECKBOX_ANY, next_line)))
                     
+                    if debug:
+                        print(f"  [debug] category header check: '{line[:60]}' - parts={len(parts)}, next_cb={next_checkboxes}")
+                    
                     if len(parts) >= 3 and next_checkboxes >= 3:
                         # This is a multi-column grid header! Try to detect and parse the grid
+                        if debug:
+                            print(f"  [debug] attempting multicolumn_grid detection from category header line {i}")
                         multicolumn_grid = detect_multicolumn_checkbox_grid(lines, i, cur_section)
                         if multicolumn_grid:
                             grid_question = parse_multicolumn_checkbox_grid(lines, multicolumn_grid, debug)
@@ -1963,10 +2007,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                                 questions.append(grid_question)
                                 i = max(multicolumn_grid['data_lines']) + 1
                                 continue
+                        elif debug:
+                            print(f"  [debug] multicolumn_grid detection failed")
                 
                 # If not a grid header, skip as before
                 if debug:
-                    print(f"  [debug] skipping category header: '{line}'")
+                    print(f"  [debug] skipping category header: '{line[:60]}'")
                 i += 1
                 continue
 
