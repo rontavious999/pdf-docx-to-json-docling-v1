@@ -52,6 +52,16 @@ WITNESS_RE     = re.compile(r"\bwitness\b", re.I)
 
 IF_GUIDANCE_RE = re.compile(r"\b(if\s+(yes|no)[^)]*|if\s+so|if\s+applicable|explain below|please explain|please list)\b", re.I)
 
+# Enhanced "If Yes" detection patterns (Fix 2)
+IF_YES_FOLLOWUP_RE = re.compile(
+    r'(.+?)\s*\[\s*\]\s*Yes\s*\[\s*\]\s*No\s+If\s+yes[,:]?\s*(?:please\s+)?explain',
+    re.I
+)
+IF_YES_INLINE_RE = re.compile(
+    r'(.+?)\s*\[\s*\]\s*Yes\s*\[\s*\]\s*No\s+If\s+yes',
+    re.I
+)
+
 PAGE_NUM_RE = re.compile(r"^\s*(?:page\s*\d+(?:\s*/\s*\d+)?|\d+\s*/\s*\d+)\s*$", re.I)
 ADDRESS_LIKE_RE = re.compile(
     r"\b(?:street|suite|ste\.?|ave|avenue|rd|road|blvd|zip|postal|fax|tel|phone|www\.|https?://|\.com|\.net|\.org|welcome|new\s+patients)\b",
@@ -169,6 +179,11 @@ def is_heading(line: str) -> bool:
     t = collapse_spaced_caps(line.strip())
     if not t:
         return False
+    
+    # Fix 1: Don't treat lines with checkboxes as headings
+    if re.search(CHECKBOX_ANY, t):
+        return False
+    
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
             return True
@@ -319,6 +334,77 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
         out.append(merged)
         i += 1
     return out
+
+# ---------- Fix 1: Split Multi-Question Lines
+
+def split_multi_question_line(line: str) -> List[str]:
+    """
+    Split lines containing multiple independent questions into separate lines.
+    
+    Example:
+        Input:  "Gender: [ ] Male [ ] Female     Marital Status: [ ] Married [ ] Single"
+        Output: ["Gender: [ ] Male [ ] Female", "Marital Status: [ ] Married [ ] Single"]
+    
+    Detection criteria:
+    - Line contains 2+ question labels
+    - Significant spacing (4+ spaces) separates the questions
+    - Each segment should have checkboxes
+    
+    Returns:
+        List of question strings (original line if no split needed)
+    """
+    # Strategy: Look for patterns like "...] ... 4+spaces ... Label:"
+    # This finds where one question ends (with ]) and another begins (with Label:)
+    
+    # Pattern: closing bracket, some text/spaces, then 4+ spaces, then a label with colon
+    split_pattern = r'\]\s+([^\[]{0,50}?)\s{4,}([A-Z][A-Za-z\s]+?):\s*\['
+    matches = list(re.finditer(split_pattern, line))
+    
+    if not matches:
+        # No clear split points found
+        return [line]
+    
+    # Build segments by splitting at the match positions
+    segments = []
+    last_end = 0
+    
+    for match in matches:
+        # The split point is right before the label (group 2)
+        split_pos = match.start() + len(match.group(0)) - len(match.group(2)) - 1 - len(': [')
+        
+        # Add the segment from last_end to split_pos
+        segment = line[last_end:split_pos].strip()
+        if segment and re.search(CHECKBOX_ANY, segment):
+            segments.append(segment)
+        
+        last_end = split_pos
+    
+    # Add the final segment
+    final_segment = line[last_end:].strip()
+    if final_segment and re.search(CHECKBOX_ANY, final_segment):
+        segments.append(final_segment)
+    
+    # Return segments if we successfully split, otherwise original line
+    return segments if len(segments) >= 2 else [line]
+
+
+def preprocess_lines(lines: List[str]) -> List[str]:
+    """
+    Preprocess lines before main parsing.
+    Currently handles: splitting multi-question lines.
+    """
+    processed = []
+    for line in lines:
+        # Skip empty lines
+        if not line.strip():
+            processed.append(line)
+            continue
+        
+        # Try to split multi-question lines
+        split_lines = split_multi_question_line(line)
+        processed.extend(split_lines)
+    
+    return processed
 
 # ---------- Options & typing
 
@@ -701,6 +787,175 @@ def looks_like_grid_header(s: str) -> Optional[List[str]]:
     parts = [p.strip() for p in re.split(r"\s{3,}", line) if p.strip()]
     return parts if len(parts) >= 3 else None
 
+# ---------- Fix 4: Enhanced Table/Grid Detection
+
+def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) -> Optional[dict]:
+    """
+    Detect if lines starting at start_idx form a table layout.
+    
+    Returns:
+        dict with table info if detected, None otherwise
+        {
+            'header_line': int,  # index of header line
+            'data_lines': List[int],  # indices of data lines
+            'num_columns': int,
+            'column_positions': List[int],  # approximate column start positions
+            'headers': List[str]  # column headers
+        }
+    """
+    if start_idx >= len(lines):
+        return None
+    
+    # Look for header line: multiple capitalized words, evenly spaced
+    header_line = lines[start_idx].strip()
+    
+    # Don't treat as table if it has checkboxes (it's data, not a header)
+    if re.search(CHECKBOX_ANY, header_line):
+        return None
+    
+    # Split by significant spacing (5+ spaces) to find potential headers
+    parts = re.split(r'\s{5,}', header_line)
+    
+    # Filter to keep only capitalized parts that look like headers
+    potential_headers = []
+    header_positions = []
+    
+    current_pos = 0
+    for part in parts:
+        # Find position of this part in original line
+        pos = header_line.find(part, current_pos)
+        part = part.strip()
+        
+        # Check if part looks like a header (starts with capital, not too long)
+        if part and part[0].isupper() and 3 <= len(part) <= 30:
+            potential_headers.append(part)
+            header_positions.append(pos)
+        
+        current_pos = pos + len(part)
+    
+    # Need at least 3 columns to be considered a table
+    if len(potential_headers) < 3:
+        return None
+    
+    headers = potential_headers
+    column_positions = header_positions
+    
+    # Check if next few lines have checkboxes aligned with these columns
+    data_lines = []
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    for i in range(start_idx + 1, min(start_idx + max_rows, len(lines))):
+        line = lines[i]
+        
+        # Count checkboxes
+        checkboxes = list(checkbox_pattern.finditer(line))
+        
+        if len(checkboxes) >= 3:  # Need at least 3 checkboxes to indicate table row (stricter)
+            # Check if checkboxes align roughly with column positions
+            checkbox_positions = [cb.start() for cb in checkboxes]
+            
+            # Allow ±15 char tolerance for alignment
+            aligned = 0
+            for cb_pos in checkbox_positions:
+                for col_pos in column_positions:
+                    if abs(cb_pos - col_pos) <= 15:
+                        aligned += 1
+                        break
+            
+            if aligned >= 3:  # At least 3 checkboxes align (stricter)
+                data_lines.append(i)
+        elif not line.strip():
+            # Empty line might signal end of table
+            break
+        elif len(checkboxes) == 0 and data_lines:
+            # No checkboxes and we've seen data lines = end of table
+            break
+    
+    # Valid table if we found at least 3 data lines (stricter requirement)
+    if len(data_lines) >= 3:
+        return {
+            'header_line': start_idx,
+            'data_lines': data_lines,
+            'num_columns': len(column_positions),
+            'column_positions': column_positions,
+            'headers': headers
+        }
+    
+    return None
+
+
+def parse_table_to_questions(
+    lines: List[str],
+    table_info: dict,
+    section: str
+) -> List['Question']:
+    """
+    Parse a detected table into separate questions, one per column.
+    
+    Each column becomes a multi-select dropdown with the column header as title.
+    """
+    questions = []
+    
+    headers = table_info['headers']
+    column_positions = table_info['column_positions']
+    data_lines = table_info['data_lines']
+    
+    # Create one question per column
+    for col_idx, header in enumerate(headers):
+        col_pos = column_positions[col_idx]
+        
+        # Determine column width (to next column or EOL)
+        if col_idx + 1 < len(column_positions):
+            col_width = column_positions[col_idx + 1] - col_pos
+        else:
+            col_width = None  # Last column goes to EOL
+        
+        # Extract items for this column
+        options = []
+        
+        for line_idx in data_lines:
+            line = lines[line_idx]
+            
+            # Extract this column's segment
+            if col_width:
+                segment = line[col_pos:col_pos + col_width]
+            else:
+                segment = line[col_pos:]
+            
+            # Check if segment has a checkbox
+            if not re.search(CHECKBOX_ANY, segment):
+                continue
+            
+            # Extract label (remove checkbox)
+            label = re.sub(CHECKBOX_ANY, '', segment).strip()
+            
+            # Clean up extra whitespace
+            label = re.sub(r'\s{3,}', ' ', label)
+            
+            # Skip if too short or empty
+            if len(label) < 2:
+                continue
+            
+            # Skip common junk patterns
+            if label.lower() in {'', 'n/a', 'none', 'other'}:
+                continue
+            
+            options.append((label, None))
+        
+        # Create question if we found options
+        if len(options) >= 2:
+            q = Question(
+                slugify(header),
+                f"{header} - Please mark any that apply",
+                section,
+                "dropdown",
+                control={"options": [make_option(n, b) for n, b in options], "multi": True}
+            )
+            
+            questions.append(q)
+    
+    return questions
+
 def chunk_by_columns(line: str, ncols: int) -> List[str]:
     line = collapse_spaced_caps(line.strip())
     if "|" in line:
@@ -734,6 +989,86 @@ def extract_compound_yn_prompts(line: str) -> List[str]:
         if p not in seen:
             out.append(p); seen.add(p)
     return out
+
+# ---------- Fix 2: Enhanced "If Yes" Detection
+
+def extract_yn_with_followup(line: str) -> Tuple[Optional[str], bool]:
+    """
+    Extract Yes/No question and determine if it has a follow-up.
+    
+    Returns:
+        (question_text, has_followup)
+    
+    Examples:
+        "Are you pregnant? [ ] Yes [ ] No If yes, please explain"
+        -> ("Are you pregnant?", True)
+        
+        "Do you smoke? [ ] Yes [ ] No"
+        -> ("Do you smoke?", False)
+    """
+    # Try explicit "if yes" pattern first
+    match = IF_YES_FOLLOWUP_RE.search(line)
+    if match:
+        question = match.group(1).strip()
+        return (question, True)
+    
+    # Try inline "if yes" pattern
+    match = IF_YES_INLINE_RE.search(line)
+    if match:
+        question = match.group(1).strip()
+        return (question, True)
+    
+    # Try existing compound pattern
+    prompts = extract_compound_yn_prompts(line)
+    if prompts:
+        # Check if line mentions "if yes" anywhere
+        has_followup = bool(re.search(r'\bif\s+yes\b', line, re.I))
+        return (prompts[0], has_followup)
+    
+    return (None, False)
+
+
+def create_yn_question_with_followup(
+    question_text: str,
+    section: str,
+    key_base: Optional[str] = None
+) -> List['Question']:
+    """
+    Create a Yes/No radio question with a conditional follow-up input field.
+    
+    Args:
+        question_text: The question text
+        section: Current section
+        key_base: Base key (if None, generated from question_text)
+    
+    Returns:
+        List of 2 Questions: [radio_question, followup_input]
+    """
+    if not key_base:
+        key_base = slugify(question_text)
+    
+    # Main Yes/No question
+    main_q = Question(
+        key_base,
+        question_text,
+        section,
+        "radio",
+        control={"options": [make_option("Yes", True), make_option("No", False)]}
+    )
+    
+    # Follow-up input field
+    followup_q = Question(
+        f"{key_base}_explanation",
+        "Please explain",
+        section,
+        "input",
+        control={"input_type": "text", "hint": "Please provide details"}
+    )
+    
+    # Add conditional - only show if main question is "yes"
+    followup_q.conditional_on = [(key_base, "yes")]
+    
+    return [main_q, followup_q]
 
 # ---------- Template dictionary (matching)
 
@@ -1058,6 +1393,9 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
     lines = coalesce_soft_wraps(lines)
+    
+    # Fix 1: Preprocess to split multi-question lines
+    lines = preprocess_lines(lines)
 
     questions: List[Question] = []
     cur_section = "General"
@@ -1128,7 +1466,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     i += 1
             i += 1; continue
 
-        # Grid
+        # Fix 4: Enhanced Table/Grid Detection - try multi-row table first
+        table_info = detect_table_layout(lines, i)
+        if table_info:
+            # Parse entire table at once
+            table_questions = parse_table_to_questions(lines, table_info, cur_section)
+            questions.extend(table_questions)
+            
+            # Skip past the table
+            i = max(table_info['data_lines']) + 1
+            continue
+
+        # Grid (existing logic for simpler cases)
         hdr_cols = looks_like_grid_header(line)
         if hdr_cols:
             ncols = len(hdr_cols)
@@ -1279,7 +1628,17 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                                       control={"options":[make_option("Yes",True),make_option("No",False)]}))
             i += 1; continue
 
-        # Compound Yes/No on one line
+        # Fix 2: Enhanced "If Yes" Detection - try new pattern first
+        question_text, has_followup = extract_yn_with_followup(line)
+        if question_text and has_followup:
+            # Create both question and follow-up using the new helper
+            new_questions = create_yn_question_with_followup(question_text, cur_section)
+            questions.extend(new_questions)
+            if debug: print(f"  [debug] gate: yn_with_followup -> '{question_text}' + explanation field")
+            i += 1
+            continue
+        
+        # Compound Yes/No on one line (existing logic)
         compound_prompts = extract_compound_yn_prompts(line)
         emitted_compound = False
         if compound_prompts:
@@ -1305,13 +1664,21 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     if re.search(r'^\s*(if\s+yes|please\s+explain|explain|comment|list|details?)', next_line, re.I):
                         create_follow_up = True
                 
-                # Create follow-up field if needed
+                # Create follow-up field if needed with conditional
                 if create_follow_up:
-                    follow_up_key = slugify(ptxt + "_details")
+                    follow_up_key = f"{key}_explanation"
                     # Check if not already created
                     if not any(q.key == follow_up_key for q in questions):
-                        follow_up_title = f"{ptxt} - Please explain"
-                        questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
+                        follow_up_q = Question(
+                            follow_up_key,
+                            "Please explain",
+                            cur_section,
+                            "input",
+                            control={"input_type": "text", "hint": "Please provide details"}
+                        )
+                        # Add conditional to only show if Yes
+                        follow_up_q.conditional_on = [(key, "yes")]
+                        questions.append(follow_up_q)
                 
                 questions.append(Question(key, ptxt, cur_section, "radio", control=control))
                 emitted_compound = True
@@ -1621,11 +1988,18 @@ def questions_to_json(questions: List[Question]) -> List[Dict]:
     errs = validate_form(questions)
     if errs:
         print("Validation warnings:", *errs, sep="\n  ", file=sys.stderr)
-    payload = [
-        {"key": q.key, "title": q.title, "section": q.section,
-         "optional": q.optional, "type": q.type, "control": q.control or {}}
-        for q in questions
-    ]
+    payload = []
+    for q in questions:
+        item = {"key": q.key, "title": q.title, "section": q.section,
+                "optional": q.optional, "type": q.type, "control": q.control or {}}
+        
+        # Fix 2: Add conditional "if" property for follow-up fields
+        if hasattr(q, 'conditional_on') and q.conditional_on:
+            # Convert conditional_on to "if" array format
+            item["if"] = [{"key": cond_key, "value": cond_val} for cond_key, cond_val in q.conditional_on]
+        
+        payload.append(item)
+    
     payload = _semantic_dedupe(payload)
     return payload
 
@@ -1660,35 +2034,166 @@ def postprocess_merge_hear_about_us(payload: List[dict]) -> List[dict]:
         payload.pop(i)
     return payload
 
+# ---------- Fix 3: Enhanced Malformed Conditions Detection
+
+def is_malformed_condition_field(field: dict) -> bool:
+    """
+    Detect if a field is a malformed medical/dental condition field.
+    
+    Criteria:
+    - Type is dropdown with multi=True
+    - Title is unusually long (5+ words) or contains multiple condition keywords
+    - Options contain medical/health terms
+    
+    Examples of malformed titles:
+    - "Artificial Angina (chest Heart pain) Valve Thyroid Disease..."
+    - "Bleeding, Swollen, Irritated gums Tobacco"
+    - "Heart Surgery Ulcers (Stomach) Dizziness AIDS"
+    """
+    if field.get('type') != 'dropdown':
+        return False
+    
+    if not field.get('control', {}).get('multi'):
+        return False
+    
+    title = field.get('title', '')
+    title_lower = title.lower()
+    
+    # Check 1: Title has multiple medical condition keywords
+    condition_keywords = [
+        'diabetes', 'cancer', 'heart', 'disease', 'arthritis', 'hepatitis',
+        'asthma', 'anxiety', 'depression', 'ulcer', 'thyroid', 'kidney',
+        'liver', 'tuberculosis', 'hiv', 'aids', 'stroke', 'bleeding',
+        'anemia', 'glaucoma', 'angina', 'valve', 'neurological'
+    ]
+    
+    keyword_count = sum(1 for kw in condition_keywords if kw in title_lower)
+    
+    # If title has 3+ condition keywords, likely malformed
+    if keyword_count >= 3:
+        return True
+    
+    # Check 2: Title is very long and has some condition keywords
+    word_count = len(title.split())
+    if word_count >= 8 and keyword_count >= 2:
+        return True
+    
+    # Check 3: Title contains multiple capitalized words that look like conditions
+    capitalized_words = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', title)
+    if len(capitalized_words) >= 4 and keyword_count >= 1:
+        return True
+    
+    return False
+
+
 def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict]:
+    """
+    Enhanced version that consolidates both well-formed and malformed condition dropdowns.
+    """
     def looks_condition(opt_name: str) -> bool:
         w = _norm_title(opt_name)
         return any(t in w for t in _COND_TOKENS)
-    groups_by_section: Dict[str, List[int]] = defaultdict(list)
-    for i,q in enumerate(payload):
-        if q.get("type")=="dropdown" and q.get("control",{}).get("multi",False) and q.get("section") in {"Medical History","Dental History"}:
-            opts = q.get("control",{}).get("options") or []
-            if len(opts) >= 5 and sum(looks_condition(o.get("name","")) for o in opts) >= 3:
-                groups_by_section[q.get("section")].append(i)
-    for section, groups in list(groups_by_section.items()):
-        if len(groups) <= 1: 
+    
+    # Separate handling for malformed vs well-formed
+    malformed_indices = []
+    wellformed_groups_by_section: Dict[str, List[int]] = defaultdict(list)
+    
+    for i, q in enumerate(payload):
+        section = q.get('section', 'General')
+        
+        # Check if malformed
+        if is_malformed_condition_field(q):
+            malformed_indices.append(i)
             continue
+        
+        # Check if well-formed medical condition field (original logic)
+        if (q.get('type') == 'dropdown' and 
+            q.get('control', {}).get('multi', False) and 
+            q.get('section') in {'Medical History', 'Dental History'}):
+            
+            opts = q.get('control', {}).get('options') or []
+            if len(opts) >= 5 and sum(looks_condition(o.get('name', '')) for o in opts) >= 3:
+                wellformed_groups_by_section[section].append(i)
+    
+    # Consolidate malformed fields
+    if malformed_indices:
+        # Extract all options from malformed fields
+        all_options = []
+        sections = set()
+        
+        for idx in malformed_indices:
+            field = payload[idx]
+            sections.add(field.get('section', 'Medical History'))
+            
+            # Extract options from the malformed field
+            opts = field.get('control', {}).get('options', [])
+            for opt in opts:
+                opt_name = opt.get('name', '')
+                opt_value = opt.get('value', '')
+                
+                # Clean up option name
+                opt_name = opt_name.strip()
+                
+                # Skip if too short or looks like junk
+                if len(opt_name) < 3:
+                    continue
+                
+                # Add to consolidated list if not duplicate
+                if opt_name not in [o['name'] for o in all_options]:
+                    all_options.append({
+                        'name': opt_name,
+                        'value': opt_value if opt_value else slugify(opt_name, 80)
+                    })
+        
+        # Create consolidated field
+        if all_options:
+            consolidated_section = list(sections)[0] if len(sections) == 1 else 'Medical History'
+            
+            consolidated_field = {
+                'key': 'medical_conditions_consolidated',
+                'type': 'dropdown',
+                'title': 'Do you have or have you had any of the following medical conditions?',
+                'section': consolidated_section,
+                'optional': False,
+                'control': {
+                    'options': sorted(all_options, key=lambda x: x['name']),
+                    'multi': True
+                }
+            }
+            
+            # Replace first malformed field with consolidated
+            payload[malformed_indices[0]] = consolidated_field
+            
+            # Remove other malformed fields
+            for idx in sorted(malformed_indices[1:], reverse=True):
+                payload.pop(idx)
+    
+    # Original consolidation logic for well-formed fields
+    for section, groups in list(wellformed_groups_by_section.items()):
+        if len(groups) <= 1:
+            continue
+        
         keep = groups[0]
         seen: Set[str] = set()
         merged: List[dict] = []
+        
         for i in groups:
-            for o in (payload[i].get("control",{}).get("options") or []):
-                name = SPELL_FIX.get(o.get("name",""), o.get("name",""))
+            for o in (payload[i].get('control', {}).get('options') or []):
+                name = SPELL_FIX.get(o.get('name', ''), o.get('name', ''))
                 norm = normalize_opt_name(name)
-                if not norm or norm in seen: continue
+                if not norm or norm in seen:
+                    continue
                 seen.add(norm)
-                merged.append({"name": name, "value": o.get("value", slugify(name,80))})
-        if section == "Medical History":
-            payload[keep]["title"] = "Medical Conditions"
-            payload[keep]["key"] = "medical_conditions"
-        payload[keep]["control"]["options"] = merged
+                merged.append({'name': name, 'value': o.get('value', slugify(name, 80))})
+        
+        if section == 'Medical History':
+            payload[keep]['title'] = 'Medical Conditions'
+            payload[keep]['key'] = 'medical_conditions'
+        payload[keep]['control']['options'] = merged
+        
         for i in sorted(groups[1:], reverse=True):
             payload.pop(i)
+    
     return payload
 
 def postprocess_signature_uniqueness(payload: List[dict]) -> List[dict]:
