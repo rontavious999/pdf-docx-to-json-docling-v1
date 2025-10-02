@@ -1361,9 +1361,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             
             # If we have inline options (especially multiple ones), check if title needs cleaning
             if opts_inline and len(opts_inline) >= 2:
-                # Title likely includes the options. Look back for a better title.
-                if i > 0:
-                    prev_line = collapse_spaced_caps(lines[i-1].strip())
+                # Title likely includes the options. Look back for a better title (skip blank lines).
+                lookback_idx = i - 1
+                while lookback_idx >= 0 and not lines[lookback_idx].strip():
+                    lookback_idx -= 1  # Skip blank lines
+                if lookback_idx >= 0:
+                    prev_line = collapse_spaced_caps(lines[lookback_idx].strip())
                     if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
                         # Use previous line if it looks like a question/prompt
                         if len(prev_line) >= 5:
