@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.9
+llm_text_to_modento.py — v2.10
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What’s new vs v2.8 (focused changes):
-  • "If yes, please explain" now creates a separate follow-up input field for details.
-  • Medical/Dental History sections are now parsed into a single multi-select dropdown.
-  • Expanded aliases for better matching of common fields like "Spouse's Name" and "Date Signed".
+What's new vs v2.9 (Archivev9 fixes):
+  • Fix 8: Section inference - automatically moves medical/dental fields from "General" to proper sections
+  • Fix 6: Duplicate consolidation - removes duplicate DOB, phone, email, address fields
+  • Improved section categorization with keyword-based inference (2+ matching keywords required)
 """
 
 from __future__ import annotations
@@ -2378,15 +2378,27 @@ def is_malformed_condition_field(field: dict) -> bool:
 
 def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict]:
     """
-    Enhanced version that consolidates both well-formed and malformed condition dropdowns.
+    Enhanced version that consolidates both well-formed and malformed condition dropdowns,
+    plus individual checkbox/radio fields that look like medical conditions (Fix 1).
     """
     def looks_condition(opt_name: str) -> bool:
         w = _norm_title(opt_name)
         return any(t in w for t in _COND_TOKENS)
     
-    # Separate handling for malformed vs well-formed
+    # Medical condition keywords for identifying individual condition fields
+    CONDITION_KEYWORDS = [
+        'diabetes', 'cancer', 'heart', 'disease', 'arthritis', 'hepatitis',
+        'asthma', 'anxiety', 'depression', 'ulcer', 'thyroid', 'kidney',
+        'liver', 'tuberculosis', 'hiv', 'aids', 'stroke', 'bleeding',
+        'anemia', 'glaucoma', 'angina', 'valve', 'neurological', 'alzheimer',
+        'blood pressure', 'cholesterol', 'pacemaker', 'chemotherapy', 'radiation',
+        'convulsion', 'seizure', 'epilepsy', 'migraine', 'allergy'
+    ]
+    
+    # Separate handling for malformed dropdowns, well-formed dropdowns, and individual checkboxes
     malformed_indices = []
     wellformed_groups_by_section: Dict[str, List[int]] = defaultdict(list)
+    individual_condition_indices: Dict[str, List[int]] = defaultdict(list)
     
     for i, q in enumerate(payload):
         section = q.get('section', 'General')
@@ -2404,6 +2416,18 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
             opts = q.get('control', {}).get('options') or []
             if len(opts) >= 5 and sum(looks_condition(o.get('name', '')) for o in opts) >= 3:
                 wellformed_groups_by_section[section].append(i)
+                continue
+        
+        # Check if individual checkbox/radio that looks like a medical condition (Fix 1)
+        if q.get('type') in ['checkbox', 'radio'] and section in {'Medical History', 'General'}:
+            title = q.get('title', '').lower()
+            # Check if title contains medical condition keywords
+            has_condition_keyword = any(kw in title for kw in CONDITION_KEYWORDS)
+            # Or if it's a short title (1-4 words) in Medical History section
+            is_short_medical = section == 'Medical History' and len(title.split()) <= 4
+            
+            if has_condition_keyword or is_short_medical:
+                individual_condition_indices[section].append(i)
     
     # Consolidate malformed fields
     if malformed_indices:
@@ -2484,6 +2508,47 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
         for i in sorted(groups[1:], reverse=True):
             payload.pop(i)
     
+    # New: Consolidate individual checkbox/radio fields that are medical conditions (Fix 1)
+    for section, indices in list(individual_condition_indices.items()):
+        # Only consolidate if we have 5+ individual condition fields
+        if len(indices) < 5:
+            continue
+        
+        # Create consolidated dropdown
+        consolidated_options = []
+        seen_names: Set[str] = set()
+        
+        for idx in indices:
+            field = payload[idx]
+            title = field.get('title', '').strip()
+            
+            # Normalize the title for duplicate detection
+            norm_title = normalize_opt_name(title)
+            if norm_title and norm_title not in seen_names:
+                seen_names.add(norm_title)
+                consolidated_options.append({
+                    'name': title,
+                    'value': slugify(title, 80)
+                })
+        
+        if consolidated_options:
+            # Replace first field with consolidated dropdown
+            payload[indices[0]] = {
+                'key': 'medical_conditions' if section == 'Medical History' else 'dental_conditions',
+                'type': 'dropdown',
+                'title': 'Do you have or have you had any of the following?',
+                'section': section,
+                'optional': False,
+                'control': {
+                    'options': sorted(consolidated_options, key=lambda x: x['name']),
+                    'multi': True
+                }
+            }
+            
+            # Remove other individual condition fields
+            for idx in sorted(indices[1:], reverse=True):
+                payload.pop(idx)
+    
     return payload
 
 def postprocess_signature_uniqueness(payload: List[dict]) -> List[dict]:
@@ -2513,6 +2578,112 @@ def postprocess_rehome_by_key(payload: List[dict], dbg: Optional[DebugLogger]=No
         if (sec not in {"Patient Information","Insurance"} and (any(k.startswith(d) for d in demo_keys) or "parent" in k)):
             q["section"] = "Patient Information"
             if dbg: dbg.gate(f"rehome -> Patient Information :: {q.get('title','')}")
+    return payload
+
+def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Reassign fields from 'General' to more specific sections based on content.
+    Uses keyword matching to identify medical and dental questions.
+    """
+    MEDICAL_KEYWORDS = [
+        'physician', 'doctor', 'hospital', 'surgery', 'surgical', 'operation',
+        'medication', 'medicine', 'prescription', 'drug',
+        'illness', 'disease', 'condition', 'diagnosis',
+        'allergy', 'allergic', 'reaction',
+        'symptom', 'pain', 'discomfort', 'health'
+    ]
+    
+    DENTAL_KEYWORDS = [
+        'tooth', 'teeth', 'gum', 'gums',
+        'dental', 'dentist', 'orthodontic', 'orthodontist',
+        'cleaning', 'cavity', 'cavities', 'crown', 'filling',
+        'bite', 'jaw', 'tmj', 'smile'
+    ]
+    
+    for item in payload:
+        if item.get('section') == 'General':
+            title_lower = item.get('title', '').lower()
+            key_lower = item.get('key', '').lower()
+            combined = title_lower + ' ' + key_lower
+            
+            # Count keyword matches
+            medical_score = sum(1 for kw in MEDICAL_KEYWORDS if kw in combined)
+            dental_score = sum(1 for kw in DENTAL_KEYWORDS if kw in combined)
+            
+            # Reassign if strong signal (2+ matching keywords)
+            if medical_score >= 2 and medical_score > dental_score:
+                if dbg:
+                    dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (score={medical_score})")
+                item['section'] = 'Medical History'
+            elif dental_score >= 2 and dental_score > medical_score:
+                if dbg:
+                    dbg.gate(f"section_inference -> Dental History :: {item.get('title', '')} (score={dental_score})")
+                item['section'] = 'Dental History'
+    
+    return payload
+
+def postprocess_consolidate_duplicates(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Remove duplicate fields, keeping the one in the most appropriate section.
+    Focuses on common fields like DOB, phone, email, address, SSN.
+    """
+    # Common fields that might be duplicated with their preferred section
+    COMMON_FIELDS = {
+        'date_of_birth': 'Patient Information',
+        'dob': 'Patient Information',
+        'phone': 'Patient Information',
+        'mobile_phone': 'Patient Information',
+        'home_phone': 'Patient Information',
+        'work_phone': 'Patient Information',
+        'cell_phone': 'Patient Information',
+        'email': 'Patient Information',
+        'address': 'Patient Information',
+        'ssn': 'Patient Information',
+        'social_security': 'Patient Information',
+    }
+    
+    # Track seen keys and their indices
+    seen_keys = {}
+    to_remove = []
+    
+    for i, item in enumerate(payload):
+        key = item.get('key', '')
+        # Normalize key by removing numeric suffixes and scope markers
+        key_base = re.sub(r'_\d+$', '', key)  # Remove _2, _3, etc.
+        key_base = re.sub(r'__\w+$', '', key_base)  # Remove __primary, __secondary, etc.
+        
+        # Check if this is a common field that might be duplicated
+        if key_base in COMMON_FIELDS:
+            if key_base in seen_keys:
+                # Duplicate found - determine which to keep
+                prev_idx = seen_keys[key_base]
+                prev_section = payload[prev_idx].get('section', 'General')
+                curr_section = item.get('section', 'General')
+                preferred_section = COMMON_FIELDS[key_base]
+                
+                if curr_section == preferred_section and prev_section != preferred_section:
+                    # Current is in preferred section, remove previous
+                    to_remove.append(prev_idx)
+                    seen_keys[key_base] = i
+                    if dbg:
+                        dbg.gate(f"duplicate_consolidation -> Removed {key_base} from {prev_section}, kept in {curr_section}")
+                elif prev_section == preferred_section and curr_section != preferred_section:
+                    # Previous is in preferred section, remove current
+                    to_remove.append(i)
+                    if dbg:
+                        dbg.gate(f"duplicate_consolidation -> Removed {key} from {curr_section}, kept {key_base} in {prev_section}")
+                else:
+                    # Neither in preferred or both in preferred, keep first occurrence
+                    to_remove.append(i)
+                    if dbg:
+                        dbg.gate(f"duplicate_consolidation -> Removed duplicate {key} from {curr_section}")
+            else:
+                seen_keys[key_base] = i
+    
+    # Remove duplicates in reverse order to maintain indices
+    for idx in sorted(set(to_remove), reverse=True):
+        payload.pop(idx)
+    
     return payload
 
 # ---------- Dictionary application + reporting
@@ -2614,6 +2785,10 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
 
     # Re-home after template merge
     payload = postprocess_rehome_by_key(payload, dbg=dbg)
+    
+    # New post-processing steps (Archivev9 fixes)
+    payload = postprocess_infer_sections(payload, dbg=dbg)
+    payload = postprocess_consolidate_duplicates(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
