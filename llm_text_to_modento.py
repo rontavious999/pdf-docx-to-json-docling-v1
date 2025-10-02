@@ -962,7 +962,10 @@ def looks_like_grid_header(s: str) -> Optional[List[str]]:
 
 def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) -> Optional[dict]:
     """
+    Archivev10 Fix 5: Enhanced Grid Boundary Detection.
+    
     Detect if lines starting at start_idx form a table layout.
+    Enhanced to handle header-less grids and inconsistent column counts.
     
     Returns:
         dict with table info if detected, None otherwise
@@ -997,15 +1000,24 @@ def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) ->
         pos = header_line.find(part, current_pos)
         part = part.strip()
         
+        # Archivev10 Fix 5: More flexible header detection
         # Check if part looks like a header (starts with capital, not too long)
-        if part and part[0].isupper() and 3 <= len(part) <= 30:
+        # Also allow lowercase if it's a medical term or short phrase
+        is_valid_header = False
+        if part and 2 <= len(part) <= 35:
+            if part[0].isupper():
+                is_valid_header = True
+            elif part.lower() in ['health', 'history', 'social', 'women', 'type']:
+                is_valid_header = True
+        
+        if is_valid_header:
             potential_headers.append(part)
             header_positions.append(pos)
         
         current_pos = pos + len(part)
     
-    # Need at least 3 columns to be considered a table
-    if len(potential_headers) < 3:
+    # Archivev10 Fix 5: Accept 2+ columns (was 3+) for smaller grids
+    if len(potential_headers) < 2:
         return None
     
     headers = potential_headers
@@ -1015,13 +1027,21 @@ def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) ->
     data_lines = []
     checkbox_pattern = re.compile(CHECKBOX_ANY)
     
+    # Archivev10 Fix 5: Use column boundary detection for better accuracy
+    precise_columns = detect_column_boundaries(lines, start_idx + 1, max_rows)
+    if precise_columns and len(precise_columns) >= len(column_positions) * 0.7:
+        column_positions = precise_columns
+    
     for i in range(start_idx + 1, min(start_idx + max_rows, len(lines))):
         line = lines[i]
         
         # Count checkboxes
         checkboxes = list(checkbox_pattern.finditer(line))
         
-        if len(checkboxes) >= 3:  # Need at least 3 checkboxes to indicate table row (stricter)
+        # Archivev10 Fix 5: More flexible - accept rows with 2+ checkboxes (was 3+)
+        min_checkboxes = max(2, len(column_positions) // 2)
+        
+        if len(checkboxes) >= min_checkboxes:
             # Check if checkboxes align roughly with column positions
             checkbox_positions = [cb.start() for cb in checkboxes]
             
@@ -1033,7 +1053,9 @@ def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) ->
                         aligned += 1
                         break
             
-            if aligned >= 3:  # At least 3 checkboxes align (stricter)
+            # Archivev10 Fix 5: More flexible alignment requirement
+            min_aligned = max(2, len(column_positions) // 2)
+            if aligned >= min_aligned:
                 data_lines.append(i)
         elif not line.strip():
             # Empty line might signal end of table
@@ -1042,8 +1064,8 @@ def detect_table_layout(lines: List[str], start_idx: int, max_rows: int = 15) ->
             # No checkboxes and we've seen data lines = end of table
             break
     
-    # Valid table if we found at least 3 data lines (stricter requirement)
-    if len(data_lines) >= 3:
+    # Archivev10 Fix 5: More flexible - accept 2+ data lines (was 3+)
+    if len(data_lines) >= 2:
         return {
             'header_line': start_idx,
             'data_lines': data_lines,
@@ -1140,6 +1162,56 @@ def chunk_by_columns(line: str, ncols: int) -> List[str]:
 
 # ---------- Archivev10 Fix 1: Enhanced Multi-Column Checkbox Grid Detection
 
+def detect_column_boundaries(lines: List[str], start_idx: int, max_lines: int = 10) -> Optional[List[int]]:
+    """
+    Archivev10 Fix 3: Whitespace-Based Column Detection.
+    
+    Analyzes multiple lines to detect consistent column positions based on checkbox locations.
+    Returns list of character positions where columns start, or None if no pattern found.
+    
+    Example:
+      Input lines with checkboxes at positions [5, 35, 65, 95]
+      Returns: [5, 35, 65, 95]
+    """
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    # Collect checkbox positions from multiple lines
+    all_positions = []
+    
+    for i in range(start_idx, min(start_idx + max_lines, len(lines))):
+        line = lines[i]
+        checkboxes = list(checkbox_pattern.finditer(line))
+        
+        if len(checkboxes) >= 2:  # Need at least 2 checkboxes to define columns
+            positions = [cb.start() for cb in checkboxes]
+            all_positions.append(positions)
+    
+    if len(all_positions) < 2:
+        return None
+    
+    # Find consistent positions across lines (±3 chars tolerance)
+    # Start with the first line's positions as a baseline
+    baseline_positions = all_positions[0]
+    consistent_positions = []
+    
+    for base_pos in baseline_positions:
+        # Count how many lines have a checkbox near this position
+        matches = 0
+        for positions in all_positions:
+            if any(abs(pos - base_pos) <= 3 for pos in positions):
+                matches += 1
+        
+        # If most lines (>= 60%) have a checkbox near this position, it's consistent
+        if matches >= len(all_positions) * 0.6:
+            consistent_positions.append(base_pos)
+    
+    # Need at least 3 consistent columns
+    if len(consistent_positions) >= 3:
+        return sorted(consistent_positions)
+    
+    return None
+
+
 def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: str, max_rows: int = 20) -> Optional[dict]:
     """
     Detect multi-column checkbox grids (3+ checkboxes per line with significant spacing).
@@ -1189,7 +1261,10 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     
     # Found a multi-column line! Now find all consecutive lines with similar pattern
     data_lines = []
-    column_positions = checkbox_positions  # Use first line to establish columns
+    
+    # Archivev10 Fix 3: Try to detect more accurate column boundaries
+    precise_columns = detect_column_boundaries(lines, first_data_line_idx, max_rows)
+    column_positions = precise_columns if precise_columns else checkbox_positions
     
     for i in range(first_data_line_idx, min(start_idx + max_rows, len(lines))):
         line = lines[i]
@@ -1230,11 +1305,55 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     return None
 
 
+def extract_text_for_checkbox(line: str, cb_end: int, column_positions: List[int], cb_pos: int) -> str:
+    """
+    Archivev10 Fix 3: Enhanced text extraction using column boundaries.
+    
+    Extracts text after a checkbox, using column positions to determine boundaries.
+    """
+    text_after = line[cb_end:]
+    checkbox_pattern = re.compile(CHECKBOX_ANY)
+    
+    # Determine which column this checkbox is in
+    current_col_idx = None
+    for idx, col_pos in enumerate(column_positions):
+        if abs(cb_pos - col_pos) <= 5:
+            current_col_idx = idx
+            break
+    
+    # Determine the boundary for this column
+    if current_col_idx is not None and current_col_idx + 1 < len(column_positions):
+        # Use next column position as boundary
+        next_col_pos = column_positions[current_col_idx + 1]
+        boundary = next_col_pos - cb_end
+        if boundary > 0:
+            item_text = text_after[:boundary].strip()
+        else:
+            item_text = text_after.strip()
+    else:
+        # Last column or no column match - look for next checkbox or large gap
+        next_cb = checkbox_pattern.search(text_after)
+        if next_cb:
+            item_text = text_after[:next_cb.start()].strip()
+        else:
+            # Split by 8+ spaces to find boundary
+            parts = re.split(r'\s{8,}', text_after, maxsplit=1)
+            item_text = parts[0].strip() if parts else text_after.strip()
+    
+    # Clean up trailing artifacts
+    item_text = re.sub(r'\s+[A-Z]\s*$', '', item_text)  # Remove trailing single caps
+    item_text = re.sub(r'\s*\([^)]{0,5}\s*$', '', item_text)  # Remove incomplete parentheticals
+    item_text = re.sub(r'\s+$', '', item_text)  # Trim trailing spaces
+    
+    return item_text
+
+
 def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bool = False) -> Optional['Question']:
     """
     Parse a multi-column checkbox grid into a single multi-select field.
     
     Extracts all checkbox items across all rows and columns, creating clean option names.
+    Uses Archivev10 Fix 3 for enhanced column-aware text extraction.
     """
     data_lines = grid_info['data_lines']
     column_positions = grid_info['column_positions']
@@ -1254,28 +1373,8 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
             cb_pos = checkbox.start()
             cb_end = checkbox.end()
             
-            # Extract text after this checkbox up to the next checkbox or significant gap
-            # Find the end of this item's text
-            text_after = line[cb_end:]
-            
-            # Look for next checkbox or large gap
-            next_cb = checkbox_pattern.search(text_after)
-            if next_cb:
-                # Text up to next checkbox
-                item_text = text_after[:next_cb.start()]
-            else:
-                # Text to end of line or next large gap
-                # Split by 8+ spaces to find column boundary
-                parts = re.split(r'\s{8,}', text_after, maxsplit=1)
-                item_text = parts[0] if parts else text_after
-            
-            # Clean up the item text
-            item_text = item_text.strip()
-            
-            # Remove any trailing partial text that looks like it's from next column
-            # (e.g., remove single letters, parentheticals from other columns)
-            item_text = re.sub(r'\s+[A-Z]\s*$', '', item_text)  # Remove trailing single caps
-            item_text = re.sub(r'\s*\([^)]{0,5}\s*$', '', item_text)  # Remove incomplete parentheticals
+            # Archivev10 Fix 3: Use enhanced text extraction with column awareness
+            item_text = extract_text_for_checkbox(line, cb_end, column_positions, cb_pos)
             
             # Skip if too short or looks like junk
             if len(item_text) < 2:
@@ -1329,6 +1428,16 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
                     if re.search(r'\b(please mark|indicate|select|check|do you have)\b', potential_title, re.I):
                         if len(potential_title) < 150:
                             title = potential_title.rstrip(':?.')
+                            
+                            # Clean up extraneous text from title
+                            # Remove "Patient Name (print)" and similar artifacts
+                            title = re.sub(r'\s+Patient\s+Name\s*\([^)]+\)\s*$', '', title, flags=re.I)
+                            title = re.sub(r'\s+Patient\s+Name\s*$', '', title, flags=re.I)
+                            # Remove trailing numbers or codes
+                            title = re.sub(r'\s+\d+\s*$', '', title)
+                            # Trim again
+                            title = title.rstrip(':?. ')
+                            
                             # Archivev10 Fix: Infer section from title if it mentions Medical/Dental History
                             if 'medical history' in title.lower():
                                 section = "Medical History"
@@ -3116,14 +3225,24 @@ def postprocess_consolidate_malformed_grids(payload: List[dict], dbg: Optional[D
             'cardiovascular', 'hematologic', 'psychiatric', 'gastrointestinal',
             'arthritis', 'diabetes', 'asthma', 'seizure', 'allergy', 'nursing',
             'teeth', 'grinding', 'clenching', 'sucking', 'biting', 'chewing',
-            'discolored', 'worn', 'crooked', 'spaces', 'overbite', 'sensitivity'
+            'discolored', 'worn', 'crooked', 'spaces', 'overbite', 'sensitivity',
+            'anesthesia', 'sulfa', 'drugs'
         ]
         
         title_lower = title.lower()
         keyword_count = sum(1 for kw in medical_keywords if kw in title_lower)
         
-        # Malformed if: 4+ capitalized words OR 3+ keywords
-        if len(capitalized_words) >= 4 or keyword_count >= 3:
+        # Enhanced detection: Malformed if title lacks connecting words
+        # Good titles have "please mark", "do you", "have you", etc.
+        has_instruction = bool(re.search(r'\b(please|mark|any|conditions|apply|do you|have you)\b', title_lower))
+        
+        # Malformed if: (4+ capitalized words AND no instructions) OR (4+ keywords AND no instructions)
+        is_malformed = False
+        if not has_instruction:
+            if len(capitalized_words) >= 4 or keyword_count >= 4:
+                is_malformed = True
+        
+        if is_malformed:
             # Also check that options exist and are reasonable
             options = item.get('control', {}).get('options', [])
             if len(options) >= 2:
