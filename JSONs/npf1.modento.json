@@ -231,13 +231,14 @@
   },
   {
     "key": "drivers_license",
-    "title": "Driver's License #",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Driver's License #",
     "control": {
+      "hint": null,
       "input_type": "text"
-    }
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "employer",
@@ -252,13 +253,15 @@
   },
   {
     "key": "work_phone",
-    "title": "Work Phone",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Work Phone",
     "control": {
-      "input_type": "phone"
-    }
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "occupation",
@@ -272,24 +275,54 @@
     "optional": false
   },
   {
-    "key": "are_you_a_full_time_student_yes_or_no",
+    "key": "full_time_student",
+    "type": "radio",
     "title": "Are you a full time student? Yes or No",
-    "section": "General",
-    "optional": false,
-    "type": "input",
     "control": {
-      "input_type": "text"
-    }
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "mother_dob",
+    "type": "date",
+    "title": "Mother's DOB",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "father_dob",
+    "type": "date",
+    "title": "Father's DOB",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "General",
+    "optional": false
   },
   {
     "key": "parent_name",
-    "title": "Parent Name",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Parent Name",
     "control": {
-      "input_type": "text"
-    }
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "parent_ssn",
@@ -303,33 +336,37 @@
   },
   {
     "key": "parent_employer",
-    "title": "Parent Employer",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Parent Employer",
     "control": {
-      "input_type": "text"
-    }
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "parent_phone",
-    "title": "Parent Phone ( )",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Parent Phone ( )",
     "control": {
-      "input_type": "phone"
-    }
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "responsible_party_name",
-    "title": "Responsible Party Name",
-    "section": "General",
-    "optional": false,
     "type": "input",
+    "title": "Responsible Party Name",
     "control": {
-      "input_type": "text"
-    }
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "General",
+    "optional": false
   },
   {
     "if": [
@@ -359,14 +396,45 @@
     }
   },
   {
-    "key": "reason_for_todays_visit",
+    "key": "reason_for_visit",
+    "type": "dropdown",
     "title": "Reason for today's visit?",
-    "section": "General",
-    "optional": false,
-    "type": "input",
     "control": {
-      "input_type": "text"
-    }
+      "hint": "Select...",
+      "multi": true,
+      "options": [
+        {
+          "name": "Routine Checkup",
+          "value": "routine"
+        },
+        {
+          "name": "Pain/Emergency",
+          "value": "pain"
+        },
+        {
+          "name": "Cleaning",
+          "value": "cleaning"
+        },
+        {
+          "name": "Cosmetic Consultation",
+          "value": "cosmetic"
+        },
+        {
+          "name": "Orthodontic Consultation",
+          "value": "ortho"
+        },
+        {
+          "name": "Follow-up",
+          "value": "followup"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
   },
   {
     "key": "how_did_you_hear_about_us",
@@ -480,14 +548,21 @@
     "optional": false
   },
   {
-    "key": "local",
-    "title": "Local #",
-    "section": "Insurance",
-    "optional": false,
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_local_number",
     "type": "input",
+    "title": "Local #",
     "control": {
+      "hint": null,
       "input_type": "text"
-    }
+    },
+    "section": "Insurance",
+    "optional": false
   },
   {
     "key": "how_important_is_your_dental_health_to_you_1_2_3_4_5_6_7_8_9_10",

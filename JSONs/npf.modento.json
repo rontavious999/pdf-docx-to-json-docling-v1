@@ -108,13 +108,14 @@
   },
   {
     "key": "drivers_license",
-    "title": "Driver's License #",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Driver's License #",
     "control": {
+      "hint": null,
       "input_type": "text"
-    }
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "state_2",
@@ -162,13 +163,15 @@
   },
   {
     "key": "work_phone",
-    "title": "Work Phone",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Work Phone",
     "control": {
-      "input_type": "phone"
-    }
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
   },
   {
     "key": "date_of_birth",
@@ -292,20 +295,39 @@
     }
   },
   {
-    "if": [
-      {
-        "key": "emergency_providing",
-        "value": true
-      }
-    ],
-    "key": "emergency_relationship",
-    "type": "input",
+    "key": "parent_relationship",
+    "type": "dropdown",
     "title": "Relationship to Patient",
     "control": {
-      "hint": "Relationship to patient",
-      "input_type": "text"
+      "hint": "Select...",
+      "options": [
+        {
+          "name": "Mother",
+          "value": "mother"
+        },
+        {
+          "name": "Father",
+          "value": "father"
+        },
+        {
+          "name": "Legal Guardian",
+          "value": "guardian"
+        },
+        {
+          "name": "Stepparent",
+          "value": "stepparent"
+        },
+        {
+          "name": "Grandparent",
+          "value": "grandparent"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ]
     },
-    "section": "General",
+    "section": "Patient Information",
     "optional": false
   },
   {
@@ -328,11 +350,9 @@
     }
   },
   {
-    "key": "full-time_student",
-    "title": "Full-time Student",
-    "section": "General",
-    "optional": false,
+    "key": "full_time_student",
     "type": "radio",
+    "title": "Full-time Student",
     "control": {
       "options": [
         {
@@ -344,7 +364,9 @@
           "value": false
         }
       ]
-    }
+    },
+    "section": "General",
+    "optional": false
   },
   {
     "key": "name_of_school",
@@ -357,14 +379,15 @@
     }
   },
   {
-    "key": "name_of_responsible_party_first_last",
-    "title": "Name of Responsible Party: First Last",
-    "section": "General",
-    "optional": false,
+    "key": "responsible_party_name",
     "type": "input",
+    "title": "Name of Responsible Party: First Last",
     "control": {
-      "input_type": "text"
-    }
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "General",
+    "optional": false
   },
   {
     "if": [
@@ -373,7 +396,7 @@
         "value": true
       }
     ],
-    "key": "emergency_relationship_2",
+    "key": "emergency_relationship",
     "type": "input",
     "title": "Relationship",
     "control": {
@@ -577,7 +600,7 @@
         "value": true
       }
     ],
-    "key": "emergency_relationship_3",
+    "key": "emergency_relationship_2",
     "type": "input",
     "title": "Relationship",
     "control": {

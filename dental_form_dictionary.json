@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "dental_form_dictionary",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "created_utc": "2025-09-28T22:36:26.858983Z",
     "source_files": [
       "new_patient (2).json",
@@ -10,7 +10,7 @@
       "health_history (2).json",
       "contact (1).json"
     ],
-    "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized."
+    "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized. v1.1.0 adds 65 fields from dental_forms_20251003 analysis."
   },
   "basic_information": [
     {
@@ -251,6 +251,30 @@
       "key": "home_phone",
       "type": "input",
       "title": "Home phone number",
+      "control": {
+        "hint": null,
+        "input_type": "phone",
+        "phone_prefix": "+1"
+      },
+      "section": "Contact Information",
+      "optional": true
+    },
+    {
+      "key": "work_phone",
+      "type": "input",
+      "title": "Work Phone",
+      "control": {
+        "hint": null,
+        "input_type": "phone",
+        "phone_prefix": "+1"
+      },
+      "section": "Contact Information",
+      "optional": true
+    },
+    {
+      "key": "fax_number",
+      "type": "input",
+      "title": "Fax Number",
       "control": {
         "hint": null,
         "input_type": "phone",
@@ -969,6 +993,23 @@
       },
       "section": "Primary Insurance Information",
       "optional": false
+    },
+    {
+      "if": [
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "insurance_plan_name",
+      "type": "input",
+      "title": "Insurance Plan Name",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Primary Insurance Information",
+      "optional": true
     }
   ],
   "insurance_secondary": [
@@ -1471,6 +1512,27 @@
       "control": {
         "hint": null,
         "input_type": "name"
+      },
+      "section": "Secondary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "sec_insurance_has",
+          "value": true
+        },
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "sec_insurance_plan_name",
+      "type": "input",
+      "title": "Insurance Plan Name",
+      "control": {
+        "hint": null,
+        "input_type": "text"
       },
       "section": "Secondary Insurance Information",
       "optional": true
@@ -2233,6 +2295,124 @@
         ]
       },
       "section": "Dental Structural History"
+    },
+    {
+      "key": "previous_orthodontic_treatment",
+      "type": "radio",
+      "title": "Have you had previous orthodontic treatment?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "jaw_pain_clicking",
+      "type": "radio",
+      "title": "Do you have jaw pain, clicking, or popping?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "sedation_preference",
+      "type": "dropdown",
+      "title": "Sedation Preference for Dental Procedures",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "None - I prefer no sedation",
+            "value": "none"
+          },
+          {
+            "name": "Nitrous Oxide (laughing gas)",
+            "value": "nitrous"
+          },
+          {
+            "name": "Oral Sedation",
+            "value": "oral"
+          },
+          {
+            "name": "IV Sedation",
+            "value": "iv"
+          },
+          {
+            "name": "Discuss with dentist",
+            "value": "discuss"
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "treatment_goals",
+      "type": "input",
+      "title": "What are your dental treatment goals?",
+      "control": {
+        "hint": "e.g., maintain healthy teeth, improve appearance, fix specific problem",
+        "input_type": "text"
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "previous_dental_problems",
+      "type": "radio",
+      "title": "Have you had any problems with previous dental treatment?",
+      "control": {
+        "extra": {
+          "hint": "Describe",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
     }
   ],
   "health_history": [
@@ -3404,6 +3584,50 @@
         ]
       },
       "section": "Medical Conditions"
+    },
+    {
+      "key": "pacemaker",
+      "type": "radio",
+      "title": "Do you have a pacemaker or other implanted device?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "latex_allergy",
+      "type": "radio",
+      "title": "Do you have a latex allergy?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
     }
   ],
   "medications": [
@@ -3905,6 +4129,1053 @@
     "insurance id": "insurance_id_number",
     "group number": "insurance_group_number",
     "insurance phone": "insurance_phone_number",
-    "address on card": "insurance_address_card"
-  }
+    "address on card": "insurance_address_card",
+    "nickname": "preferred_name",
+    "driver's license": "drivers_license",
+    "drivers license": "drivers_license",
+    "dl number": "drivers_license",
+    "dl state": "drivers_license_state",
+    "student": "full_time_student",
+    "parent employer": "parent_employer",
+    "parent phone": "parent_phone",
+    "parent email": "parent_email",
+    "mother dob": "mother_dob",
+    "mother's dob": "mother_dob",
+    "father dob": "father_dob",
+    "father's dob": "father_dob",
+    "local number": "insurance_local_number",
+    "local #": "insurance_local_number",
+    "effective date": "insurance_effective_date",
+    "copay": "insurance_copay",
+    "deductible": "insurance_deductible",
+    "responsible party": "responsible_party_name",
+    "last visit": "last_dental_visit",
+    "last xray": "last_xray_date",
+    "reason for visit": "reason_for_visit",
+    "dental anxiety": "dental_anxiety_level",
+    "brushing frequency": "brushing_frequency",
+    "flossing frequency": "flossing_frequency",
+    "tobacco frequency": "tobacco_frequency",
+    "alcohol frequency": "alcohol_frequency",
+    "drug frequency": "drug_frequency",
+    "blood type": "blood_type",
+    "sleep apnea": "sleep_apnea",
+    "work phone": "work_phone",
+    "fax": "fax_number",
+    "pacemaker": "pacemaker",
+    "latex allergy": "latex_allergy",
+    "jaw pain": "jaw_pain_clicking",
+    "tmj": "jaw_pain_clicking",
+    "sedation": "sedation_preference",
+    "treatment goals": "treatment_goals",
+    "orthodontic": "previous_orthodontic_treatment"
+  },
+  "patient_identification": [
+    {
+      "key": "nickname",
+      "type": "input",
+      "title": "Preferred Name/Nickname",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Basic Information",
+      "optional": true
+    },
+    {
+      "key": "drivers_license",
+      "type": "input",
+      "title": "Driver's License Number",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Basic Information",
+      "optional": true
+    },
+    {
+      "key": "drivers_license_state",
+      "type": "states",
+      "title": "Driver's License State",
+      "control": {
+        "hint": "Select state..."
+      },
+      "section": "Basic Information",
+      "optional": true
+    },
+    {
+      "key": "patient_id",
+      "type": "input",
+      "title": "Patient ID Number",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Basic Information",
+      "optional": true
+    }
+  ],
+  "minor_patient_information": [
+    {
+      "key": "full_time_student",
+      "type": "radio",
+      "title": "Are you a full-time student?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Patient Information",
+      "optional": true
+    },
+    {
+      "key": "school_name",
+      "type": "input",
+      "title": "School Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Patient Information",
+      "optional": true
+    },
+    {
+      "key": "grade_level",
+      "type": "input",
+      "title": "Grade Level",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Patient Information",
+      "optional": true
+    },
+    {
+      "key": "parent_name",
+      "type": "input",
+      "title": "Parent/Guardian Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "parent_relationship",
+      "type": "dropdown",
+      "title": "Relationship to Patient",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Mother",
+            "value": "mother"
+          },
+          {
+            "name": "Father",
+            "value": "father"
+          },
+          {
+            "name": "Legal Guardian",
+            "value": "guardian"
+          },
+          {
+            "name": "Stepparent",
+            "value": "stepparent"
+          },
+          {
+            "name": "Grandparent",
+            "value": "grandparent"
+          },
+          {
+            "name": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "parent_employer",
+      "type": "input",
+      "title": "Parent/Guardian Employer",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "parent_phone",
+      "type": "input",
+      "title": "Parent/Guardian Phone",
+      "control": {
+        "hint": null,
+        "input_type": "phone",
+        "phone_prefix": "+1"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "parent_email",
+      "type": "input",
+      "title": "Parent/Guardian Email",
+      "control": {
+        "hint": null,
+        "input_type": "email"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "mother_name",
+      "type": "input",
+      "title": "Mother's Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "mother_dob",
+      "type": "date",
+      "title": "Mother's Date of Birth",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "mother_ssn",
+      "type": "input",
+      "title": "Mother's SSN",
+      "control": {
+        "hint": null,
+        "input_type": "ssn"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "father_name",
+      "type": "input",
+      "title": "Father's Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "father_dob",
+      "type": "date",
+      "title": "Father's Date of Birth",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "father_ssn",
+      "type": "input",
+      "title": "Father's SSN",
+      "control": {
+        "hint": null,
+        "input_type": "ssn"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "guardian_name",
+      "type": "input",
+      "title": "Legal Guardian Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Parent/Guardian Information",
+      "optional": true
+    }
+  ],
+  "insurance_additional_fields": [
+    {
+      "if": [
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "insurance_local_number",
+      "type": "input",
+      "title": "Local Number",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Primary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "insurance_effective_date",
+      "type": "date",
+      "title": "Insurance Effective Date",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Primary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "insurance_copay",
+      "type": "input",
+      "title": "Copay Amount",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Primary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "insurance_deductible",
+      "type": "input",
+      "title": "Annual Deductible",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Primary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "sec_insurance_has",
+          "value": true
+        },
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "sec_insurance_local_number",
+      "type": "input",
+      "title": "Local Number",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Secondary Insurance Information",
+      "optional": true
+    },
+    {
+      "if": [
+        {
+          "key": "sec_insurance_has",
+          "value": true
+        },
+        {
+          "key": "insurance_has",
+          "value": true
+        }
+      ],
+      "key": "sec_insurance_effective_date",
+      "type": "date",
+      "title": "Insurance Effective Date",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Secondary Insurance Information",
+      "optional": true
+    }
+  ],
+  "responsible_party": [
+    {
+      "key": "responsible_party_name",
+      "type": "input",
+      "title": "Responsible Party Name",
+      "control": {
+        "hint": "Person responsible for payment",
+        "input_type": "name"
+      },
+      "section": "Financial Information",
+      "optional": true
+    },
+    {
+      "key": "responsible_party_relationship",
+      "type": "dropdown",
+      "title": "Relationship to Patient",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Self",
+            "value": "self"
+          },
+          {
+            "name": "Spouse",
+            "value": "spouse"
+          },
+          {
+            "name": "Parent",
+            "value": "parent"
+          },
+          {
+            "name": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      "section": "Financial Information",
+      "optional": true
+    },
+    {
+      "key": "responsible_party_ssn",
+      "type": "input",
+      "title": "Responsible Party SSN",
+      "control": {
+        "hint": null,
+        "input_type": "ssn"
+      },
+      "section": "Financial Information",
+      "optional": true
+    },
+    {
+      "key": "responsible_party_dob",
+      "type": "date",
+      "title": "Responsible Party Date of Birth",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Financial Information",
+      "optional": true
+    },
+    {
+      "key": "responsible_party_phone",
+      "type": "input",
+      "title": "Responsible Party Phone",
+      "control": {
+        "hint": null,
+        "input_type": "phone",
+        "phone_prefix": "+1"
+      },
+      "section": "Financial Information",
+      "optional": true
+    },
+    {
+      "key": "responsible_party_employer",
+      "type": "input",
+      "title": "Responsible Party Employer",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Financial Information",
+      "optional": true
+    }
+  ],
+  "dental_history_additional": [
+    {
+      "key": "last_dental_visit",
+      "type": "date",
+      "title": "Date of Last Dental Visit",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "last_xray_date",
+      "type": "date",
+      "title": "Date of Last X-rays",
+      "control": {
+        "input_type": "past"
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "reason_for_visit",
+      "type": "dropdown",
+      "title": "Reason for Today's Visit",
+      "control": {
+        "hint": "Select...",
+        "multi": true,
+        "options": [
+          {
+            "name": "Routine Checkup",
+            "value": "routine"
+          },
+          {
+            "name": "Pain/Emergency",
+            "value": "pain"
+          },
+          {
+            "name": "Cleaning",
+            "value": "cleaning"
+          },
+          {
+            "name": "Cosmetic Consultation",
+            "value": "cosmetic"
+          },
+          {
+            "name": "Orthodontic Consultation",
+            "value": "ortho"
+          },
+          {
+            "name": "Follow-up",
+            "value": "followup"
+          },
+          {
+            "name": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "dental_anxiety_level",
+      "type": "dropdown",
+      "title": "On a scale of 1-5, how anxious are you about dental treatment?",
+      "control": {
+        "hint": "1 = Not anxious, 5 = Very anxious",
+        "options": [
+          {
+            "name": "1 - Not anxious",
+            "value": 1
+          },
+          {
+            "name": "2 - Slightly anxious",
+            "value": 2
+          },
+          {
+            "name": "3 - Moderately anxious",
+            "value": 3
+          },
+          {
+            "name": "4 - Very anxious",
+            "value": 4
+          },
+          {
+            "name": "5 - Extremely anxious",
+            "value": 5
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "brushing_frequency",
+      "type": "dropdown",
+      "title": "How often do you brush your teeth?",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Once a day",
+            "value": "once"
+          },
+          {
+            "name": "Twice a day",
+            "value": "twice"
+          },
+          {
+            "name": "Three or more times a day",
+            "value": "3plus"
+          },
+          {
+            "name": "Less than once a day",
+            "value": "less"
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "flossing_frequency",
+      "type": "dropdown",
+      "title": "How often do you floss?",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Daily",
+            "value": "daily"
+          },
+          {
+            "name": "Several times a week",
+            "value": "several"
+          },
+          {
+            "name": "Occasionally",
+            "value": "occasional"
+          },
+          {
+            "name": "Never",
+            "value": "never"
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    },
+    {
+      "key": "mouthwash_use",
+      "type": "radio",
+      "title": "Do you use mouthwash?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Dental History",
+      "optional": true
+    }
+  ],
+  "social_history": [
+    {
+      "key": "tobacco_type",
+      "type": "dropdown",
+      "title": "Type of Tobacco",
+      "control": {
+        "hint": "Select all that apply",
+        "multi": true,
+        "options": [
+          {
+            "name": "Cigarettes",
+            "value": "cigarettes"
+          },
+          {
+            "name": "Cigars",
+            "value": "cigars"
+          },
+          {
+            "name": "Pipe",
+            "value": "pipe"
+          },
+          {
+            "name": "Chewing Tobacco",
+            "value": "chewing"
+          },
+          {
+            "name": "Vaping/E-cigarettes",
+            "value": "vaping"
+          },
+          {
+            "name": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "tobacco_frequency",
+      "type": "input",
+      "title": "Tobacco Use - How much/How often?",
+      "control": {
+        "hint": "e.g., 1 pack per day",
+        "input_type": "text"
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "tobacco_duration",
+      "type": "input",
+      "title": "Tobacco Use - How long?",
+      "control": {
+        "hint": "e.g., 10 years",
+        "input_type": "text"
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "alcohol_frequency",
+      "type": "dropdown",
+      "title": "Alcohol Consumption Frequency",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Daily",
+            "value": "daily"
+          },
+          {
+            "name": "Several times a week",
+            "value": "weekly"
+          },
+          {
+            "name": "Occasionally",
+            "value": "occasional"
+          },
+          {
+            "name": "Rarely",
+            "value": "rarely"
+          },
+          {
+            "name": "Never",
+            "value": "never"
+          }
+        ]
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "drug_type",
+      "type": "input",
+      "title": "Recreational Drug Type",
+      "control": {
+        "hint": "If applicable",
+        "input_type": "text"
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "drug_frequency",
+      "type": "input",
+      "title": "Drug Use Frequency",
+      "control": {
+        "hint": "If applicable",
+        "input_type": "text"
+      },
+      "section": "General Health Information",
+      "optional": true
+    }
+  ],
+  "communication_preferences": [
+    {
+      "key": "preferred_contact_method",
+      "type": "dropdown",
+      "title": "Preferred Contact Method",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Phone",
+            "value": "phone"
+          },
+          {
+            "name": "Email",
+            "value": "email"
+          },
+          {
+            "name": "Text Message",
+            "value": "text"
+          },
+          {
+            "name": "Mail",
+            "value": "mail"
+          }
+        ]
+      },
+      "section": "Contact Information",
+      "optional": true
+    },
+    {
+      "key": "preferred_contact_time",
+      "type": "dropdown",
+      "title": "Best Time to Contact",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "Morning (8am-12pm)",
+            "value": "morning"
+          },
+          {
+            "name": "Afternoon (12pm-5pm)",
+            "value": "afternoon"
+          },
+          {
+            "name": "Evening (5pm-8pm)",
+            "value": "evening"
+          },
+          {
+            "name": "Anytime",
+            "value": "anytime"
+          }
+        ]
+      },
+      "section": "Contact Information",
+      "optional": true
+    },
+    {
+      "key": "appointment_reminder_preference",
+      "type": "dropdown",
+      "title": "How would you like to receive appointment reminders?",
+      "control": {
+        "hint": "Select all that apply",
+        "multi": true,
+        "options": [
+          {
+            "name": "Text Message",
+            "value": "text"
+          },
+          {
+            "name": "Email",
+            "value": "email"
+          },
+          {
+            "name": "Phone Call",
+            "value": "phone"
+          },
+          {
+            "name": "No reminders",
+            "value": "none"
+          }
+        ]
+      },
+      "section": "Contact Information",
+      "optional": true
+    },
+    {
+      "key": "language_preference",
+      "type": "dropdown",
+      "title": "Preferred Language",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "English",
+            "value": "en"
+          },
+          {
+            "name": "Spanish",
+            "value": "es"
+          },
+          {
+            "name": "Chinese",
+            "value": "zh"
+          },
+          {
+            "name": "Vietnamese",
+            "value": "vi"
+          },
+          {
+            "name": "Korean",
+            "value": "ko"
+          },
+          {
+            "name": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      "section": "Contact Information",
+      "optional": true
+    }
+  ],
+  "health_history_additional": [
+    {
+      "key": "blood_type",
+      "type": "dropdown",
+      "title": "Blood Type",
+      "control": {
+        "hint": "Select...",
+        "options": [
+          {
+            "name": "A+",
+            "value": "a_pos"
+          },
+          {
+            "name": "A-",
+            "value": "a_neg"
+          },
+          {
+            "name": "B+",
+            "value": "b_pos"
+          },
+          {
+            "name": "B-",
+            "value": "b_neg"
+          },
+          {
+            "name": "AB+",
+            "value": "ab_pos"
+          },
+          {
+            "name": "AB-",
+            "value": "ab_neg"
+          },
+          {
+            "name": "O+",
+            "value": "o_pos"
+          },
+          {
+            "name": "O-",
+            "value": "o_neg"
+          },
+          {
+            "name": "Unknown",
+            "value": "unknown"
+          }
+        ]
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "recent_weight_change",
+      "type": "radio",
+      "title": "Have you had any recent unexplained weight changes?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "General Health Information",
+      "optional": true
+    },
+    {
+      "key": "current_medications_list",
+      "type": "input",
+      "title": "Please list all current medications, including over-the-counter drugs and supplements",
+      "control": {
+        "hint": "Include dosages if known",
+        "input_type": "text"
+      },
+      "section": "Medications",
+      "optional": true
+    },
+    {
+      "key": "herbal_supplements",
+      "type": "radio",
+      "title": "Are you taking any herbal supplements or vitamins?",
+      "control": {
+        "extra": {
+          "hint": "Please list",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medications",
+      "optional": true
+    },
+    {
+      "key": "bleeding_disorder",
+      "type": "radio",
+      "title": "Do you have any bleeding disorders or take blood thinners?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "sleep_apnea",
+      "type": "radio",
+      "title": "Do you have sleep apnea or use a CPAP machine?",
+      "control": {
+        "extra": {
+          "hint": "Provide details",
+          "type": "input",
+          "value": true,
+          "optional": true
+        },
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    }
+  ]
 }

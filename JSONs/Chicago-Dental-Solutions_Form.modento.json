@@ -87,33 +87,15 @@
   },
   {
     "key": "work_phone",
-    "title": "Work Phone",
-    "section": "Patient Information",
-    "optional": false,
     "type": "input",
+    "title": "Work Phone",
     "control": {
-      "input_type": "phone"
-    }
-  },
-  {
-    "key": "work_phone_ext",
-    "title": "Work Phone: Ext#",
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
     "section": "Patient Information",
-    "optional": false,
-    "type": "dropdown",
-    "control": {
-      "options": [
-        {
-          "name": "Male",
-          "value": "male"
-        },
-        {
-          "name": "Female",
-          "value": "female"
-        }
-      ],
-      "multi": true
-    }
+    "optional": false
   },
   {
     "key": "marital_status",
@@ -331,13 +313,14 @@
   },
   {
     "key": "responsible_party_name",
-    "title": "Responsible Party Name",
-    "section": "Insurance",
-    "optional": false,
     "type": "input",
+    "title": "Responsible Party Name",
     "control": {
-      "input_type": "text"
-    }
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
   },
   {
     "if": [
