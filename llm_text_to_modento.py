@@ -1791,13 +1791,15 @@ def extract_text_only_items_at_columns(line: str, column_positions: List[int], c
             if not re.search(r'[a-zA-Z]', text):
                 continue
             
-            # Skip known labels
+            # Skip known labels (exact match only)
             if text.lower() in KNOWN_LABELS:
                 continue
             
-            # Skip if any word in text is in known labels (partial match)
+            # Archivev13 Fix: Don't skip compound labels that contain known labels
+            # Only skip if text is a single-word label
+            # (e.g., skip "Tobacco" alone, but not "Alcohol Frequency")
             text_words = text.lower().split()
-            if any(label in text.lower() for label in KNOWN_LABELS if len(label) > 3):
+            if len(text_words) == 1 and any(label == text.lower() for label in KNOWN_LABELS):
                 continue
             
             # Skip category headers

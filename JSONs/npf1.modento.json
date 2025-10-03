@@ -867,12 +867,24 @@
           "value": "bad_breath"
         },
         {
+          "name": "How much How long",
+          "value": "how_much_how_long"
+        },
+        {
           "name": "Loose tipped, shifting teeth",
           "value": "loose_tipped_shifting_teeth"
         },
         {
+          "name": "Alcohol Frequency",
+          "value": "alcohol_frequency"
+        },
+        {
           "name": "Previous perio",
           "value": "previous_perio"
+        },
+        {
+          "name": "Drugs Frequency",
+          "value": "drugs_frequency"
         }
       ],
       "multi": true
