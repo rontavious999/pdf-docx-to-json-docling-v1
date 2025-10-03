@@ -548,13 +548,13 @@ KNOWN_FIELD_LABELS = {
     'city': r'\bcity\b',
     'state': r'\bstate\b',
     'zip': r'\bzip(?:\s+code)?\b',
-    'drivers_license': r'\bdrivers?\s+license\s*#?\b',
+    'drivers_license': r'\bdrivers?\s+license\s*#?',
     'student': r'\b(?:full\s+time\s+)?student\b',
     'mother_dob': r"\bmother'?s?\s+dob\b",
     'father_dob': r"\bfather'?s?\s+dob\b",
     'dob': r'\bdob\b',
-    'group_number': r'\bgroup\s*#\b',
-    'local_number': r'\blocal\s*#\b',
+    'group_number': r'\bgroup\s*#',
+    'local_number': r'\blocal\s*#',
 }
 
 

@@ -463,6 +463,33 @@
     "optional": false
   },
   {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group #",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "local",
+    "title": "Local #",
+    "section": "Insurance",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
     "key": "how_important_is_your_dental_health_to_you_1_2_3_4_5_6_7_8_9_10",
     "title": "How important is your dental health to you? 1 2 3 4 5 6 7 8 9 10",
     "section": "Dental History",

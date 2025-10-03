@@ -254,9 +254,43 @@
     "optional": false
   },
   {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number_2",
+    "type": "input",
+    "title": "ID Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
     "key": "name_of_employer",
     "title": "Name of Employer",
-    "section": "General",
+    "section": "Insurance",
     "optional": false,
     "type": "input",
     "control": {
@@ -266,7 +300,7 @@
   {
     "key": "name_of_employer_2",
     "title": "Name of Employer #2",
-    "section": "General",
+    "section": "Insurance",
     "optional": false,
     "type": "dropdown",
     "control": {
@@ -298,7 +332,7 @@
   {
     "key": "responsible_party_name",
     "title": "Responsible Party Name",
-    "section": "General",
+    "section": "Insurance",
     "optional": false,
     "type": "input",
     "control": {
@@ -333,36 +367,19 @@
     "optional": false
   },
   {
-    "if": [
-      {
-        "key": "insurance_has",
-        "value": true
-      }
-    ],
-    "key": "insurance_company_2",
-    "type": "input",
-    "title": "Insurance Company #2",
-    "control": {
-      "hint": "Company name",
-      "input_type": "name"
-    },
-    "section": "Insurance",
-    "optional": false
-  },
-  {
     "key": "state_3",
     "type": "states",
     "title": "State #3",
     "control": {
       "hint": "Select state..."
     },
-    "section": "Patient Information",
+    "section": "Insurance",
     "optional": false
   },
   {
     "key": "name_of_employer_4",
     "title": "Name of Employer #4",
-    "section": "General",
+    "section": "Insurance",
     "optional": false,
     "type": "dropdown",
     "control": {
