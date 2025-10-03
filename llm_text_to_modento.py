@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.13
+llm_text_to_modento.py — v2.14
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.12 (Archivev11 fixes):
-  • Archivev11 Fix 1: Enhanced column boundary detection with label pattern removal
-  • Archivev11 Fix 2: Text-only item detection in multi-column grids
-  • Archivev11 Fix 3: Post-processor to clean overflow artifacts in field titles
+What's new vs v2.13 (Additional Archivev11 fixes):
+  • Archivev11 Fix 4: Enhanced category header detection for label patterns
+  • Archivev11 Fix 5: Make generic "Please explain" titles unique with context
+  • Previous (v2.13): Column boundary detection, text-only items, overflow cleanup
   • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
   • Previous (v2.11): Multi-line headers, section inference, duplicate consolidation
 """
@@ -215,10 +215,12 @@ def is_heading(line: str) -> bool:
 
 def is_category_header(line: str, next_line: str = "") -> bool:
     """
-    Archivev10 Fix 2: Enhanced category header detection in medical/dental grids.
+    Archivev10 Fix 2 + Archivev11 Fix 4: Enhanced category header detection in medical/dental grids.
     Category headers are short lines without checkboxes that precede lines with checkboxes.
     
     Examples: "Cancer", "Cardiovascular", "Endocrinology", "Pain/Discomfort", "Appearance"
+    
+    Archivev11 Fix 4: Added detection for common label patterns like "Frequency", "Pattern", "Conditions"
     """
     cleaned = collapse_spaced_caps(line.strip())
     
@@ -238,6 +240,13 @@ def is_category_header(line: str, next_line: str = "") -> bool:
     if re.search(r':\s*\S', cleaned):
         return False
     
+    # Archivev11 Fix 4: Check for common label patterns
+    # These are often found in forms and should be treated as headers/labels, not fields
+    label_keywords = ['frequency', 'pattern', 'conditions', 'health', 'comments', 
+                      'how much', 'how long', 'additional comments']
+    cleaned_lower = cleaned.lower()
+    is_label_pattern = any(kw in cleaned_lower for kw in label_keywords)
+    
     # Known category header patterns in medical/dental forms
     category_keywords = [
         'cancer', 'cardiovascular', 'endocrinology', 'musculoskeletal', 
@@ -247,8 +256,11 @@ def is_category_header(line: str, next_line: str = "") -> bool:
         'viral infections', 'medical allergies', 'sleep pattern'
     ]
     
-    cleaned_lower = cleaned.lower()
     is_known_category = any(kw in cleaned_lower for kw in category_keywords)
+    
+    # Archivev11 Fix 4: Label patterns with next line having checkboxes are headers
+    if is_label_pattern and next_line and re.search(CHECKBOX_ANY, next_line):
+        return True
     
     # Next line should have checkboxes (indicates this is a header for checkbox items)
     if next_line and re.search(CHECKBOX_ANY, next_line):
@@ -3495,6 +3507,87 @@ def postprocess_clean_overflow_titles(payload: List[dict], dbg: Optional[DebugLo
     
     return payload
 
+
+def postprocess_make_explain_fields_unique(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Archivev11 Fix 5: Make duplicate titles unique by adding context.
+    
+    When multiple fields have the same title in a section, add context from:
+    - Preceding field (for explanation/follow-up fields)
+    - Numeric suffix (for repeated fields like "Insured's Name")
+    - Key information (as a last resort)
+    """
+    # Track title occurrences by section
+    title_counts = {}
+    
+    for i, item in enumerate(payload):
+        title = item.get('title', '').strip()
+        section = item.get('section', 'General')
+        key = item.get('key', '')
+        
+        # Create a unique identifier for this title in this section
+        section_title = f"{section}:{title}"
+        
+        # Check if this is a duplicate
+        if section_title in title_counts:
+            count = title_counts[section_title]
+            title_counts[section_title] = count + 1
+            
+            # Strategy 1: For generic explanation/detail titles, use preceding field context
+            generic_titles = ['please explain', 'explanation', 'details', 'comments', 'if yes, please explain']
+            is_generic = any(gt in title.lower() for gt in generic_titles)
+            
+            if is_generic and i > 0:
+                prev_item = payload[i - 1]
+                prev_title = prev_item.get('title', '')
+                
+                # If previous field is a yes/no question, use it as context
+                if any(yn in prev_title.lower() for yn in ['yes or no', 'y or n', 'have you', 'are you', 'do you']):
+                    # Extract first few words of question as context
+                    words = prev_title.split()[:5]
+                    context = ' '.join(words)
+                    new_title = f"{context} - {title}"
+                    
+                    if dbg:
+                        dbg.gate(f"unique_title -> '{title}' → '{new_title}' (context)")
+                    
+                    item['title'] = new_title
+                    continue
+            
+            # Strategy 2: For repeated fields (like Insurance fields), add numeric suffix
+            # Check if key has a numeric suffix or scope marker
+            key_has_suffix = bool(re.search(r'(_\d+|__\w+)$', key))
+            if key_has_suffix:
+                # Extract suffix info
+                if '__primary' in key:
+                    new_title = f"{title} (Primary)"
+                elif '__secondary' in key:
+                    new_title = f"{title} (Secondary)"
+                elif re.search(r'_(\d+)$', key):
+                    match = re.search(r'_(\d+)$', key)
+                    num = match.group(1)
+                    new_title = f"{title} #{num}"
+                else:
+                    new_title = f"{title} ({count + 1})"
+                
+                if dbg:
+                    dbg.gate(f"unique_title -> '{title}' → '{new_title}' (suffix)")
+                
+                item['title'] = new_title
+                continue
+            
+            # Strategy 3: Fallback - add numeric suffix
+            new_title = f"{title} ({count + 1})"
+            
+            if dbg:
+                dbg.gate(f"unique_title -> '{title}' → '{new_title}' (numeric)")
+            
+            item['title'] = new_title
+        else:
+            title_counts[section_title] = 1
+    
+    return payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -3604,6 +3697,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev11 Fix 3: Clean up column overflow in field titles
     payload = postprocess_clean_overflow_titles(payload, dbg=dbg)
+    
+    # Archivev11 Fix 5: Make generic "Please explain" fields unique
+    payload = postprocess_make_explain_fields_unique(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
