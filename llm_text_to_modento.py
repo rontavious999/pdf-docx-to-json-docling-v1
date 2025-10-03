@@ -102,6 +102,23 @@ YN_SIMPLE_RE = re.compile(r"(?P<prompt>.*?)(?:\bYes\b|\bY\b)\s*(?:/|,|\s+)\s*(?:
 # parent/guardian
 PARENT_RE = re.compile(r"\b(parent|guardian|mother|father|legal\s+guardian)\b", re.I)
 
+# Archivev12 Fix 2: Special field patterns for common fields without perfect formatting
+SEX_GENDER_PATTERNS = [
+    re.compile(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female)', re.I),
+    re.compile(r'\b(sex|gender)\s*\[\s*\]\s*(?:male|female|M|F)', re.I),
+]
+
+MARITAL_STATUS_PATTERNS = [
+    re.compile(r'(?:please\s+)?circle\s+one\s*:?\s*(single|married|divorced|separated|widowed)', re.I),
+    re.compile(r'\bmarital\s+status\s*:?\s*(?:\[\s*\]|single|married)', re.I),
+]
+
+PHONE_PATTERNS = [
+    (r'work\s+phone', 'work_phone'),
+    (r'home\s+phone', 'home_phone'),
+    (r'(?:cell|mobile)\s+phone', 'cell_phone'),
+]
+
 ALLOWED_TYPES = {"input", "date", "states", "radio", "dropdown", "terms", "signature"}
 
 PRIMARY_SUFFIX = "__primary"
@@ -199,6 +216,12 @@ def is_heading(line: str) -> bool:
     # Archivev10 Fix 1: Don't treat lines with checkboxes as headings
     if re.search(CHECKBOX_ANY, t):
         return False
+    
+    # Archivev12 Fix: Don't treat known field labels as headings
+    # Check against common form field patterns
+    for field_key, pattern in KNOWN_FIELD_LABELS.items():
+        if re.match(pattern + r'\s*(?:\(|_|\[|$)', t, re.I):
+            return False
     
     # Archivev10 Fix 1: Don't treat multi-column grid headers as headings
     # (e.g., "Appearance    Function    Habits    Previous Comfort Options")
@@ -504,10 +527,234 @@ def split_multi_question_line(line: str) -> List[str]:
     return segments if len(segments) >= 2 else [line]
 
 
+# ---------- Archivev12 Fix 1: Enhanced Multi-Field Line Splitting
+
+# Known field labels dictionary for pattern matching
+KNOWN_FIELD_LABELS = {
+    'sex': r'\bsex\b',
+    'gender': r'\bgender\b',
+    'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)\b',
+    'work_phone': r'\bwork\s+phone\b',
+    'home_phone': r'\bhome\s+phone\b',
+    'cell_phone': r'\b(?:cell|mobile)\s+phone\b',
+    'email': r'\be-?mail\b',
+    'occupation': r'\boccupation\b',
+    'employer': r'\bemployer\b',
+    'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
+    'address': r'\b(?:mailing\s+)?address\b',
+    'city': r'\bcity\b',
+    'state': r'\bstate\b',
+    'zip': r'\bzip(?:\s+code)?\b',
+}
+
+
+def split_by_checkboxes_no_colon(line: str) -> List[str]:
+    """
+    Archivev12 Fix 1a: Split lines with checkboxes but no colons.
+    Pattern: Label [ ] options ... Label [ ] options
+    
+    Strategy: Find field labels (capitalized words) that are followed by checkboxes,
+    separated by 4+ spaces from the next field label.
+    """
+    # Find all potential field starts: Capital letter word followed by checkbox pattern
+    # Look for pattern: 4+ spaces, then Capital letter starting a new field label
+    # The key is to detect where one field ends and another begins by looking for spacing
+    
+    # Pattern to find split points: 4+ spaces followed by a capitalized label
+    split_pattern = r'\s{4,}(?=[A-Z][A-Za-z\s]{2,30}?\s*\[)'
+    
+    split_positions = [m.start() for m in re.finditer(split_pattern, line)]
+    
+    if not split_positions:
+        return [line]
+    
+    # Split at these positions
+    segments = []
+    last_pos = 0
+    
+    for pos in split_positions:
+        segment = line[last_pos:pos].strip()
+        if segment and re.search(CHECKBOX_ANY, segment):
+            segments.append(segment)
+        last_pos = pos
+    
+    # Add final segment
+    final_segment = line[last_pos:].strip()
+    if final_segment and re.search(CHECKBOX_ANY, final_segment):
+        segments.append(final_segment)
+    
+    return segments if len(segments) >= 2 else [line]
+
+
+def split_by_known_labels(line: str) -> List[str]:
+    """
+    Archivev12 Fix 1b: Split lines based on known field labels with spacing.
+    Handles: Work Phone (   )         Occupation
+    """
+    # Find all known label matches in the line
+    label_matches = []
+    for field_key, pattern in KNOWN_FIELD_LABELS.items():
+        for match in re.finditer(pattern, line, re.I):
+            label_matches.append((match.start(), match.end(), field_key, match.group(0)))
+    
+    # Sort by position
+    label_matches.sort()
+    
+    if len(label_matches) < 2:
+        return [line]
+    
+    # Check if labels are separated by sufficient spacing (4+ spaces)
+    segments = []
+    for i in range(len(label_matches)):
+        start_pos = label_matches[i][0]
+        
+        if i + 1 < len(label_matches):
+            # Check spacing between this label end and next label start
+            end_this = label_matches[i][1]
+            start_next = label_matches[i + 1][0]
+            between = line[end_this:start_next]
+            
+            # Must have 4+ consecutive spaces to be considered separate fields
+            if not re.search(r'\s{4,}', between):
+                continue
+            
+            end_pos = label_matches[i + 1][0]
+        else:
+            end_pos = len(line)
+        
+        segment = line[start_pos:end_pos].strip()
+        if segment:
+            segments.append(segment)
+    
+    # Only return segments if we got at least 2
+    return segments if len(segments) >= 2 else [line]
+
+
+def enhanced_split_multi_field_line(line: str) -> List[str]:
+    """
+    Archivev12 Fix 1: Enhanced multi-field line splitting.
+    Tries multiple strategies in order:
+    1. Existing pattern (colon + checkbox)
+    2. Checkboxes without colons
+    3. Known label patterns with spacing
+    """
+    # Try existing pattern first (backward compatible)
+    result = split_multi_question_line(line)
+    if len(result) > 1:
+        return result
+    
+    # Try checkboxes without colons
+    result = split_by_checkboxes_no_colon(line)
+    if len(result) > 1:
+        return result
+    
+    # Try known label detection
+    result = split_by_known_labels(line)
+    if len(result) > 1:
+        return result
+    
+    return [line]
+
+
+def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Archivev12 Fix 2a: Detect sex/gender field patterns.
+    Returns: (field_type, segment) or None
+    
+    For lines with checkboxes (e.g., "Sex [ ] Male [ ] Female"), extract the entire field.
+    For lines with text options (e.g., "Sex M or F"), extract up to the pattern.
+    """
+    for pattern in SEX_GENDER_PATTERNS:
+        match = pattern.search(line)
+        if match:
+            # Check if this is a checkbox-based field
+            # Look for checkboxes after the label
+            after_label = line[match.end():]
+            has_checkboxes = bool(re.search(CHECKBOX_ANY, after_label))
+            
+            if has_checkboxes:
+                # Extract the entire sex/gender field including all checkboxes until next field or end
+                # Look for 4+ spaces followed by a capital letter (indicating next field)
+                next_field_match = re.search(r'\s{4,}[A-Z]', line[match.start():])
+                if next_field_match:
+                    # Extract up to next field
+                    end_pos = match.start() + next_field_match.start()
+                    return ("sex_gender", line[:end_pos].strip())
+                else:
+                    # No next field, extract to end
+                    return ("sex_gender", line.strip())
+            else:
+                # Text-based options (M or F), extract up to match end
+                return ("sex_gender", line[:match.end()].strip())
+    return None
+
+
+def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Archivev12 Fix 2b: Detect marital status field patterns.
+    Returns: (field_type, extracted_segment) or None
+    """
+    for pattern in MARITAL_STATUS_PATTERNS:
+        match = pattern.search(line)
+        if match:
+            # For "Please Circle One:" pattern, need to capture options after it
+            if "circle" in match.group(0).lower():
+                # Extract from "Please Circle One:" onwards
+                segment = line[match.start():].strip()
+                return ("marital_status", segment)
+            else:
+                return ("marital_status", line[match.start():].strip())
+    return None
+
+
+def split_complex_multi_field_line(line: str) -> List[str]:
+    """
+    Archivev12 Fix 2c: Handle complex lines with multiple fields of different types.
+    E.g., "Sex M or F   Soc. Sec. #   Please Circle One: Single Married..."
+    """
+    segments = []
+    remaining = line
+    
+    # Try to detect and extract sex/gender field
+    sex_result = detect_sex_gender_field(line)
+    if sex_result:
+        field_type, segment = sex_result
+        segments.append(segment)
+        # Remove this segment from remaining, accounting for position
+        sex_pos = line.find(segment)
+        if sex_pos == 0:
+            remaining = line[len(segment):].strip()
+        else:
+            remaining = line[sex_pos + len(segment):].strip()
+    
+    # Try to detect and extract marital status field from remaining
+    marital_result = detect_marital_status_field(remaining)
+    if marital_result:
+        field_type, segment = marital_result
+        # Find the position of marital status segment in remaining
+        marital_start = remaining.lower().find("please circle") if "please circle" in remaining.lower() else remaining.lower().find("marital")
+        
+        if marital_start > 0:
+            # There's content before marital status (like SSN)
+            before = remaining[:marital_start].strip()
+            if before and len(before) > 3:  # Has significant content before
+                segments.append(before)
+        
+        # Add the marital status field
+        segments.append(segment)
+        remaining = ""
+    elif remaining:
+        # If we extracted sex/gender, add remaining as separate field
+        if segments and len(remaining) > 3:
+            segments.append(remaining)
+    
+    return segments if len(segments) >= 2 else [line]
+
+
 def preprocess_lines(lines: List[str]) -> List[str]:
     """
     Preprocess lines before main parsing.
-    Currently handles: splitting multi-question lines.
+    Currently handles: splitting multi-question lines with enhanced strategies.
     """
     processed = []
     for line in lines:
@@ -516,8 +763,21 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             processed.append(line)
             continue
         
-        # Try to split multi-question lines
-        split_lines = split_multi_question_line(line)
+        # Archivev12 Fix: Try multiple splitting strategies
+        # Strategy 1: Check if line has sex/gender or marital patterns - use complex split first
+        has_sex_gender = any(p.search(line) for p in SEX_GENDER_PATTERNS)
+        has_marital = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
+        
+        if has_sex_gender or has_marital:
+            # Try complex multi-field detection first for these special cases
+            split_lines = split_complex_multi_field_line(line)
+            if len(split_lines) == 1:
+                # If complex didn't split, try enhanced
+                split_lines = enhanced_split_multi_field_line(line)
+        else:
+            # Strategy 2: Enhanced multi-field splitting for regular cases
+            split_lines = enhanced_split_multi_field_line(line)
+        
         processed.extend(split_lines)
     
     return processed
@@ -2182,8 +2442,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if INSURANCE_SECONDARY_RE.search(line):
             cur_section = "Insurance"; insurance_scope = "__secondary"
 
+        # Archivev12 Fix: Check for special field patterns BEFORE heading detection
+        # to prevent them from being treated as headings
+        is_special_sex_field = any(p.search(line) for p in SEX_GENDER_PATTERNS)
+        is_special_marital_field = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
+        is_special_field = is_special_sex_field or is_special_marital_field
+        
         # Fix 2: Section heading with multi-line header detection
-        if is_heading(line):
+        if not is_special_field and is_heading(line):
             # Look ahead to see if the next line is also a heading (multi-line header)
             potential_headers = [line]
             j = i + 1
@@ -2192,7 +2458,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 next_line = collapse_spaced_caps(next_raw.strip())
                 if not next_line:
                     break
-                if is_heading(next_line):
+                # Archivev12 Fix: Don't include special fields in multi-line headers
+                is_next_special_sex = any(p.search(next_line) for p in SEX_GENDER_PATTERNS)
+                is_next_special_marital = any(p.search(next_line) for p in MARITAL_STATUS_PATTERNS)
+                is_next_special = is_next_special_sex or is_next_special_marital
+                
+                if is_heading(next_line) and not is_next_special:
                     potential_headers.append(next_line)
                     j += 1
                 else:
@@ -2611,6 +2882,47 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if emitted_compound:
             i += 1; continue
 
+        # Archivev12 Fix 3: Special handling for Sex/Gender with text options (M or F)
+        sex_match = re.search(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female|Mor\s*F)', line, re.I)
+        if sex_match:
+            key = "sex"
+            title = sex_match.group(1).title()
+            control = {
+                "options": [
+                    {"name": "Male", "value": "male"},
+                    {"name": "Female", "value": "female"},
+                    {"name": "Other", "value": "other"},
+                    {"name": "Prefer not to self identify", "value": "not_say"}
+                ]
+            }
+            questions.append(Question(key, title, cur_section, "radio", control=control))
+            i += 1
+            continue
+        
+        # Archivev12 Fix 4: Special handling for "Please Circle One:" marital status
+        marital_match = re.search(r'(?:please\s+)?circle\s+one\s*:?\s*(.*?)$', line, re.I)
+        if marital_match:
+            # Extract options from the rest of the line
+            options_text = marital_match.group(1).strip()
+            # Common marital status options
+            marital_options = []
+            for opt in ['Single', 'Married', 'Divorced', 'Separated', 'Widowed', 'Widow']:
+                if opt.lower() in options_text.lower():
+                    if opt == 'Widow':
+                        opt = 'Widowed'  # Normalize
+                    if opt not in [o['name'] for o in marital_options]:
+                        marital_options.append({"name": opt, "value": opt.lower()})
+            
+            if marital_options:
+                # Add standard options if not present
+                if not any(o['name'] == 'Prefer not to say' for o in marital_options):
+                    marital_options.append({"name": "Prefer not to say", "value": "not say"})
+                
+                control = {"options": marital_options}
+                questions.append(Question("marital_status", "Marital Status", cur_section, "radio", control=control))
+                i += 1
+                continue
+
         # Option harvesting for a single prompt (incl. “hear about us”)
         opts_inline = options_from_inline_line(line)
         opts_block: List[Tuple[str, Optional[bool]]] = []
@@ -2720,7 +3032,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             # If title still has checkbox markers, try to extract clean text
             if re.search(CHECKBOX_ANY, clean_title):
                 extracted = extract_title_from_inline_checkboxes(clean_title)
-                if extracted and len(extracted) > 3:
+                # Archivev12 Fix: Allow short field names like "Sex", "Age"
+                if extracted and len(extracted) >= 2:
                     clean_title = extracted
                 else:
                     # Couldn't extract - fallback to looking back or generic title
