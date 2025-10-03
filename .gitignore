@@ -19,6 +19,7 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+__MACOSX/
 
 # Test outputs
 /tmp/

@@ -1,0 +1,1252 @@
+[
+  {
+    "key": "patient_registration_todays_date",
+    "title": "Patient Registration Today's Date",
+    "section": "General",
+    "optional": false,
+    "type": "date",
+    "control": {
+      "input_type": "any"
+    }
+  },
+  {
+    "key": "last_name",
+    "type": "input",
+    "title": "Last Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "First Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "mi",
+    "type": "input",
+    "title": "MI",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of Birth",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "age",
+    "title": "Age",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "sex",
+    "type": "radio",
+    "title": "Sex",
+    "control": {
+      "options": [
+        {
+          "name": "Male",
+          "value": "male"
+        },
+        {
+          "name": "Female",
+          "value": "female"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        },
+        {
+          "name": "Prefer not to self identify",
+          "value": "not_say"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "soc_sec",
+    "title": "Soc. Sec. #",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "marital_status",
+    "type": "radio",
+    "title": "Marital Status",
+    "control": {
+      "options": [
+        {
+          "name": "Single",
+          "value": "single"
+        },
+        {
+          "name": "Married",
+          "value": "married"
+        },
+        {
+          "name": "Widowed",
+          "value": "widowed"
+        },
+        {
+          "name": "Divorced",
+          "value": "divorced"
+        },
+        {
+          "name": "Prefer not to say",
+          "value": "not say"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip Code",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "Email",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "home_phone",
+    "type": "input",
+    "title": "Home Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "phone",
+    "title": "Phone",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
+    }
+  },
+  {
+    "key": "mobile_phone",
+    "type": "input",
+    "title": "Mobile Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "drivers_license",
+    "type": "input",
+    "title": "Driver's License #",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "employer",
+    "type": "input",
+    "title": "Employer",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "work_phone",
+    "type": "input",
+    "title": "Work Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "occupation",
+    "type": "input",
+    "title": "Occupation",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "full_time_student",
+    "type": "radio",
+    "title": "Are you a full time student? Yes or No",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "mother_dob",
+    "type": "date",
+    "title": "Mother's DOB",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "father_dob",
+    "type": "date",
+    "title": "Father's DOB",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "parent_name",
+    "type": "input",
+    "title": "Parent Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "parent_ssn",
+    "title": "Parent SSN",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "ssn"
+    }
+  },
+  {
+    "key": "parent_employer",
+    "type": "input",
+    "title": "Parent Employer",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "parent_phone",
+    "type": "input",
+    "title": "Parent Phone ( )",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "responsible_party_name",
+    "type": "input",
+    "title": "Responsible Party Name",
+    "control": {
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship",
+    "type": "input",
+    "title": "Relationship",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "if_you_are_filling_this_form_out_on_behalf_of_another_person_wha",
+    "title": "If you are filling this form out on behalf of another person, what is your relationship to that person?",
+    "section": "Emergency Contact",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "reason_for_visit",
+    "type": "dropdown",
+    "title": "Reason for today's visit?",
+    "control": {
+      "hint": "Select...",
+      "multi": true,
+      "options": [
+        {
+          "name": "Routine Checkup",
+          "value": "routine"
+        },
+        {
+          "name": "Pain/Emergency",
+          "value": "pain"
+        },
+        {
+          "name": "Cleaning",
+          "value": "cleaning"
+        },
+        {
+          "name": "Cosmetic Consultation",
+          "value": "cosmetic"
+        },
+        {
+          "name": "Orthodontic Consultation",
+          "value": "ortho"
+        },
+        {
+          "name": "Follow-up",
+          "value": "followup"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "how_did_you_hear_about_us",
+    "title": "How did you hear about us?",
+    "section": "General",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "In-home Mailer",
+          "value": "in-home_mailer"
+        },
+        {
+          "name": "Social Media",
+          "value": "social_media"
+        },
+        {
+          "name": "Insurance",
+          "value": "insurance"
+        },
+        {
+          "name": "Practice Website",
+          "value": "practice_website"
+        },
+        {
+          "name": "Internet",
+          "value": "internet"
+        },
+        {
+          "name": "Family/Friend/Coworker",
+          "value": "familyfriendcoworker"
+        }
+      ],
+      "multi": true,
+      "extra": {
+        "type": "Input",
+        "hint": "Other (please specify)"
+      }
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "referrer",
+        "value": "Friend/Family"
+      }
+    ],
+    "key": "referred_by",
+    "type": "input",
+    "title": "Other Who can we thank for your visit?",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "insureds_name_insureds_name",
+    "title": "Insured's Name Insured's Name",
+    "section": "Insurance",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder",
+    "type": "input",
+    "title": "Insured's Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group #",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_local_number",
+    "type": "input",
+    "title": "Local #",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "how_important_is_your_dental_health_to_you_1_2_3_4_5_6_7_8_9_10",
+    "title": "How important is your dental health to you? 1 2 3 4 5 6 7 8 9 10",
+    "section": "Dental History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "1",
+          "value": 1
+        },
+        {
+          "name": "2",
+          "value": 2
+        },
+        {
+          "name": "3",
+          "value": 3
+        },
+        {
+          "name": "4",
+          "value": 4
+        },
+        {
+          "name": "5",
+          "value": 5
+        },
+        {
+          "name": "6",
+          "value": 6
+        },
+        {
+          "name": "7",
+          "value": 7
+        },
+        {
+          "name": "8",
+          "value": 8
+        },
+        {
+          "name": "9",
+          "value": 9
+        },
+        {
+          "name": "10",
+          "value": 10
+        }
+      ]
+    }
+  },
+  {
+    "key": "where_would_you_rate_your_current_dental_health_1_2_3_4_5_6_7_8_",
+    "title": "Where would you rate your current dental health? 1 2 3 4 5 6 7 8 9 10",
+    "section": "Dental History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "1",
+          "value": 1
+        },
+        {
+          "name": "2",
+          "value": 2
+        },
+        {
+          "name": "3",
+          "value": 3
+        },
+        {
+          "name": "4",
+          "value": 4
+        },
+        {
+          "name": "5",
+          "value": 5
+        },
+        {
+          "name": "6",
+          "value": 6
+        },
+        {
+          "name": "7",
+          "value": 7
+        },
+        {
+          "name": "8",
+          "value": 8
+        },
+        {
+          "name": "9",
+          "value": 9
+        },
+        {
+          "name": "10",
+          "value": 10
+        }
+      ]
+    }
+  },
+  {
+    "key": "where_do_you_want_your_dental_health_to_be_1_2_3_4_5_6_7_8_9_10",
+    "title": "Where do you want your dental health to be? 1 2 3 4 5 6 7 8 9 10",
+    "section": "Dental History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "1",
+          "value": 1
+        },
+        {
+          "name": "2",
+          "value": 2
+        },
+        {
+          "name": "3",
+          "value": 3
+        },
+        {
+          "name": "4",
+          "value": 4
+        },
+        {
+          "name": "5",
+          "value": 5
+        },
+        {
+          "name": "6",
+          "value": 6
+        },
+        {
+          "name": "7",
+          "value": 7
+        },
+        {
+          "name": "8",
+          "value": 8
+        },
+        {
+          "name": "9",
+          "value": 9
+        },
+        {
+          "name": "10",
+          "value": 10
+        }
+      ]
+    }
+  },
+  {
+    "key": "what_would_you_like_to_change_about_your_smile",
+    "title": "What would you like to change about your smile?",
+    "section": "Dental History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Color",
+          "value": "color"
+        },
+        {
+          "name": "Bite",
+          "value": "bite"
+        },
+        {
+          "name": "Chipped Teeth",
+          "value": "chipped_teeth"
+        },
+        {
+          "name": "Spaces",
+          "value": "spaces"
+        },
+        {
+          "name": "Crowding",
+          "value": "crowding"
+        },
+        {
+          "name": "Smile Makeover",
+          "value": "smile_makeover"
+        },
+        {
+          "name": "Missing Teeth",
+          "value": "missing_teeth"
+        },
+        {
+          "name": "Whiter Teeth",
+          "value": "whiter_teeth"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "your_last_cleaning_your_last_oral_cancer_screening_1_your_last_c",
+    "title": "Your last cleaning Your last oral cancer screening 1 Your last complete X-rays /",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "what_is_the_most_important_thing_to_you_about_your_future_smile_",
+    "title": "What is the most important thing to you about your future smile and dental health?",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "what_is_the_most_important_thing_to_you_about_your_dental_visit_",
+    "title": "What is the most important thing to you about your dental visit today?",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "why_did_you_leave_your_previous_dentist",
+    "title": "Why did you leave your previous dentist?",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "dental_conditions",
+    "title": "Dental History Cont. - Please mark (x) any of the following conditions that apply to you",
+    "section": "Dental History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Discolored teeth",
+          "value": "discolored_teeth"
+        },
+        {
+          "name": "Grinding/Clenching",
+          "value": "grindingclenching"
+        },
+        {
+          "name": "Thumb sucking",
+          "value": "thumb_sucking"
+        },
+        {
+          "name": "Nitrous Oxide",
+          "value": "nitrous_oxide"
+        },
+        {
+          "name": "Worn teeth",
+          "value": "worn_teeth"
+        },
+        {
+          "name": "Headaches",
+          "value": "headaches"
+        },
+        {
+          "name": "Nail-biting",
+          "value": "nail-biting"
+        },
+        {
+          "name": "Oral Sedation (Pill)",
+          "value": "oral_sedation_pill"
+        },
+        {
+          "name": "Misshaped teeth",
+          "value": "misshaped_teeth"
+        },
+        {
+          "name": "Jaw Joint (TMJ) pain",
+          "value": "jaw_joint_tmj_pain"
+        },
+        {
+          "name": "Cheek/Lip biting",
+          "value": "cheeklip_biting"
+        },
+        {
+          "name": "IV Sedation",
+          "value": "iv_sedation"
+        },
+        {
+          "name": "Crooked teeth",
+          "value": "crooked_teeth"
+        },
+        {
+          "name": "Jaw Joint (TMJ) clicking",
+          "value": "jaw_joint_tmj_clicking"
+        },
+        {
+          "name": "Chewing on ice",
+          "value": "chewing_on_ice"
+        },
+        {
+          "name": "Spaces",
+          "value": "spaces"
+        },
+        {
+          "name": "Bad Bite",
+          "value": "bad_bite"
+        },
+        {
+          "name": "Overbite",
+          "value": "overbite"
+        },
+        {
+          "name": "Sleep Apnea",
+          "value": "sleep_apnea"
+        },
+        {
+          "name": "Mouth Breathing",
+          "value": "mouth_breathing"
+        },
+        {
+          "name": "Snoring",
+          "value": "snoring"
+        },
+        {
+          "name": "Flat teeth",
+          "value": "flat_teeth"
+        },
+        {
+          "name": "Sore Muscles (neck, shoulders)",
+          "value": "sore_muscles_neck_shoulders"
+        },
+        {
+          "name": "Daytime Drowsiness",
+          "value": "daytime_drowsiness"
+        },
+        {
+          "name": "Sensitivity (hot, cold, sweet)",
+          "value": "sensitivity_hot_cold_sweet"
+        },
+        {
+          "name": "Difficulty Opening or Closing",
+          "value": "difficulty_opening_or_closing"
+        },
+        {
+          "name": "Bed wetting (for children)",
+          "value": "bed_wetting_for_children"
+        },
+        {
+          "name": "Pressure",
+          "value": "pressure"
+        },
+        {
+          "name": "Difficulty Chewing on either side",
+          "value": "difficulty_chewing_on_either_side"
+        },
+        {
+          "name": "Broken teeth",
+          "value": "broken_teeth"
+        },
+        {
+          "name": "Bleeding, Swollen, Irritated gums",
+          "value": "bleeding_swollen_irritated_gums"
+        },
+        {
+          "name": "Worn Dry Mouth teeth",
+          "value": "worn_dry_mouth_teeth"
+        },
+        {
+          "name": "Bad breath",
+          "value": "bad_breath"
+        },
+        {
+          "name": "How much How long",
+          "value": "how_much_how_long"
+        },
+        {
+          "name": "Loose tipped, shifting teeth",
+          "value": "loose_tipped_shifting_teeth"
+        },
+        {
+          "name": "Alcohol Frequency",
+          "value": "alcohol_frequency"
+        },
+        {
+          "name": "Previous perio",
+          "value": "previous_perio"
+        },
+        {
+          "name": "Drugs Frequency",
+          "value": "drugs_frequency"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "medical_conditions",
+    "title": "Medical History - Please mark (x) to your response to indicate if you have or have had any of the following",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Diabetes",
+          "value": "diabetes"
+        },
+        {
+          "name": "Arthritis",
+          "value": "arthritis"
+        },
+        {
+          "name": "Asthma",
+          "value": "asthma"
+        },
+        {
+          "name": "Antibiotics",
+          "value": "antibiotics"
+        },
+        {
+          "name": "Chemotherapy",
+          "value": "chemotherapy"
+        },
+        {
+          "name": "Hepatitis A/B/C",
+          "value": "hepatitis_abc"
+        },
+        {
+          "name": "Artificial Joints",
+          "value": "artificial_joints"
+        },
+        {
+          "name": "Emphysema",
+          "value": "emphysema"
+        },
+        {
+          "name": "Radiation Therapy",
+          "value": "radiation_therapy"
+        },
+        {
+          "name": "Jaundice",
+          "value": "jaundice"
+        },
+        {
+          "name": "Jaw Joint Pain",
+          "value": "jaw_joint_pain"
+        },
+        {
+          "name": "Respiratory Problems",
+          "value": "respiratory_problems"
+        },
+        {
+          "name": "Opioids",
+          "value": "opioids"
+        },
+        {
+          "name": "Kidney Disease",
+          "value": "kidney_disease"
+        },
+        {
+          "name": "Rheumatoid Arthritis",
+          "value": "rheumatoid_arthritis"
+        },
+        {
+          "name": "Sinus Problems",
+          "value": "sinus_problems"
+        },
+        {
+          "name": "Liver Disease",
+          "value": "liver_disease"
+        },
+        {
+          "name": "Sleep Apnea (Percocet,",
+          "value": "sleep_apnea_percocet"
+        },
+        {
+          "name": "Artificial Angina (chest Heart pain) Valve",
+          "value": "artificial_angina_chest_heart_pain_valve"
+        },
+        {
+          "name": "Thyroid Disease Neurological",
+          "value": "thyroid_disease_neurological"
+        },
+        {
+          "name": "Anxiety",
+          "value": "anxiety"
+        },
+        {
+          "name": "Tuberculosis",
+          "value": "tuberculosis"
+        },
+        {
+          "name": "Latex Local Anesthetics",
+          "value": "latex_local_anesthetics"
+        },
+        {
+          "name": "Heart Conditions",
+          "value": "heart_conditions"
+        },
+        {
+          "name": "Depression",
+          "value": "depression"
+        },
+        {
+          "name": "NSAIDS",
+          "value": "nsaids"
+        },
+        {
+          "name": "Heart Surgery",
+          "value": "heart_surgery"
+        },
+        {
+          "name": "Ulcers (Stomach)",
+          "value": "ulcers_stomach"
+        },
+        {
+          "name": "Dizziness",
+          "value": "dizziness"
+        },
+        {
+          "name": "AIDS",
+          "value": "aids"
+        },
+        {
+          "name": "High",
+          "value": "high"
+        },
+        {
+          "name": "Gastrointestinal Disease [",
+          "value": "gastrointestinal_disease"
+        },
+        {
+          "name": "Drug",
+          "value": "drug"
+        },
+        {
+          "name": "HIV Positive",
+          "value": "hiv_positive"
+        },
+        {
+          "name": "Allergies",
+          "value": "allergies"
+        },
+        {
+          "name": "Mitral Valve Prolapse",
+          "value": "mitral_valve_prolapse"
+        },
+        {
+          "name": "Fainting",
+          "value": "fainting"
+        },
+        {
+          "name": "HPV",
+          "value": "hpv"
+        },
+        {
+          "name": "Pacemaker Hematologic/Lymphatic",
+          "value": "pacemaker_hematologiclymphatic"
+        },
+        {
+          "name": "Anemia",
+          "value": "anemia"
+        },
+        {
+          "name": "Seizures",
+          "value": "seizures"
+        },
+        {
+          "name": "Rheumatic Fever",
+          "value": "rheumatic_fever"
+        },
+        {
+          "name": "Blood Disorders",
+          "value": "blood_disorders"
+        },
+        {
+          "name": "Psychiatric Illness",
+          "value": "psychiatric_illness"
+        },
+        {
+          "name": "Currently Pregnant",
+          "value": "currently_pregnant"
+        },
+        {
+          "name": "Scarlet Fever",
+          "value": "scarlet_fever"
+        },
+        {
+          "name": "Bruise Easily",
+          "value": "bruise_easily"
+        },
+        {
+          "name": "Nursing",
+          "value": "nursing"
+        },
+        {
+          "name": "Stroke",
+          "value": "stroke"
+        },
+        {
+          "name": "Excessive Bleeding",
+          "value": "excessive_bleeding"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "are_you_under_the_care_of_a_physician_y_or_n_if_yes_please_expla",
+    "title": "Are you under the care of a physician? Y or N If yes, please explain",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "have_you_had_a_serious_illness_operation_or_hospitalization_in_t",
+    "title": "Have you had a serious illness, operation, or hospitalization in the past 5 years? Y or N, If yes please explain",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "are_you_taking_or_have_you_recently_taken_any_prescription_or_ov",
+    "title": "Are you taking or have you recently taken any prescription or over the counter medicine(s)? Y or N If yes, please list all and why, including vitamins, natural or herbal supplements and/or dietary supplements",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "have_you_ever_in_the_past_or_are_you_now_currently_taking_any_me",
+    "title": "Have you ever in the past, or are you now currently taking any medications for Osteopenia/Osteoporosis or Bone Disease?",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "the_undersigned_hereby_authorizes_doctor_to_take_x-rays_study_mo",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "The undersigned hereby authorizes Doctor to take x-rays, study models, photographs, or any other diagnostic aids deemed appropriate by Doctor to make a thorough the use of anesthetic agents embodies a certain risk. I have read, understand and agree to the above terms and conditions."
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "for_completion_by_dentist_only_additional_comments",
+    "title": "For completion by dentist only | Additional",
+    "section": "Consent",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  }
+]
