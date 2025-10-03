@@ -1,5 +1,59 @@
 [
   {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
     "key": "mobile_phone",
     "type": "input",
     "title": "Mobile Phone",
@@ -22,17 +76,6 @@
     }
   },
   {
-    "key": "ssn",
-    "type": "input",
-    "title": "SSN",
-    "control": {
-      "hint": null,
-      "input_type": "ssn"
-    },
-    "section": "General",
-    "optional": false
-  },
-  {
     "key": "age",
     "title": "Age",
     "section": "General",
@@ -43,9 +86,21 @@
     }
   },
   {
-    "key": "sex",
-    "type": "radio",
-    "title": "Gender",
+    "key": "work_phone",
+    "title": "Work Phone",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
+    }
+  },
+  {
+    "key": "work_phone_ext",
+    "title": "Work Phone: Ext#",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "dropdown",
     "control": {
       "options": [
         {
@@ -55,19 +110,10 @@
         {
           "name": "Female",
           "value": "female"
-        },
-        {
-          "name": "Other",
-          "value": "other"
-        },
-        {
-          "name": "Prefer not to self identify",
-          "value": "not_say"
         }
-      ]
-    },
-    "section": "General",
-    "optional": false
+      ],
+      "multi": true
+    }
   },
   {
     "key": "marital_status",
@@ -98,17 +144,6 @@
       ]
     },
     "section": "General",
-    "optional": false
-  },
-  {
-    "key": "address",
-    "type": "input",
-    "title": "Address",
-    "control": {
-      "hint": "Street Address, Apt#",
-      "input_type": "name"
-    },
-    "section": "Patient Information",
     "optional": false
   },
   {
@@ -192,11 +227,48 @@
     "optional": false
   },
   {
-    "key": "relationship_to_insurance_holder",
-    "title": "Relationship to Insurance holder",
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company",
+    "type": "input",
+    "title": "Insurance Company",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
     "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_2",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "name_of_employer",
+    "title": "Name of Employer",
+    "section": "General",
     "optional": false,
-    "type": "radio",
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "name_of_employer_2",
+    "title": "Name of Employer #2",
+    "section": "General",
+    "optional": false,
+    "type": "dropdown",
     "control": {
       "options": [
         {
@@ -219,7 +291,8 @@
           "name": "Other",
           "value": "other"
         }
-      ]
+      ],
+      "multi": true
     }
   },
   {
@@ -260,11 +333,38 @@
     "optional": false
   },
   {
-    "key": "relationship_to_insurance_holder_2",
-    "title": "Relationship to Insurance holder #2",
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company_2",
+    "type": "input",
+    "title": "Insurance Company #2",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
     "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_3",
+    "type": "states",
+    "title": "State #3",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "name_of_employer_4",
+    "title": "Name of Employer #4",
+    "section": "General",
     "optional": false,
-    "type": "radio",
+    "type": "dropdown",
     "control": {
       "options": [
         {
@@ -287,7 +387,8 @@
           "name": "Other",
           "value": "other"
         }
-      ]
+      ],
+      "multi": true
     }
   },
   {

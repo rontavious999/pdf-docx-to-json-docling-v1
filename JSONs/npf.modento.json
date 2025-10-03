@@ -42,6 +42,28 @@
     "optional": false
   },
   {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
     "key": "city",
     "type": "input",
     "title": "City",
@@ -72,6 +94,27 @@
     },
     "section": "Patient Information",
     "optional": false
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "E-Mail",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "drivers_license",
+    "title": "Driver's License #",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
   },
   {
     "key": "state_2",
@@ -128,28 +171,6 @@
     }
   },
   {
-    "key": "email",
-    "type": "input",
-    "title": "Email",
-    "control": {
-      "hint": "joe@example.com",
-      "input_type": "email"
-    },
-    "section": "Patient Information",
-    "optional": false
-  },
-  {
-    "key": "ssn",
-    "type": "input",
-    "title": "SSN",
-    "control": {
-      "hint": null,
-      "input_type": "ssn"
-    },
-    "section": "General",
-    "optional": false
-  },
-  {
     "key": "date_of_birth",
     "type": "date",
     "title": "Date of Birth",
@@ -160,11 +181,44 @@
     "optional": false
   },
   {
+    "key": "occupation",
+    "type": "input",
+    "title": "Patient Employed By Occupation",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "city_2",
+    "type": "input",
+    "title": "City #2",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
     "key": "state_3",
     "type": "states",
     "title": "State #3",
     "control": {
       "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode_2",
+    "type": "input",
+    "title": "Zip #2",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
     },
     "section": "Patient Information",
     "optional": false
@@ -238,6 +292,23 @@
     }
   },
   {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship",
+    "type": "input",
+    "title": "Relationship to Patient",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
     "key": "is_the_patient_a_minor",
     "title": "Is the patient a Minor?",
     "section": "General",
@@ -302,7 +373,7 @@
         "value": true
       }
     ],
-    "key": "emergency_relationship",
+    "key": "emergency_relationship_2",
     "type": "input",
     "title": "Relationship",
     "control": {
@@ -349,17 +420,6 @@
     }
   },
   {
-    "key": "address",
-    "type": "input",
-    "title": "Address",
-    "control": {
-      "hint": "Street Address, Apt#",
-      "input_type": "name"
-    },
-    "section": "Patient Information",
-    "optional": false
-  },
-  {
     "key": "state_4",
     "type": "states",
     "title": "State #4",
@@ -381,7 +441,7 @@
     "optional": false
   },
   {
-    "key": "occupation",
+    "key": "occupation_2",
     "type": "input",
     "title": "Occupation",
     "control": {
@@ -429,13 +489,35 @@
     "optional": false
   },
   {
+    "key": "city_3",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
     "key": "state_6",
     "type": "states",
-    "title": "State #6",
+    "title": "State",
     "control": {
       "hint": "Select state..."
     },
-    "section": "Patient Information",
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "zipcode_3",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Insurance",
     "optional": false
   },
   {
@@ -495,7 +577,7 @@
         "value": true
       }
     ],
-    "key": "emergency_relationship_2",
+    "key": "emergency_relationship_3",
     "type": "input",
     "title": "Relationship",
     "control": {

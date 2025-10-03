@@ -218,9 +218,10 @@ def is_heading(line: str) -> bool:
         return False
     
     # Archivev12 Fix: Don't treat known field labels as headings
+    # Archivev13 Fix: Use search instead of match, and allow # suffix
     # Check against common form field patterns
     for field_key, pattern in KNOWN_FIELD_LABELS.items():
-        if re.match(pattern + r'\s*(?:\(|_|\[|$)', t, re.I):
+        if re.search(pattern, t, re.I):
             return False
     
     # Archivev10 Fix 1: Don't treat multi-column grid headers as headings
@@ -537,14 +538,23 @@ KNOWN_FIELD_LABELS = {
     'work_phone': r'\bwork\s+phone\b',
     'home_phone': r'\bhome\s+phone\b',
     'cell_phone': r'\b(?:cell|mobile)\s+phone\b',
+    'parent_phone': r'\bparent\s+phone\b',
     'email': r'\be-?mail\b',
     'occupation': r'\boccupation\b',
     'employer': r'\bemployer\b',
+    'parent_employer': r'\bparent\s+employer\b',
     'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
     'address': r'\b(?:mailing\s+)?address\b',
     'city': r'\bcity\b',
     'state': r'\bstate\b',
     'zip': r'\bzip(?:\s+code)?\b',
+    'drivers_license': r'\bdrivers?\s+license\s*#?\b',
+    'student': r'\b(?:full\s+time\s+)?student\b',
+    'mother_dob': r"\bmother'?s?\s+dob\b",
+    'father_dob': r"\bfather'?s?\s+dob\b",
+    'dob': r'\bdob\b',
+    'group_number': r'\bgroup\s*#\b',
+    'local_number': r'\blocal\s*#\b',
 }
 
 
@@ -590,6 +600,7 @@ def split_by_known_labels(line: str) -> List[str]:
     """
     Archivev12 Fix 1b: Split lines based on known field labels with spacing.
     Handles: Work Phone (   )         Occupation
+    Also handles: Are you a student? ... Mother's DOB ... Father's DOB
     """
     # Find all known label matches in the line
     label_matches = []
@@ -603,8 +614,44 @@ def split_by_known_labels(line: str) -> List[str]:
     if len(label_matches) < 2:
         return [line]
     
+    # Remove overlapping matches - keep the longer/more specific one
+    filtered_matches = []
+    for i, match in enumerate(label_matches):
+        # Check if this match overlaps with any previous match
+        overlaps = False
+        for prev_match in filtered_matches:
+            # Check if ranges overlap
+            if not (match[1] <= prev_match[0] or match[0] >= prev_match[1]):
+                # They overlap - keep the longer match
+                overlaps = True
+                break
+        if not overlaps:
+            filtered_matches.append(match)
+    
+    label_matches = filtered_matches
+    
+    if len(label_matches) < 2:
+        return [line]
+    
     # Check if labels are separated by sufficient spacing (4+ spaces)
     segments = []
+    last_added_idx = -1
+    
+    # If first label doesn't start at position 0, check for text before first big spacing gap
+    # This handles cases like "Are you a student? Yes or No    Mother's DOB    Father's DOB"
+    if label_matches[0][0] > 0:
+        # Look for the first significant spacing gap (4+ spaces) before the second label
+        if len(label_matches) >= 2:
+            # Check text from start to second label
+            text_before_second = line[:label_matches[1][0]]
+            # Find position of first 4+ space gap
+            gap_match = re.search(r'\s{4,}', text_before_second)
+            if gap_match:
+                # Extract everything before the gap as first segment
+                before_gap = line[:gap_match.start()].strip()
+                if before_gap and len(before_gap) > 5:
+                    segments.append(before_gap)
+    
     for i in range(len(label_matches)):
         start_pos = label_matches[i][0]
         
@@ -618,15 +665,56 @@ def split_by_known_labels(line: str) -> List[str]:
             if not re.search(r'\s{4,}', between):
                 continue
             
-            end_pos = label_matches[i + 1][0]
+            # This is a valid split point
+            end_pos = start_next
+            segment = line[start_pos:end_pos].strip()
+            if segment:
+                segments.append(segment)
+                last_added_idx = i
         else:
-            end_pos = len(line)
-        
-        segment = line[start_pos:end_pos].strip()
-        if segment:
-            segments.append(segment)
+            # Last match - add from here to end
+            segment = line[start_pos:].strip()
+            if segment:
+                segments.append(segment)
     
     # Only return segments if we got at least 2
+    return segments if len(segments) >= 2 else [line]
+
+
+def split_conditional_field_line(line: str) -> List[str]:
+    """
+    Archivev13 Fix: Handle conditional multi-field lines.
+    Pattern: "Question? ... If condition: field1 ... field2"
+    Example: "Are you a student? Yes or No If patient is a minor: Mother's DOB    Father's DOB"
+    """
+    # Look for "If ... :" pattern
+    conditional_match = re.search(r'\b(if\s+[^:]{5,40}:)', line, re.I)
+    if not conditional_match:
+        return [line]
+    
+    conditional_text = conditional_match.group(0)
+    conditional_start = conditional_match.start()
+    
+    # Split into:
+    # 1. Text before conditional (should be a question)
+    # 2. Text after conditional (contains multiple fields)
+    before_conditional = line[:conditional_start].strip()
+    after_conditional = line[conditional_match.end():].strip()
+    
+    segments = []
+    
+    # Add the question before conditional if it exists and is meaningful
+    if before_conditional and len(before_conditional) > 5:
+        segments.append(before_conditional)
+    
+    # Try to split the after_conditional part using known labels
+    if after_conditional:
+        after_segments = split_by_known_labels(after_conditional)
+        if len(after_segments) > 1:
+            segments.extend(after_segments)
+        else:
+            segments.append(after_conditional)
+    
     return segments if len(segments) >= 2 else [line]
 
 
@@ -634,11 +722,17 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
     Archivev12 Fix 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
-    1. Existing pattern (colon + checkbox)
-    2. Checkboxes without colons
-    3. Known label patterns with spacing
+    1. Conditional field patterns (Archivev13)
+    2. Existing pattern (colon + checkbox)
+    3. Checkboxes without colons
+    4. Known label patterns with spacing
     """
-    # Try existing pattern first (backward compatible)
+    # Try conditional field pattern first (Archivev13)
+    result = split_conditional_field_line(line)
+    if len(result) > 1:
+        return result
+    
+    # Try existing pattern (backward compatible)
     result = split_multi_question_line(line)
     if len(result) > 1:
         return result

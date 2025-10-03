@@ -90,6 +90,16 @@
     "optional": false
   },
   {
+    "key": "soc_sec",
+    "title": "Soc. Sec. #",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
     "key": "marital_status",
     "type": "radio",
     "title": "Marital Status",
@@ -262,6 +272,16 @@
     "optional": false
   },
   {
+    "key": "are_you_a_full_time_student_yes_or_no",
+    "title": "Are you a full time student? Yes or No",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
     "key": "parent_name",
     "title": "Parent Name",
     "section": "Patient Information",
@@ -279,6 +299,26 @@
     "type": "input",
     "control": {
       "input_type": "ssn"
+    }
+  },
+  {
+    "key": "parent_employer",
+    "title": "Parent Employer",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "parent_phone",
+    "title": "Parent Phone ( )",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
     }
   },
   {
