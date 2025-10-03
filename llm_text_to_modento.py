@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.12
+llm_text_to_modento.py — v2.13
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.11 (Archivev10 fixes):
-  • Archivev10 Fix 1: Enhanced multi-column checkbox grid detection and parsing
-  • Archivev10 Fix 2: Improved category header detection in multi-column grids
-  • Archivev10 Fix 4: Grid consolidation post-processor for malformed fields
-  • Previous: Multi-line headers, category headers, section inference, duplicate consolidation
+What's new vs v2.12 (Archivev11 fixes):
+  • Archivev11 Fix 1: Enhanced column boundary detection with label pattern removal
+  • Archivev11 Fix 2: Text-only item detection in multi-column grids
+  • Archivev11 Fix 3: Post-processor to clean overflow artifacts in field titles
+  • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
+  • Previous (v2.11): Multi-line headers, section inference, duplicate consolidation
 """
 
 from __future__ import annotations
@@ -1287,8 +1288,9 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
         # Count checkboxes
         line_checkboxes = list(checkbox_pattern.finditer(line))
         
-        # Line should have at least 2 checkboxes (some rows may have fewer)
-        if len(line_checkboxes) >= 2:
+        # Line should have at least 1 checkbox
+        # (Changed from 2 for Archivev11 Fix 2: some lines have text-only items in other columns)
+        if len(line_checkboxes) >= 1:
             data_lines.append(i)
     
     # Valid grid if we found at least 3 data lines
@@ -1307,9 +1309,10 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
 
 def extract_text_for_checkbox(line: str, cb_end: int, column_positions: List[int], cb_pos: int) -> str:
     """
-    Archivev10 Fix 3: Enhanced text extraction using column boundaries.
+    Archivev10 Fix 3 + Archivev11 Fix 1: Enhanced text extraction using column boundaries.
     
     Extracts text after a checkbox, using column positions to determine boundaries.
+    Archivev11 Fix 1: Also removes known label patterns from adjacent columns.
     """
     text_after = line[cb_end:]
     checkbox_pattern = re.compile(CHECKBOX_ANY)
@@ -1340,6 +1343,19 @@ def extract_text_for_checkbox(line: str, cb_end: int, column_positions: List[int
             parts = re.split(r'\s{8,}', text_after, maxsplit=1)
             item_text = parts[0].strip() if parts else text_after.strip()
     
+    # Archivev11 Fix 1: Remove known label patterns from adjacent columns
+    # These are common labels that appear in adjacent columns and shouldn't be part of the field name
+    LABEL_PATTERNS = [
+        r'\s+Frequency\s*$',           # "Alcohol Frequency", "Drugs Frequency"
+        r'\s+How\s+much\s*$',          # "How much"
+        r'\s+How\s+long\s*$',          # "How long"
+        r'\s+Comments?\s*:?\s*$',      # "Comments", "Comment:"
+        r'\s+Additional\s+Comments?\s*:?\s*$',  # "Additional Comments"
+    ]
+    
+    for pattern in LABEL_PATTERNS:
+        item_text = re.sub(pattern, '', item_text, flags=re.I)
+    
     # Clean up trailing artifacts
     item_text = re.sub(r'\s+[A-Z]\s*$', '', item_text)  # Remove trailing single caps
     item_text = re.sub(r'\s*\([^)]{0,5}\s*$', '', item_text)  # Remove incomplete parentheticals
@@ -1348,12 +1364,113 @@ def extract_text_for_checkbox(line: str, cb_end: int, column_positions: List[int
     return item_text
 
 
+def extract_text_only_items_at_columns(line: str, column_positions: List[int], checkboxes_found: List[int]) -> List[str]:
+    """
+    Archivev11 Fix 2: Extract text-only items at column positions.
+    
+    Looks for text at expected column positions that don't have checkboxes.
+    Validates that text is not a category header or label.
+    
+    Args:
+        line: The line to extract from
+        column_positions: List of character positions where columns are expected
+        checkboxes_found: List of positions where checkboxes were found on this line
+        
+    Returns:
+        List of text items found at column positions without checkboxes
+    """
+    text_items = []
+    
+    # Labels that should NOT be captured as items
+    KNOWN_LABELS = [
+        'frequency', 'how much', 'how long', 'comments', 'additional comments',
+        'tobacco', 'alcohol', 'drugs', 'social', 'pattern', 'conditions',
+        'sleep pattern or conditions', 'how much how long'
+    ]
+    
+    # Category headers that should be skipped
+    CATEGORY_HEADERS = [
+        'appearance', 'function', 'habits', 'previous comfort options',
+        'pain/discomfort', 'periodontal', 'gum health', 'sleep pattern',
+        'cancer', 'cardiovascular', 'endocrinology', 'musculoskeletal',
+        'respiratory', 'gastrointestinal', 'neurological', 'hematologic',
+        'medical allergies', 'women', 'viral infections', 'sleep pattern or conditions'
+    ]
+    
+    for col_pos in column_positions:
+        # Skip if there's a checkbox at or near this position
+        has_checkbox = any(abs(cb_pos - col_pos) <= 5 for cb_pos in checkboxes_found)
+        if has_checkbox:
+            continue
+        
+        # Extract text starting from this column position
+        # Look ahead to next column or 40 characters, whichever is shorter
+        next_col_idx = column_positions.index(col_pos) + 1 if col_pos in column_positions else -1
+        if next_col_idx > 0 and next_col_idx < len(column_positions):
+            end_pos = column_positions[next_col_idx]
+        else:
+            end_pos = col_pos + 40
+        
+        # Make sure we don't go past end of line
+        end_pos = min(end_pos, len(line))
+        
+        if col_pos < len(line):
+            text = line[col_pos:end_pos].strip()
+            
+            # Validate this looks like an item, not a label or header
+            if len(text) < 3:
+                continue
+            
+            # Skip if it's just whitespace or punctuation
+            if not re.search(r'[a-zA-Z]', text):
+                continue
+            
+            # Skip known labels
+            if text.lower() in KNOWN_LABELS:
+                continue
+            
+            # Skip if any word in text is in known labels (partial match)
+            text_words = text.lower().split()
+            if any(label in text.lower() for label in KNOWN_LABELS if len(label) > 3):
+                continue
+            
+            # Skip category headers
+            if text.lower() in CATEGORY_HEADERS:
+                continue
+            
+            # Skip if any category header is in text
+            if any(header in text.lower() for header in CATEGORY_HEADERS if len(header) > 3):
+                continue
+            
+            # Skip if it's "Pattern or Conditions" type text
+            if re.match(r'^(Pattern|Conditions?|Health)\s*$', text, re.I):
+                continue
+            
+            # Skip if text starts with lowercase (likely truncated)
+            if text and text[0].islower():
+                continue
+            
+            # Skip if it looks like a checkbox label remnant (e.g., "[ ]" without the bracket)
+            if text.strip() in ['[', ']', '[ ]', '[]']:
+                continue
+            
+            # Clean up the text (remove trailing punctuation, whitespace)
+            text = text.rstrip('.:;,')
+            
+            # If it still has reasonable length, add it
+            if len(text) >= 3 and len(text) <= 50:
+                text_items.append(text)
+    
+    return text_items
+
+
 def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bool = False) -> Optional['Question']:
     """
     Parse a multi-column checkbox grid into a single multi-select field.
     
     Extracts all checkbox items across all rows and columns, creating clean option names.
     Uses Archivev10 Fix 3 for enhanced column-aware text extraction.
+    Uses Archivev11 Fix 2 for text-only item detection.
     """
     data_lines = grid_info['data_lines']
     column_positions = grid_info['column_positions']
@@ -1368,12 +1485,14 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
         
         # Find all checkboxes in this line
         checkboxes = list(checkbox_pattern.finditer(line))
+        checkbox_positions = [cb.start() for cb in checkboxes]
         
+        # Extract checkbox items
         for checkbox in checkboxes:
             cb_pos = checkbox.start()
             cb_end = checkbox.end()
             
-            # Archivev10 Fix 3: Use enhanced text extraction with column awareness
+            # Archivev10 Fix 3 + Archivev11 Fix 1: Use enhanced text extraction with column awareness
             item_text = extract_text_for_checkbox(line, cb_end, column_positions, cb_pos)
             
             # Skip if too short or looks like junk
@@ -1394,6 +1513,15 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
                 continue
             
             all_options.append((item_text, None))
+        
+        # Archivev11 Fix 2: Also look for text-only items at column positions
+        # Only do this for lines that have fewer checkboxes than expected columns
+        if len(checkboxes) < len(column_positions):
+            text_only_items = extract_text_only_items_at_columns(line, column_positions, checkbox_positions)
+            for item in text_only_items:
+                if debug:
+                    print(f"    [debug] text-only item at line {line_idx}: '{item}'")
+                all_options.append((item, None))
     
     # Remove duplicates while preserving order
     seen = set()
@@ -3331,6 +3459,42 @@ def postprocess_consolidate_malformed_grids(payload: List[dict], dbg: Optional[D
     
     return payload
 
+
+def postprocess_clean_overflow_titles(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Archivev11 Fix 3: Clean up field titles that have column overflow artifacts.
+    
+    Removes known label patterns that appear at the end of titles due to
+    text extraction extending into adjacent columns.
+    """
+    LABEL_PATTERNS = [
+        r'\s+Frequency\s*$',           # "Alcohol Frequency", "Drugs Frequency"
+        r'\s+How\s+much\s*$',          # "How much"
+        r'\s+How\s+long\s*$',          # "How long"
+        r'\s+Comments?\s*:?\s*$',      # "Comments", "Comment:"
+        r'\s+Additional\s+Comments?\s*:?\s*$',  # "Additional Comments"
+        r'\s+Pattern\s*$',             # "Pattern"
+        r'\s+Conditions?\s*$',         # "Conditions"
+    ]
+    
+    for item in payload:
+        title = item.get('title', '')
+        original_title = title
+        
+        # Check if title ends with a known label pattern
+        for pattern in LABEL_PATTERNS:
+            if re.search(pattern, title, re.I):
+                # Truncate at the pattern
+                title = re.sub(pattern, '', title, flags=re.I).strip()
+                
+                if dbg and title != original_title:
+                    dbg.gate(f"overflow_title_cleaned -> '{original_title}' → '{title}'")
+                
+                item['title'] = title
+                break
+    
+    return payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -3437,6 +3601,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev10 Fix 4: Consolidate malformed grid fields
     payload = postprocess_consolidate_malformed_grids(payload, dbg=dbg)
+    
+    # Archivev11 Fix 3: Clean up column overflow in field titles
+    payload = postprocess_clean_overflow_titles(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
