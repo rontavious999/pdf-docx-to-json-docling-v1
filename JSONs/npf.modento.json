@@ -1,0 +1,579 @@
+[
+  {
+    "key": "todays_date",
+    "title": "Today's Date",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "date",
+    "control": {
+      "input_type": "any"
+    }
+  },
+  {
+    "key": "patient_name",
+    "title": "Patient Name",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "mi",
+    "type": "input",
+    "title": "MI",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "preferred_name",
+    "type": "input",
+    "title": "Preferred Name",
+    "control": {
+      "hint": "Optional",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state_2",
+    "type": "states",
+    "title": "State #2",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "mobile_phone",
+    "type": "input",
+    "title": "Mobile Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "phone",
+    "title": "Phone",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
+    }
+  },
+  {
+    "key": "home_phone",
+    "type": "input",
+    "title": "Home Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "work_phone",
+    "title": "Work Phone",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
+    }
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "Email",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of Birth",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state_3",
+    "type": "states",
+    "title": "State #3",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "sex",
+    "type": "radio",
+    "title": "Sex",
+    "control": {
+      "options": [
+        {
+          "name": "Male",
+          "value": "male"
+        },
+        {
+          "name": "Female",
+          "value": "female"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        },
+        {
+          "name": "Prefer not to self identify",
+          "value": "not_say"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "marital_status",
+    "type": "radio",
+    "title": "Marital Status",
+    "control": {
+      "options": [
+        {
+          "name": "Single",
+          "value": "single"
+        },
+        {
+          "name": "Married",
+          "value": "married"
+        },
+        {
+          "name": "Widowed",
+          "value": "widowed"
+        },
+        {
+          "name": "Divorced",
+          "value": "divorced"
+        },
+        {
+          "name": "Prefer not to say",
+          "value": "not say"
+        }
+      ]
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "in_case_of_emergency_who_should_be_notified",
+    "title": "In case of emergency, who should be notified?",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "is_the_patient_a_minor",
+    "title": "Is the patient a Minor?",
+    "section": "General",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "full-time_student",
+    "title": "Full-time Student",
+    "section": "General",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "name_of_school",
+    "title": "Name of School",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "name_of_responsible_party_first_last",
+    "title": "Name of Responsible Party: First Last",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship",
+    "type": "input",
+    "title": "Relationship",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "if_patient_is_a_minor_primary_residence",
+    "title": "If patient is a Minor, primary residence",
+    "section": "General",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Both Parents",
+          "value": "both_parents"
+        },
+        {
+          "name": "Mom",
+          "value": "mom"
+        },
+        {
+          "name": "Dad",
+          "value": "dad"
+        },
+        {
+          "name": "Step Parent",
+          "value": "step_parent"
+        },
+        {
+          "name": "Shared Custody",
+          "value": "shared_custody"
+        },
+        {
+          "name": "Guardian",
+          "value": "guardian"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state_4",
+    "type": "states",
+    "title": "State #4",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "employer",
+    "type": "input",
+    "title": "Employer",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "occupation",
+    "type": "input",
+    "title": "Occupation",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state_5",
+    "type": "states",
+    "title": "State #5",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder",
+    "type": "input",
+    "title": "Insured's Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_6",
+    "type": "states",
+    "title": "State #6",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number",
+    "type": "input",
+    "title": "ID Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_relationship",
+    "type": "radio",
+    "title": "Relationship to Insured",
+    "control": {
+      "options": [
+        {
+          "name": "Self",
+          "value": "self"
+        },
+        {
+          "name": "Spouse",
+          "value": "spouse"
+        },
+        {
+          "name": "Child",
+          "value": "child"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship_2",
+    "type": "input",
+    "title": "Relationship",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "Dental History",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder_2",
+    "type": "input",
+    "title": "Insured's Name #2",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "terms_patient_responsibi",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "• Patient Responsibilities: We are committed to providing you with the best possible care and helping you achieve your optimum oral health. Toward these goals, we would like to explain your financial and scheduling responsibilities with our practice."
+    }
+  },
+  {
+    "key": "payment_payment_is_due_at_the_time_services_are_rendered_financi",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Payment: Payment is due at the time services are rendered. Financial arrangements are discussed during the initial visit and a financial agreement is completed in advance of performing any treatment with our practice. We accept the following forms of payment: Cash (US currency only), certified check or money order, credit card (Visa, Mastercard, Amex, Discover). Personal checks are also accepted from patients who have established a positive payment history with the practice. Non-sufficient funds or returned checks may be grounds for declining future personal checks and an alternative form of payment may be requested, upon the discretion of the doctor. plan. Benefits and payments received are based on the terms of the contract negotiated between you or your employer If we are a contracted provider with your plan, you are responsible only for your portion of the approved fee as determined by your plan. We are required to collect the patient's portion (deductible, co-insurance, co-pay, or any the amount determined by your plan, the amount billed to you will be adjusted to reflect this. If we are not a contracted provider with your dental benefit plan, it is the patient's responsibility to verify with the plan whether the plan allows patients to receive reimbursement for services from out-of-network providers. If your plan allows reimbursement for services from out-of-network providers, our practice can file the claim with your plan and receive reimbursement directly from the plan if you \"assign benefits\" to us. In this circumstance, you are responsible and will be billed for any unpaid balance for services rendered upon receipt of payment from the plan to our practice, even if that amount is different than our estimated patient portion of the bill. If you choose to not \"assign benefits\" to our practice, you are responsible for filing claims and obtaining reimbursement directly from"
+    }
+  },
+  {
+    "key": "terms_scheduling_of_appo",
+    "title": "Terms (3)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "• Scheduling of Appointments: We reserve the doctor and hygienist's time on the schedule for each patient procedure and are diligent about being on-time. Because of this courtesy, when a patient cancels an appointment, it impacts the overall quality of service we are able to provide. To maintain the utmost service and care, we do require 24 hour advance notice to reschedule an appointment. With less than 24 hour notice, a cancellation fee of minimum $50 may be charged or deposit to reserve the appointment time again, may be required. To serve all of our patients in a timely manner, we may need to reschedule an appointment if a patient is ten minutes late or more arriving to our practice. To reschedule an appointment due to late arrival, a fee of minimum $50 may be charged or deposit to reserve the appointment time again, may be required. • Authorizations: I understand that the information I have provided is correct to the best of my knowledge. I authorize treatment. (initial) I have read the above and agree to the financial and scheduling terms. (initial) I authorize the release of my personal information necessary to process my dental benefit claims, including health information, diagnosis, and records of any treatment or exam rendered. I hereby authorize payment of benefits"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  }
+]
