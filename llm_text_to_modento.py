@@ -532,29 +532,56 @@ def split_multi_question_line(line: str) -> List[str]:
 
 # Known field labels dictionary for pattern matching
 KNOWN_FIELD_LABELS = {
+    # Name fields
+    'first_name': r'\bfirst\s+name\b',
+    'last_name': r'\blast\s+name\b',
+    'preferred_name': r'\bpreferred\s+name\b',
+    'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)\b',
+    'patient_name': r'\bpatient\s+name\b',
+    'parent_name': r'\bparent\s+name\b',
+    # Date/Age fields
+    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth)\b',
+    'dob': r'\bdob\b',
+    'age': r'\bage\b',
+    'mother_dob': r"\bmother'?s?\s+dob\b",
+    'father_dob': r"\bfather'?s?\s+dob\b",
+    # Demographics
     'sex': r'\bsex\b',
     'gender': r'\bgender\b',
     'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)\b',
+    # Contact fields
     'work_phone': r'\bwork\s+phone\b',
     'home_phone': r'\bhome\s+phone\b',
     'cell_phone': r'\b(?:cell|mobile)\s+phone\b',
     'parent_phone': r'\bparent\s+phone\b',
-    'email': r'\be-?mail\b',
+    'email': r'\be-?mail(?:\s+address)?\b',
+    'emergency_contact': r'\bemergency\s+contact\b',
+    'phone': r'\bphone\b',
+    'ext': r'\bext\s*#?\b',
+    'extension': r'\bextension\b',
+    # Employment/Education
     'occupation': r'\boccupation\b',
     'employer': r'\bemployer\b',
     'parent_employer': r'\bparent\s+employer\b',
+    'student': r'\b(?:full\s+time\s+)?student\b',
+    # ID fields
     'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
+    'drivers_license': r'\bdrivers?\s+license\s*#?',
+    'member_id': r'\bmember\s+id\b',
+    'policy_holder': r'\bpolicy\s+holder\b',
+    # Address fields
     'address': r'\b(?:mailing\s+)?address\b',
     'city': r'\bcity\b',
     'state': r'\bstate\b',
     'zip': r'\bzip(?:\s+code)?\b',
-    'drivers_license': r'\bdrivers?\s+license\s*#?',
-    'student': r'\b(?:full\s+time\s+)?student\b',
-    'mother_dob': r"\bmother'?s?\s+dob\b",
-    'father_dob': r"\bfather'?s?\s+dob\b",
-    'dob': r'\bdob\b',
+    'apt': r'\bapt\s*#?\b',
+    # Insurance fields
     'group_number': r'\bgroup\s*#',
     'local_number': r'\blocal\s*#',
+    'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)\b',
+    # Misc
+    'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit\b',
+    'previous_dentist': r'\bprevious\s+dentist\b',
 }
 
 
