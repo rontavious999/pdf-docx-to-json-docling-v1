@@ -749,11 +749,17 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
     Archivev12 Fix 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
+    0. Archivev15: Field label with inline checkbox (DON'T split these)
     1. Conditional field patterns (Archivev13)
     2. Existing pattern (colon + checkbox)
     3. Checkboxes without colons
     4. Known label patterns with spacing
     """
+    # Archivev15 Fix 1: Check if this is a field with inline checkbox option
+    # These should NOT be split, so return early
+    if detect_field_with_inline_checkbox(line):
+        return [line]
+    
     # Try conditional field pattern first (Archivev13)
     result = split_conditional_field_line(line)
     if len(result) > 1:
@@ -1016,6 +1022,38 @@ def option_from_bullet_line(ln: str) -> Optional[Tuple[str, Optional[bool]]]:
     if low in ("yes", "y"): return ("Yes", True)
     if low in ("no", "n"):  return ("No", False)
     return (name, None)
+
+def detect_field_with_inline_checkbox(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Archivev15 Fix 1: Detect lines with field label followed by inline checkbox option.
+    
+    Pattern: "Field Label:    <spaces>    [ ] Option text"
+    
+    Returns:
+        Tuple of (field_label, checkbox_option) if pattern detected, None otherwise
+    
+    Examples:
+        "Cell Phone:                         [ ] Yes, send me Text Message alerts"
+        -> ("Cell Phone", "Yes, send me Text Message alerts")
+        
+        "E-mail Address:                     [ ] Yes, send me alerts via Email"
+        -> ("E-mail Address", "Yes, send me alerts via Email")
+    """
+    # Look for pattern: text ending with colon, followed by spaces, then checkbox and text
+    pattern = r'^(.+?):\s{5,}' + CHECKBOX_ANY + r'\s+(.+)$'
+    match = re.match(pattern, line.strip())
+    
+    if match:
+        field_label = match.group(1).strip()
+        checkbox_text = match.group(2).strip()
+        
+        # Validate: field label should be reasonably short (not a question)
+        # and checkbox text should be meaningful
+        if len(field_label) <= 50 and len(checkbox_text) >= 5:
+            return (field_label, checkbox_text)
+    
+    return None
+
 
 def options_from_inline_line(ln: str) -> List[Tuple[str, Optional[bool]]]:
     """
@@ -2857,6 +2895,45 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if debug: print(f"  [debug] gate: insurance_fanout -> '{line}' -> ['insurance_id_number','ssn(+scope)']")
             i += 1; continue
 
+        # Archivev15 Fix 1: Check for field label with inline checkbox option
+        # Pattern: "Field Label:    <spaces>    [ ] Option text"
+        # This must be checked BEFORE try_split_known_labels which incorrectly splits these lines
+        # Use raw line (not collapsed) to preserve spacing
+        field_checkbox_split = detect_field_with_inline_checkbox(raw)
+        if field_checkbox_split:
+            field_label, checkbox_option = field_checkbox_split
+            
+            # Create the main field (e.g., "Cell Phone")
+            field_title = field_label.strip()
+            field_key = slugify(field_title)
+            field_itype = classify_input_type(field_title)
+            
+            questions.append(Question(
+                field_key,
+                field_title,
+                cur_section,
+                "input",
+                control={"input_type": field_itype or "text"}
+            ))
+            
+            # Create the checkbox field (e.g., "Yes, send me Text Message alerts")
+            checkbox_title = checkbox_option.strip()
+            checkbox_key = slugify(checkbox_title)
+            
+            questions.append(Question(
+                checkbox_key,
+                checkbox_title,
+                cur_section,
+                "radio",
+                control={"options": [make_option("Yes", True), make_option("No", False)]}
+            ))
+            
+            if debug:
+                print(f"  [debug] gate: field_with_inline_checkbox -> '{field_title}' + '{checkbox_title}'")
+            
+            i += 1
+            continue
+
         # --- Composite / multi-label fan-out ---
         composite_labels = try_split_known_labels(line)
         if composite_labels:
@@ -3063,6 +3140,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 questions.append(Question("marital_status", "Marital Status", cur_section, "radio", control=control))
                 i += 1
                 continue
+
 
         # Option harvesting for a single prompt (incl. “hear about us”)
         opts_inline = options_from_inline_line(line)

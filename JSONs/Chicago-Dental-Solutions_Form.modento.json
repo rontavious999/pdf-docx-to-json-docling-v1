@@ -109,7 +109,38 @@
   {
     "key": "mobile_phone",
     "type": "input",
-    "title": "Mobile Phone",
+    "title": "Cell Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "yes_send_me_text_message_alerts",
+    "title": "Yes, send me Text Message alerts",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "work_phone",
+    "type": "input",
+    "title": "Work Phone",
     "control": {
       "hint": null,
       "input_type": "phone",
@@ -127,28 +158,6 @@
     "control": {
       "input_type": "phone"
     }
-  },
-  {
-    "key": "age",
-    "title": "Age",
-    "section": "Patient Information",
-    "optional": false,
-    "type": "input",
-    "control": {
-      "input_type": "text"
-    }
-  },
-  {
-    "key": "work_phone",
-    "type": "input",
-    "title": "Work Phone",
-    "control": {
-      "hint": null,
-      "input_type": "phone",
-      "phone_prefix": "+1"
-    },
-    "section": "Patient Information",
-    "optional": false
   },
   {
     "key": "ext",
@@ -221,7 +230,7 @@
   {
     "key": "email",
     "type": "input",
-    "title": "Email",
+    "title": "E-mail Address",
     "control": {
       "hint": "joe@example.com",
       "input_type": "email"
