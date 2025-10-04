@@ -119,7 +119,7 @@
     "optional": false
   },
   {
-    "key": "yes_send_me_text_message_alerts",
+    "key": "opt_in_yes_send_me_text_message_alerts",
     "title": "Yes, send me Text Message alerts",
     "section": "Patient Information",
     "optional": false,
@@ -237,6 +237,25 @@
     },
     "section": "Patient Information",
     "optional": false
+  },
+  {
+    "key": "opt_in_yes_send_me_alerts_via_email",
+    "title": "Yes, send me alerts via Email",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
   },
   {
     "if": [

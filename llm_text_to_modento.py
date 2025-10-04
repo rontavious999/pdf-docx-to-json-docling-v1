@@ -2918,7 +2918,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             
             # Create the checkbox field (e.g., "Yes, send me Text Message alerts")
             checkbox_title = checkbox_option.strip()
-            checkbox_key = slugify(checkbox_title)
+            # Use a prefix to ensure unique key that won't conflict with main field
+            checkbox_key = f"opt_in_{slugify(checkbox_title)}"
             
             questions.append(Question(
                 checkbox_key,
@@ -4145,19 +4146,21 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
     
     for q in payload:
         # Archivev8 Fix 3: Check if this is a conditional/explanation field
-        # These should not have templates applied to avoid breaking conditional relationships
+        # Archivev15 Fix: Also skip opt-in preference fields (inline checkbox options)
+        # These should not have templates applied to avoid breaking conditional relationships or changing keys
         is_conditional_field = (
             bool(q.get("conditional_on")) or
             "_explanation" in q.get("key", "") or
             "_followup" in q.get("key", "") or
             "_details" in q.get("key", "") or
+            q.get("key", "").startswith("opt_in_") or  # Archivev15: Skip opt-in preference fields
             (q.get("title", "").lower().strip() in ["please explain", "explanation", "details", "comments"])
         )
         
         if is_conditional_field:
             # Skip template matching for conditional fields
             out.append(q)
-            if dbg.enabled:
+            if dbg.enabled and not q.get("key", "").startswith("opt_in_"):
                 print(f"  [debug] template: skipping conditional field '{q.get('key')}' to preserve relationship")
             continue
         
