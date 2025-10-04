@@ -34,7 +34,7 @@ import requests
 
 # ===================== API CONFIG =====================
 # Put your API key here (recommended to use env var instead).
-UNSTRACT_API_KEY = os.getenv("LLMWHISPERER_API_KEY", "wG15LPsf2W5B30sslJIzc6KN38Hjpr9sJOigobcBrbI")  # <-- PUT YOUR API KEY HERE
+UNSTRACT_API_KEY = os.getenv("LLMWHISPERER_API_KEY", "#######")  # <-- PUT YOUR API KEY HERE
 BASE_URL = os.getenv(
     "LLMWHISPERER_BASE_URL_V2",
     "https://llmwhisperer-api.us-central.unstract.com/api/v2",
