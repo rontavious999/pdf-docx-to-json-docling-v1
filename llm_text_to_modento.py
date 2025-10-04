@@ -1196,6 +1196,7 @@ def clean_option_text(text: str) -> str:
     
     # Fix 2: Handle malformed slash-separated conditions
     # Pattern: "ConditionA/ random text that doesn't make sense"
+    # But preserve valid compound phrases like "I live/work in area", "AIDS/HIV", "Family/Friend"
     if '/' in text:
         parts = [p.strip() for p in text.split('/')]
         
@@ -1204,20 +1205,37 @@ def clean_option_text(text: str) -> str:
             first_part = parts[0]
             second_part = parts[1]
             
-            # Heuristics for "messy" second part:
-            # - More than 2 words (likely run-on text, medical conditions are usually 1-2 words)
-            # - Contains multiple spaces (formatting artifact)
-            # - Doesn't start with capital (incomplete/malformed)
-            # - Contains typos or strange patterns (like "Seizers" instead of "Seizures")
-            is_messy_second = (
-                len(second_part.split()) > 2 or
-                '  ' in second_part or
-                (len(second_part) > 0 and not second_part[0].isupper())
-            )
+            # Common valid compound patterns to preserve
+            # Pattern 1: "word1/word2" where both are short (likely acronym or compound like "AIDS/HIV")
+            # Pattern 2: "I live/work" - starts with pronoun/common phrase
+            valid_compound_starts = {'i', 'you', 'we', 'they', 'he', 'she'}
+            valid_continuation_words = {'work', 'or', 'and', 'in', 'of', 'to'}
             
-            # If first part looks complete and second is messy, use just first
-            if len(first_part) >= 3 and first_part[0].isupper() and is_messy_second:
-                text = first_part
+            is_valid_compound = False
+            if len(parts) == 2:  # Only check for simple two-part compounds
+                first_word = first_part.split()[0].lower() if first_part.split() else ''
+                second_word = second_part.split()[0].lower() if second_part.split() else ''
+                
+                # Short compound (likely valid): "AIDS/HIV", "M/F"
+                if len(first_part) <= 10 and len(second_part) <= 10 and len(second_part.split()) <= 2:
+                    is_valid_compound = True
+                # Phrase continuation: "I live/work"
+                elif first_word in valid_compound_starts or second_word in valid_continuation_words:
+                    is_valid_compound = True
+            
+            # Heuristics for "messy" second part (only if not a valid compound):
+            # - More than 2 words (likely run-on text)
+            # - Contains multiple spaces (formatting artifact)
+            # - Contains unusual capitalization patterns
+            if not is_valid_compound:
+                is_messy_second = (
+                    len(second_part.split()) > 2 or
+                    '  ' in second_part
+                )
+                
+                # If first part looks complete and second is messy, use just first
+                if len(first_part) >= 3 and first_part[0].isupper() and is_messy_second:
+                    text = first_part
     
     # Fix 3: Clean extra whitespace
     text = re.sub(r'\s+', ' ', text)
