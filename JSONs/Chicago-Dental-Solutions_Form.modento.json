@@ -1,0 +1,1309 @@
+[
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "First Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "last_name",
+    "type": "input",
+    "title": "Last Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "preferred_name",
+    "type": "input",
+    "title": "Preferred Name",
+    "control": {
+      "hint": "Optional",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Birth Date",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "apt",
+    "title": "Apt#",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "mobile_phone",
+    "type": "input",
+    "title": "Cell Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "opt_in_yes_send_me_text_message_alerts",
+    "title": "Yes, send me Text Message alerts",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "work_phone",
+    "type": "input",
+    "title": "Work Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "phone",
+    "title": "Phone",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "phone"
+    }
+  },
+  {
+    "key": "ext",
+    "title": "Ext#",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "sex",
+    "type": "radio",
+    "title": "Gender",
+    "control": {
+      "options": [
+        {
+          "name": "Male",
+          "value": "male"
+        },
+        {
+          "name": "Female",
+          "value": "female"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        },
+        {
+          "name": "Prefer not to self identify",
+          "value": "not_say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "marital_status",
+    "type": "radio",
+    "title": "Marital Status",
+    "control": {
+      "options": [
+        {
+          "name": "Single",
+          "value": "single"
+        },
+        {
+          "name": "Married",
+          "value": "married"
+        },
+        {
+          "name": "Widowed",
+          "value": "widowed"
+        },
+        {
+          "name": "Divorced",
+          "value": "divorced"
+        },
+        {
+          "name": "Prefer not to say",
+          "value": "not say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "E-mail Address",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "opt_in_yes_send_me_alerts_via_email",
+    "title": "Yes, send me alerts via Email",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_name",
+    "type": "input",
+    "title": "Emergency Contact",
+    "control": {
+      "hint": "Who should we contact?",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "previous_dentist_andor_dental_office",
+    "title": "Previous Dentist and/or Dental Office",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "how_did_you_hear_about_us",
+    "title": "How did you hear about us?",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "I live/work in area",
+          "value": "i_livework_in_area"
+        },
+        {
+          "name": "Google",
+          "value": "google"
+        },
+        {
+          "name": "Yelp",
+          "value": "yelp"
+        },
+        {
+          "name": "Social Media",
+          "value": "social_media"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "referrer",
+        "value": "Friend/Family"
+      }
+    ],
+    "key": "referred_by",
+    "type": "input",
+    "title": "I was Referred by",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "other",
+    "title": "Other",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "no_dental_insurance",
+    "title": "No Dental Insurance",
+    "section": "Insurance",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "No Dental Insurance",
+          "value": "no_dental_insurance"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number",
+    "type": "input",
+    "title": "Primary Insurance (Policy Holder)",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company",
+    "type": "input",
+    "title": "Name of Insurance Company",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state__primary",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder",
+    "type": "input",
+    "title": "Policy Holder Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "birth_date__primary",
+    "title": "Birth Date#: / /",
+    "section": "Insurance",
+    "optional": false,
+    "type": "date",
+    "control": {
+      "input_type": "past"
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number_2",
+    "type": "input",
+    "title": "ID Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group#",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "name_of_employer",
+    "title": "Name of Employer",
+    "section": "Insurance",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "name_of_employer__primary",
+    "title": "Name of Employer (Primary)",
+    "section": "Insurance",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Self",
+          "value": "self"
+        },
+        {
+          "name": "Parent",
+          "value": "parent"
+        },
+        {
+          "name": "Child",
+          "value": "child"
+        },
+        {
+          "name": "Spouse",
+          "value": "spouse"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "responsible_party_name",
+    "type": "input",
+    "title": "Responsible Party Name",
+    "control": {
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder_2",
+    "type": "input",
+    "title": "Insured's Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_2",
+    "type": "states",
+    "title": "State #2",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "birth_date__primary_2",
+    "title": "Birth Date: / /",
+    "section": "Insurance",
+    "optional": false,
+    "type": "date",
+    "control": {
+      "input_type": "past"
+    }
+  },
+  {
+    "key": "name_of_employer__primary_2",
+    "title": "Name of Employer (Primary)",
+    "section": "Insurance",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Self",
+          "value": "self"
+        },
+        {
+          "name": "Parent",
+          "value": "parent"
+        },
+        {
+          "name": "Child",
+          "value": "child"
+        },
+        {
+          "name": "Spouse",
+          "value": "spouse"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "medication_that_you_may_be_taking_could_have_an_important_interr",
+    "title": "medication that you may be taking, could have an important interrelationship with the dentistry you will receive. Thank you for answering the following questions.",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "are_you_under_a_physicians_care_now",
+    "title": "Are you under a physician's care now?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "are_you_under_a_physicians_care_now_explanation",
+    "title": "Please explain",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text",
+      "hint": "Please provide details"
+    },
+    "if": [
+      {
+        "key": "are_you_under_a_physicians_care_now",
+        "value": "yes"
+      }
+    ]
+  },
+  {
+    "key": "have_you_ever_been_hospitalized_had_major_surgery",
+    "title": "Have you ever been hospitalized/ had major surgery?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "have_you_ever_been_hospitalized_had_major_surgery_explanation",
+    "title": "Have you ever been hospitalized/ - Please explain",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text",
+      "hint": "Please provide details"
+    },
+    "if": [
+      {
+        "key": "have_you_ever_been_hospitalized_had_major_surgery",
+        "value": "yes"
+      }
+    ]
+  },
+  {
+    "key": "have_you_ever_had_a_serious_head_neck_injury",
+    "title": "Have you ever had a serious head/ neck injury?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "have_you_ever_had_a_serious_head_neck_injury_explanation",
+    "title": "Have you ever had a - Please explain",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text",
+      "hint": "Please provide details"
+    },
+    "if": [
+      {
+        "key": "have_you_ever_had_a_serious_head_neck_injury",
+        "value": "yes"
+      }
+    ]
+  },
+  {
+    "key": "are_you_taking_any_medications_pills_or_drugs",
+    "title": "Are you taking any medications, pills or drugs?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "are_you_taking_any_medications_pills_or_drugs_explanation",
+    "title": "Are you taking any medications, - Please explain",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text",
+      "hint": "Please provide details"
+    },
+    "if": [
+      {
+        "key": "are_you_taking_any_medications_pills_or_drugs",
+        "value": "yes"
+      }
+    ]
+  },
+  {
+    "key": "do_you_take_or_have_you_taken_phen-fen_or_redux",
+    "title": "Do you take, or have you taken, Phen-Fen or Redux?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "have_you_ever_taken_fosamax_boniva_actonel",
+    "title": "Have you ever taken Fosamax, Boniva, Actonel/",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "are_you_on_a_special_diet",
+    "title": "Are you on a special diet?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "do_you_use_tobacco",
+    "title": "Do you use tobacco?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "do_you_use_controlled_substances",
+    "title": "Do you use controlled substances?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "women_are_you",
+    "title": "Women are you",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Pregnant",
+          "value": "pregnant"
+        },
+        {
+          "name": "Trying to get pregnant",
+          "value": "trying_to_get_pregnant"
+        },
+        {
+          "name": "Nursing",
+          "value": "nursing"
+        },
+        {
+          "name": "Taking oral contraceptives",
+          "value": "taking_oral_contraceptives"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "are_you_allergic_to_any_of_the_following",
+    "title": "Are you allergic to any of the following",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Aspirin",
+          "value": "aspirin"
+        },
+        {
+          "name": "Penicillin",
+          "value": "penicillin"
+        },
+        {
+          "name": "Codeine",
+          "value": "codeine"
+        },
+        {
+          "name": "Acrylic",
+          "value": "acrylic"
+        },
+        {
+          "name": "Metal",
+          "value": "metal"
+        },
+        {
+          "name": "Latex",
+          "value": "latex"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "local_anesthesia_sulfa_drugs_other",
+    "title": "Local Anesthesia Sulfa Drugs Other",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Local Anesthesia",
+          "value": "local_anesthesia"
+        },
+        {
+          "name": "Sulfa Drugs",
+          "value": "sulfa_drugs"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "medical_conditions",
+    "title": "Do you have, or have you had, any of the following?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "AIDS/HIV Positive",
+          "value": "aidshiv_positive"
+        },
+        {
+          "name": "Chest Pains",
+          "value": "chest_pains"
+        },
+        {
+          "name": "Frequent Headaches",
+          "value": "frequent_headaches"
+        },
+        {
+          "name": "Hypoglycemia",
+          "value": "hypoglycemia"
+        },
+        {
+          "name": "Rheurnatism",
+          "value": "rheurnatism"
+        },
+        {
+          "name": "Alzheimer's Disease",
+          "value": "alzheimers_disease"
+        },
+        {
+          "name": "Cold Sores/Fever Blisters",
+          "value": "cold_soresfever_blisters"
+        },
+        {
+          "name": "Genital Herpes",
+          "value": "genital_herpes"
+        },
+        {
+          "name": "rregular Heartbeat",
+          "value": "rregular_heartbeat"
+        },
+        {
+          "name": "Scarlet Fever",
+          "value": "scarlet_fever"
+        },
+        {
+          "name": "Anaphylaxis",
+          "value": "anaphylaxis"
+        },
+        {
+          "name": "Congenital Heart Disorder",
+          "value": "congenital_heart_disorder"
+        },
+        {
+          "name": "Glaucoma",
+          "value": "glaucoma"
+        },
+        {
+          "name": "Kidney Problems",
+          "value": "kidney_problems"
+        },
+        {
+          "name": "Shingles",
+          "value": "shingles"
+        },
+        {
+          "name": "Anemia",
+          "value": "anemia"
+        },
+        {
+          "name": "Convulsions",
+          "value": "convulsions"
+        },
+        {
+          "name": "Hay Fever",
+          "value": "hay_fever"
+        },
+        {
+          "name": "Leukemia",
+          "value": "leukemia"
+        },
+        {
+          "name": "Sinus Trouble",
+          "value": "sinus_trouble"
+        },
+        {
+          "name": "Sickle Cell Disease",
+          "value": "sickle_cell_disease"
+        },
+        {
+          "name": "Angina",
+          "value": "angina"
+        },
+        {
+          "name": "Cortisone Medicine",
+          "value": "cortisone_medicine"
+        },
+        {
+          "name": "Heart Attack/Failure",
+          "value": "heart_attackfailure"
+        },
+        {
+          "name": "Liver Disease",
+          "value": "liver_disease"
+        },
+        {
+          "name": "Spina Bifida",
+          "value": "spina_bifida"
+        },
+        {
+          "name": "Arthritis/Gout",
+          "value": "arthritisgout"
+        },
+        {
+          "name": "Diabetes",
+          "value": "diabetes"
+        },
+        {
+          "name": "Heart Murmur",
+          "value": "heart_murmur"
+        },
+        {
+          "name": "Low Blood Pressure",
+          "value": "low_blood_pressure"
+        },
+        {
+          "name": "Stomach/Intestinal",
+          "value": "stomachintestinal"
+        },
+        {
+          "name": "Artificial Heart Valve",
+          "value": "artificial_heart_valve"
+        },
+        {
+          "name": "Drug Addiction",
+          "value": "drug_addiction"
+        },
+        {
+          "name": "Heart Pacemaker",
+          "value": "heart_pacemaker"
+        },
+        {
+          "name": "Mitral Valve Prolapse",
+          "value": "mitral_valve_prolapse"
+        },
+        {
+          "name": "Artificial Joint",
+          "value": "artificial_joint"
+        },
+        {
+          "name": "Easily Winded",
+          "value": "easily_winded"
+        },
+        {
+          "name": "Heart Trouble/Disease",
+          "value": "heart_troubledisease"
+        },
+        {
+          "name": "Osteoporosis",
+          "value": "osteoporosis"
+        },
+        {
+          "name": "Stroke",
+          "value": "stroke"
+        },
+        {
+          "name": "Asthma",
+          "value": "asthma"
+        },
+        {
+          "name": "Emphysema",
+          "value": "emphysema"
+        },
+        {
+          "name": "Hemophilia",
+          "value": "hemophilia"
+        },
+        {
+          "name": "Pain in Jaw Joints",
+          "value": "pain_in_jaw_joints"
+        },
+        {
+          "name": "Swelling of Limbs",
+          "value": "swelling_of_limbs"
+        },
+        {
+          "name": "Hepatitis A",
+          "value": "hepatitis_a"
+        },
+        {
+          "name": "Parathyroid Disease",
+          "value": "parathyroid_disease"
+        },
+        {
+          "name": "Thyroid Disease",
+          "value": "thyroid_disease"
+        },
+        {
+          "name": "Blood Transfusion Disease",
+          "value": "blood_transfusion_disease"
+        },
+        {
+          "name": "Epilepsy",
+          "value": "epilepsy"
+        },
+        {
+          "name": "Herpes",
+          "value": "herpes"
+        },
+        {
+          "name": "Psychiatric Care",
+          "value": "psychiatric_care"
+        },
+        {
+          "name": "Tonsillitis",
+          "value": "tonsillitis"
+        },
+        {
+          "name": "Breathing Problem",
+          "value": "breathing_problem"
+        },
+        {
+          "name": "Excessive Thirst",
+          "value": "excessive_thirst"
+        },
+        {
+          "name": "High Blood Pressure",
+          "value": "high_blood_pressure"
+        },
+        {
+          "name": "Radiation Treatments",
+          "value": "radiation_treatments"
+        },
+        {
+          "name": "Tuberculosis Tumors/Growths",
+          "value": "tuberculosis_tumorsgrowths"
+        },
+        {
+          "name": "Bruise Easily",
+          "value": "bruise_easily"
+        },
+        {
+          "name": "Fainting/Dizzy Spells",
+          "value": "faintingdizzy_spells"
+        },
+        {
+          "name": "High Cholesterol",
+          "value": "high_cholesterol"
+        },
+        {
+          "name": "Recent Weight Loss",
+          "value": "recent_weight_loss"
+        },
+        {
+          "name": "Ulcers",
+          "value": "ulcers"
+        },
+        {
+          "name": "Cancer",
+          "value": "cancer"
+        },
+        {
+          "name": "Frequent Cough",
+          "value": "frequent_cough"
+        },
+        {
+          "name": "Hives/Rash",
+          "value": "hivesrash"
+        },
+        {
+          "name": "Renal Dialyses",
+          "value": "renal_dialyses"
+        },
+        {
+          "name": "Venereal Disease",
+          "value": "venereal_disease"
+        },
+        {
+          "name": "Chemotherapy",
+          "value": "chemotherapy"
+        },
+        {
+          "name": "Frequent Diarrhea",
+          "value": "frequent_diarrhea"
+        },
+        {
+          "name": "Hypoglycemia",
+          "value": "hypoglycemia"
+        },
+        {
+          "name": "Rheumatic Fever",
+          "value": "rheumatic_fever"
+        },
+        {
+          "name": "Yellow Jaundice",
+          "value": "yellow_jaundice"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "have_you_had_any_serious_illness_not_listed_above_explanation",
+    "title": "Do you have, or have - Please explain",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text",
+      "hint": "Please provide details"
+    },
+    "if": [
+      {
+        "key": "have_you_had_any_serious_illness_not_listed_above",
+        "value": "yes"
+      }
+    ]
+  },
+  {
+    "key": "have_you_had_any_serious_illness_not_listed_above",
+    "title": "Have you had any serious illness not listed above?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "to_the_best_of_my_knowledge_the_questions_on_this_form_have_been",
+    "title": "To the best of my knowledge, the questions on this form have been accurately answered. I understand that providing incorrect information can be",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  }
+]
