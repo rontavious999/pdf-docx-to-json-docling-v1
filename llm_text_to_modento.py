@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.14
+llm_text_to_modento.py — v2.15
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.13 (Additional Archivev11 fixes):
-  • Archivev11 Fix 4: Enhanced category header detection for label patterns
-  • Archivev11 Fix 5: Make generic "Please explain" titles unique with context
+What's new vs v2.14 (Archivev16 fix):
+  • Archivev16 Fix: OCR typo correction for common misreads (e.g., "rregular" -> "Irregular")
+  • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
   • Previous (v2.13): Column boundary detection, text-only items, overflow cleanup
   • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
   • Previous (v2.11): Multi-line headers, section inference, duplicate consolidation
@@ -1206,6 +1206,7 @@ def clean_option_text(text: str) -> str:
     Fixes:
     1. Repeated words: "Blood Blood Transfusion" -> "Blood Transfusion"
     2. Slash-separated malformed: "Epilepsy/ Excessive Seizers Bleeding" -> "Epilepsy"
+    3. OCR typos: "rregular Heartbeat" -> "Irregular Heartbeat" (Archivev16 Fix)
     
     Args:
         text: Raw option text
@@ -1277,6 +1278,16 @@ def clean_option_text(text: str) -> str:
     
     # Fix 3: Clean extra whitespace
     text = re.sub(r'\s+', ' ', text)
+    
+    # Fix 4: Correct common OCR typos (Archivev16)
+    # Common patterns where OCR misreads "I" as "r" at the start of words
+    OCR_CORRECTIONS = {
+        r'\brregular\b': 'Irregular',
+        r'\brrregular\b': 'Irregular',
+    }
+    
+    for pattern, replacement in OCR_CORRECTIONS.items():
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
     
     return text.strip()
 
