@@ -561,8 +561,9 @@ KNOWN_FIELD_LABELS = {
     'extension': r'\bextension\b',
     # Employment/Education
     'occupation': r'\boccupation\b',
-    'employer': r'\bemployer\b',
+    'employer': r'\b(?:employer|employed\s+by)\b',
     'parent_employer': r'\bparent\s+employer\b',
+    'patient_employer': r'\bpatient\s+employed\s+by\b',
     'student': r'\b(?:full\s+time\s+)?student\b',
     # ID fields
     'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
@@ -1328,11 +1329,12 @@ def clean_option_text(text: str) -> str:
     # Fix 3: Clean extra whitespace
     text = re.sub(r'\s+', ' ', text)
     
-    # Fix 4: Correct common OCR typos (Archivev16)
-    # Common patterns where OCR misreads "I" as "r" at the start of words
+    # Fix 4: Correct common OCR typos (Archivev16, Archivev17)
+    # Common patterns where OCR misreads "I" as "r" or "u" as "rn"
     OCR_CORRECTIONS = {
         r'\brregular\b': 'Irregular',
         r'\brrregular\b': 'Irregular',
+        r'\brheurnatism\b': 'Rheumatism',
     }
     
     for pattern, replacement in OCR_CORRECTIONS.items():
