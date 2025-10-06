@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.15
+llm_text_to_modento.py — v2.16
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.14 (Archivev16 fix):
-  • Archivev16 Fix: OCR typo correction for common misreads (e.g., "rregular" -> "Irregular")
+What's new vs v2.15 (Archivev17 fix):
+  • Archivev17 Fix: Multi-sub-field label splitting (e.g., "Phone: Mobile Home Work" -> 3 fields)
+  • Archivev17 Fix: Enhanced employer pattern detection ("Patient Employed By Occupation")
+  • Archivev17 Fix: Insurance field patterns (Birthdate, Dental Plan Name, Relationship to Insured)
+  • Archivev17 Fix: OCR typo correction for "Rheurnatism" -> "Rheumatism"
+  • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
   • Previous (v2.13): Column boundary detection, text-only items, overflow cleanup
   • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
-  • Previous (v2.11): Multi-line headers, section inference, duplicate consolidation
 """
 
 from __future__ import annotations
@@ -540,7 +543,7 @@ KNOWN_FIELD_LABELS = {
     'patient_name': r'\bpatient\s+name\b',
     'parent_name': r'\bparent\s+name\b',
     # Date/Age fields
-    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth)\b',
+    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)\b',
     'dob': r'\bdob\b',
     'age': r'\bage\b',
     'mother_dob': r"\bmother'?s?\s+dob\b",
@@ -561,8 +564,9 @@ KNOWN_FIELD_LABELS = {
     'extension': r'\bextension\b',
     # Employment/Education
     'occupation': r'\boccupation\b',
-    'employer': r'\bemployer\b',
+    'employer': r'\b(?:employer|employed\s+by)\b',
     'parent_employer': r'\bparent\s+employer\b',
+    'patient_employer': r'\bpatient\s+employed\s+by\b',
     'student': r'\b(?:full\s+time\s+)?student\b',
     # ID fields
     'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
@@ -576,9 +580,14 @@ KNOWN_FIELD_LABELS = {
     'zip': r'\bzip(?:\s+code)?\b',
     'apt': r'\bapt\s*#?\b',
     # Insurance fields
-    'group_number': r'\bgroup\s*#',
+    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)\b',
     'local_number': r'\blocal\s*#',
     'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)\b',
+    'dental_plan_name': r'\bdental\s+plan\s+name\b',
+    'plan_group_number': r'\bplan\s*/\s*group\s+number\b',
+    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name\b",
+    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured\b',
+    'id_number': r'\bid\s+number\b',
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit\b',
     'previous_dentist': r'\bprevious\s+dentist\b',
@@ -708,6 +717,49 @@ def split_by_known_labels(line: str) -> List[str]:
     return segments if len(segments) >= 2 else [line]
 
 
+def split_label_with_subfields(line: str) -> List[str]:
+    """
+    Archivev17 Fix: Handle pattern "Label: Sub1    Sub2    Sub3"
+    
+    Detects lines where a single label (ending with colon) is followed by multiple
+    sub-labels separated by wide spacing (4+ spaces).
+    
+    Example: "Phone: Mobile                                  Home                                  Work"
+    Should create: ["Phone: Mobile", "Phone: Home", "Phone: Work"]
+    Or better: ["Mobile Phone", "Home Phone", "Work Phone"]
+    """
+    # Pattern: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
+    # Must have at least 2 sub-labels to consider splitting
+    match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:\s{4,}[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
+    
+    if not match:
+        return [line]
+    
+    main_label = match.group(1).strip(':').strip()  # e.g., "Phone"
+    sublabels_text = match.group(2)  # e.g., "Mobile    Home    Work"
+    
+    # Split by 4+ spaces to get individual sub-labels
+    sublabels = [s.strip() for s in re.split(r'\s{4,}', sublabels_text) if s.strip()]
+    
+    # Must have at least 2 sub-labels to be valid
+    if len(sublabels) < 2:
+        return [line]
+    
+    # Create separate field entries
+    # Format: "Sublabel Main-label" (e.g., "Mobile Phone", "Home Phone", "Work Phone")
+    segments = []
+    for sublabel in sublabels:
+        # Create a natural-sounding field name
+        if main_label.lower() in ['phone', 'number', 'address']:
+            # For phone/number/address: "Mobile Phone", "Home Phone"
+            segments.append(f"{sublabel} {main_label}")
+        else:
+            # For others: keep original format "Label: Sublabel"
+            segments.append(f"{main_label}: {sublabel}")
+    
+    return segments if len(segments) >= 2 else [line]
+
+
 def split_conditional_field_line(line: str) -> List[str]:
     """
     Archivev13 Fix: Handle conditional multi-field lines.
@@ -750,15 +802,21 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     Archivev12 Fix 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
-    1. Conditional field patterns (Archivev13)
-    2. Existing pattern (colon + checkbox)
-    3. Checkboxes without colons
-    4. Known label patterns with spacing
+    1. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
+    2. Conditional field patterns (Archivev13)
+    3. Existing pattern (colon + checkbox)
+    4. Checkboxes without colons
+    5. Known label patterns with spacing
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
         return [line]
+    
+    # Archivev17 Fix: Check if this is "Label: Sub1  Sub2  Sub3" pattern
+    result = split_label_with_subfields(line)
+    if len(result) > 1:
+        return result
     
     # Try conditional field pattern first (Archivev13)
     result = split_conditional_field_line(line)
@@ -1279,11 +1337,12 @@ def clean_option_text(text: str) -> str:
     # Fix 3: Clean extra whitespace
     text = re.sub(r'\s+', ' ', text)
     
-    # Fix 4: Correct common OCR typos (Archivev16)
-    # Common patterns where OCR misreads "I" as "r" at the start of words
+    # Fix 4: Correct common OCR typos (Archivev16, Archivev17)
+    # Common patterns where OCR misreads "I" as "r" or "u" as "rn"
     OCR_CORRECTIONS = {
         r'\brregular\b': 'Irregular',
         r'\brrregular\b': 'Irregular',
+        r'\brheurnatism\b': 'Rheumatism',
     }
     
     for pattern, replacement in OCR_CORRECTIONS.items():
