@@ -708,6 +708,49 @@ def split_by_known_labels(line: str) -> List[str]:
     return segments if len(segments) >= 2 else [line]
 
 
+def split_label_with_subfields(line: str) -> List[str]:
+    """
+    Archivev17 Fix: Handle pattern "Label: Sub1    Sub2    Sub3"
+    
+    Detects lines where a single label (ending with colon) is followed by multiple
+    sub-labels separated by wide spacing (4+ spaces).
+    
+    Example: "Phone: Mobile                                  Home                                  Work"
+    Should create: ["Phone: Mobile", "Phone: Home", "Phone: Work"]
+    Or better: ["Mobile Phone", "Home Phone", "Work Phone"]
+    """
+    # Pattern: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
+    # Must have at least 2 sub-labels to consider splitting
+    match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:\s{4,}[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
+    
+    if not match:
+        return [line]
+    
+    main_label = match.group(1).strip(':').strip()  # e.g., "Phone"
+    sublabels_text = match.group(2)  # e.g., "Mobile    Home    Work"
+    
+    # Split by 4+ spaces to get individual sub-labels
+    sublabels = [s.strip() for s in re.split(r'\s{4,}', sublabels_text) if s.strip()]
+    
+    # Must have at least 2 sub-labels to be valid
+    if len(sublabels) < 2:
+        return [line]
+    
+    # Create separate field entries
+    # Format: "Sublabel Main-label" (e.g., "Mobile Phone", "Home Phone", "Work Phone")
+    segments = []
+    for sublabel in sublabels:
+        # Create a natural-sounding field name
+        if main_label.lower() in ['phone', 'number', 'address']:
+            # For phone/number/address: "Mobile Phone", "Home Phone"
+            segments.append(f"{sublabel} {main_label}")
+        else:
+            # For others: keep original format "Label: Sublabel"
+            segments.append(f"{main_label}: {sublabel}")
+    
+    return segments if len(segments) >= 2 else [line]
+
+
 def split_conditional_field_line(line: str) -> List[str]:
     """
     Archivev13 Fix: Handle conditional multi-field lines.
@@ -750,15 +793,21 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     Archivev12 Fix 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
-    1. Conditional field patterns (Archivev13)
-    2. Existing pattern (colon + checkbox)
-    3. Checkboxes without colons
-    4. Known label patterns with spacing
+    1. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
+    2. Conditional field patterns (Archivev13)
+    3. Existing pattern (colon + checkbox)
+    4. Checkboxes without colons
+    5. Known label patterns with spacing
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
         return [line]
+    
+    # Archivev17 Fix: Check if this is "Label: Sub1  Sub2  Sub3" pattern
+    result = split_label_with_subfields(line)
+    if len(result) > 1:
+        return result
     
     # Try conditional field pattern first (Archivev13)
     result = split_conditional_field_line(line)
