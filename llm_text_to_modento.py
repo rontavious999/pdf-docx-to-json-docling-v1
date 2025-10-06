@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.15
+llm_text_to_modento.py — v2.16
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.14 (Archivev16 fix):
-  • Archivev16 Fix: OCR typo correction for common misreads (e.g., "rregular" -> "Irregular")
+What's new vs v2.15 (Archivev17 fix):
+  • Archivev17 Fix: Multi-sub-field label splitting (e.g., "Phone: Mobile Home Work" -> 3 fields)
+  • Archivev17 Fix: Enhanced employer pattern detection ("Patient Employed By Occupation")
+  • Archivev17 Fix: Insurance field patterns (Birthdate, Dental Plan Name, Relationship to Insured)
+  • Archivev17 Fix: OCR typo correction for "Rheurnatism" -> "Rheumatism"
+  • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
   • Previous (v2.13): Column boundary detection, text-only items, overflow cleanup
   • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
-  • Previous (v2.11): Multi-line headers, section inference, duplicate consolidation
 """
 
 from __future__ import annotations
