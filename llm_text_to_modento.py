@@ -540,7 +540,7 @@ KNOWN_FIELD_LABELS = {
     'patient_name': r'\bpatient\s+name\b',
     'parent_name': r'\bparent\s+name\b',
     # Date/Age fields
-    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth)\b',
+    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)\b',
     'dob': r'\bdob\b',
     'age': r'\bage\b',
     'mother_dob': r"\bmother'?s?\s+dob\b",
@@ -577,9 +577,14 @@ KNOWN_FIELD_LABELS = {
     'zip': r'\bzip(?:\s+code)?\b',
     'apt': r'\bapt\s*#?\b',
     # Insurance fields
-    'group_number': r'\bgroup\s*#',
+    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)\b',
     'local_number': r'\blocal\s*#',
     'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)\b',
+    'dental_plan_name': r'\bdental\s+plan\s+name\b',
+    'plan_group_number': r'\bplan\s*/\s*group\s+number\b',
+    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name\b",
+    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured\b',
+    'id_number': r'\bid\s+number\b',
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit\b',
     'previous_dentist': r'\bprevious\s+dentist\b',
