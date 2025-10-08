@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.16
+llm_text_to_modento.py — v2.17
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.15 (Archivev17 fix):
-  • Archivev17 Fix: Multi-sub-field label splitting (e.g., "Phone: Mobile Home Work" -> 3 fields)
-  • Archivev17 Fix: Enhanced employer pattern detection ("Patient Employed By Occupation")
-  • Archivev17 Fix: Insurance field patterns (Birthdate, Dental Plan Name, Relationship to Insured)
-  • Archivev17 Fix: OCR typo correction for "Rheurnatism" -> "Rheumatism"
+What's new vs v2.16 (Archivev18 fixes):
+  • Archivev18 Fix 1: Remove date template artifacts (e.g., "Birth Date#: / /" -> "Birth Date#")
+  • Archivev18 Fix 2: Filter instructional paragraph text from being captured as fields
+  • Archivev18 Fix 3: Improve "Please explain" field titles to use full parent question text
+  • Archivev18 Fix 4: Consolidate continuation checkbox options into parent field
+  • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
   • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
-  • Previous (v2.13): Column boundary detection, text-only items, overflow cleanup
   • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
 """
 
@@ -1042,6 +1042,11 @@ def clean_field_title(title: str) -> str:
     # Remove checkbox markers
     cleaned = re.sub(CHECKBOX_ANY, '', title)
     
+    # Archivev18 Fix 1: Remove date template artifacts (e.g., ": / /" or "/ /")
+    # These appear in forms as placeholder formatting (e.g., "Birth Date#: / /")
+    cleaned = re.sub(r':\s*/\s*/\s*$', '', cleaned)  # Remove ": / /" at end
+    cleaned = re.sub(r'/\s*/\s*$', '', cleaned)      # Remove "/ /" at end
+    
     # Remove multiple spaces
     cleaned = re.sub(r'\s{2,}', ' ', cleaned)
     
@@ -1050,6 +1055,10 @@ def clean_field_title(title: str) -> str:
     
     # Remove trailing colons if followed by nothing
     cleaned = re.sub(r':\s*$', '', cleaned)
+    
+    # Archivev18 Fix 1b: Also remove trailing '#' followed by colon (e.g., "Birth Date#:" -> "Birth Date#")
+    # But preserve the # if it's part of the field name
+    cleaned = re.sub(r'#:\s*$', '#', cleaned)
     
     return cleaned
 
@@ -3297,7 +3306,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if DATE_LABEL_RE.search(title):
             key = slugify(title or "date")
             if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
-            questions.append(Question(key, title or "Date", cur_section, "date",
+            # Archivev18 Fix 1: Clean date field titles to remove template artifacts
+            clean_title = clean_field_title(title) if title else "Date"
+            questions.append(Question(key, clean_title, cur_section, "date",
                                       control={"input_type": classify_date_input(title)}))
             i += 1; continue
 
@@ -3427,10 +3438,46 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         i += 1
 
     # Final sanitation & signature rule
+    def is_instructional_text(text: str) -> bool:
+        """
+        Archivev18 Fix 2: Detect instructional/paragraph text that shouldn't be captured as fields.
+        Returns True if the text is likely instructions/guidance rather than a field label.
+        """
+        text_lower = text.lower().strip()
+        
+        # Check for common instructional phrases
+        instructional_phrases = [
+            "thank you for",
+            "medication that you may be taking",
+            "could have an important",
+            "interrelationship with",
+            "health problems that you may have",
+            "please read",
+            "i understand that providing incorrect",
+            "to the best of my knowledge",
+            "the questions on this form have been",
+            "accurately answered",
+            "providing incorrect information can be",
+            "although dental professionals",
+            "your mouth is a part of",
+        ]
+        
+        if any(phrase in text_lower for phrase in instructional_phrases):
+            return True
+        
+        # If text is very long (>150 chars) and contains connecting phrases, likely instructional
+        if len(text) > 150:
+            connecting_phrases = [" that you ", " which ", " could ", " should ", " would "]
+            if any(phrase in text_lower for phrase in connecting_phrases):
+                return True
+        
+        return False
+    
     def is_junk(q: Question) -> bool:
         t = q.title.strip().lower()
         return (q.key == "q" or len(q.title.strip()) <= 1 or
-                t in {"<<<", ">>>", "-", "—", "continued on back side"})
+                t in {"<<<", ">>>", "-", "—", "continued on back side"} or
+                is_instructional_text(q.title))
     questions = [q for q in questions if not is_junk(q)]
     questions = [q for q in questions if not WITNESS_RE.search(q.title)]
 
@@ -4075,6 +4122,83 @@ def postprocess_consolidate_malformed_grids(payload: List[dict], dbg: Optional[D
     return payload
 
 
+def postprocess_consolidate_continuation_options(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Archivev18 Fix 4: Consolidate checkbox fields that are continuations of previous fields.
+    
+    Pattern: Field with title that's just concatenated option names (e.g., "Local Anesthesia Sulfa Drugs Other")
+    following a field with a proper question title in the same section.
+    
+    Example:
+    Field 1: "Are you allergic to any of the following?" with options [Aspirin, Penicillin, ...]
+    Field 2: "Local Anesthesia Sulfa Drugs Other" with options [Local Anesthesia, Sulfa Drugs, Other]
+    
+    Should consolidate Field 2's options into Field 1 and remove Field 2.
+    """
+    i = 0
+    while i < len(payload):
+        item = payload[i]
+        title = item.get('title', '')
+        
+        # Check if this field looks like concatenated options (3+ capitalized words, no question marks/colons)
+        # and is a dropdown with multiple options
+        words = title.split()
+        capitalized = [w for w in words if w and w[0].isupper()]
+        
+        is_concatenated = (
+            len(capitalized) >= 3 and 
+            '?' not in title and 
+            not title.endswith(':') and
+            item.get('type') in ('dropdown', 'radio')
+        )
+        
+        if is_concatenated and i > 0:
+            prev_item = payload[i - 1]
+            prev_title = prev_item.get('title', '').lower()
+            
+            # Check if previous field is in same section and is a question about selecting/checking items
+            same_section = item.get('section') == prev_item.get('section')
+            is_selection_question = any(phrase in prev_title for phrase in [
+                'allergic', 'any of the following', 'select', 'choose', 'check', 'mark'
+            ])
+            prev_is_dropdown = prev_item.get('type') in ('dropdown', 'radio')
+            
+            if same_section and is_selection_question and prev_is_dropdown:
+                # Consolidate: add current field's options to previous field
+                current_options = item.get('control', {}).get('options', [])
+                prev_options = prev_item.get('control', {}).get('options', [])
+                
+                # Check if options in current field match parts of its title (confirmation it's concatenated)
+                option_names = [opt.get('name', '') if isinstance(opt, dict) else opt for opt in current_options]
+                title_has_options = sum(1 for opt_name in option_names if opt_name in title)
+                
+                if title_has_options >= 2:  # At least 2 option names appear in title
+                    # Merge options
+                    combined_options = prev_options + current_options
+                    
+                    # Remove duplicates
+                    seen = set()
+                    unique_options = []
+                    for opt in combined_options:
+                        opt_name = opt.get('name', '') if isinstance(opt, dict) else opt
+                        if opt_name and opt_name.lower() not in seen:
+                            seen.add(opt_name.lower())
+                            unique_options.append(opt)
+                    
+                    prev_item['control']['options'] = unique_options
+                    
+                    if dbg:
+                        dbg.gate(f"continuation_consolidated -> Merged '{title}' ({len(current_options)} opts) into '{prev_item['title']}' (total: {len(unique_options)} opts)")
+                    
+                    # Remove current field
+                    payload.pop(i)
+                    continue
+        
+        i += 1
+    
+    return payload
+
+
 def postprocess_clean_overflow_titles(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
     """
     Archivev11 Fix 3: Clean up field titles that have column overflow artifacts.
@@ -4131,31 +4255,42 @@ def postprocess_make_explain_fields_unique(payload: List[dict], dbg: Optional[De
         # Create a unique identifier for this title in this section
         section_title = f"{section}:{title}"
         
+        # Archivev18 Fix 3: Handle generic explanation titles even on first occurrence
+        generic_titles = ['please explain', 'explanation', 'details', 'comments', 'if yes, please explain']
+        is_generic = any(gt in title.lower() for gt in generic_titles)
+        
+        # If this is a generic title following a yes/no question, improve it immediately
+        if is_generic and i > 0:
+            prev_item = payload[i - 1]
+            prev_title = prev_item.get('title', '')
+            
+            # If previous field is a yes/no question, use it as context
+            if any(yn in prev_title.lower() for yn in ['yes or no', 'y or n', 'have you', 'are you', 'do you']):
+                # Use full parent question title, but truncate if too long
+                # Remove trailing question mark and colon for better readability
+                context = prev_title.rstrip('?:').strip()
+                
+                # If context is too long (>60 chars), use first few words
+                if len(context) > 60:
+                    words = context.split()[:5]
+                    context = ' '.join(words)
+                
+                new_title = f"{context} - Please explain"
+                
+                if dbg:
+                    dbg.gate(f"unique_title -> '{title}' → '{new_title}' (context)")
+                
+                item['title'] = new_title
+                # Update title for duplicate tracking
+                title = new_title
+                section_title = f"{section}:{title}"
+        
         # Check if this is a duplicate
         if section_title in title_counts:
             count = title_counts[section_title]
             title_counts[section_title] = count + 1
             
-            # Strategy 1: For generic explanation/detail titles, use preceding field context
-            generic_titles = ['please explain', 'explanation', 'details', 'comments', 'if yes, please explain']
-            is_generic = any(gt in title.lower() for gt in generic_titles)
-            
-            if is_generic and i > 0:
-                prev_item = payload[i - 1]
-                prev_title = prev_item.get('title', '')
-                
-                # If previous field is a yes/no question, use it as context
-                if any(yn in prev_title.lower() for yn in ['yes or no', 'y or n', 'have you', 'are you', 'do you']):
-                    # Extract first few words of question as context
-                    words = prev_title.split()[:5]
-                    context = ' '.join(words)
-                    new_title = f"{context} - {title}"
-                    
-                    if dbg:
-                        dbg.gate(f"unique_title -> '{title}' → '{new_title}' (context)")
-                    
-                    item['title'] = new_title
-                    continue
+            # Note: Generic titles are now handled above, before duplicate check
             
             # Strategy 2: For repeated fields (like Insurance fields), add numeric suffix
             # Check if key has a numeric suffix or scope marker
@@ -4302,6 +4437,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev11 Fix 3: Clean up column overflow in field titles
     payload = postprocess_clean_overflow_titles(payload, dbg=dbg)
+    
+    # Archivev18 Fix 4: Consolidate continuation checkbox options
+    payload = postprocess_consolidate_continuation_options(payload, dbg=dbg)
     
     # Archivev11 Fix 5: Make generic "Please explain" fields unique
     payload = postprocess_make_explain_fields_unique(payload, dbg=dbg)
