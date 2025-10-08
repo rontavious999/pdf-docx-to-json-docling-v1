@@ -24,3 +24,8 @@ __MACOSX/
 # Test outputs
 /tmp/
 *.stats.json
+
+# Output directories (generated files)
+output/*.txt
+output/*.json
+JSONs/*.json
