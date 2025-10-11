@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.17
+llm_text_to_modento.py — v2.18
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.16 (Archivev18 fixes):
-  • Archivev18 Fix 1: Remove date template artifacts (e.g., "Birth Date#: / /" -> "Birth Date#")
-  • Archivev18 Fix 2: Filter instructional paragraph text from being captured as fields
-  • Archivev18 Fix 3: Improve "Please explain" field titles to use full parent question text
-  • Archivev18 Fix 4: Consolidate continuation checkbox options into parent field
+What's new vs v2.17 (Archivev19 fixes):
+  • Archivev19 Fix 1: Prevent single-word field labels (e.g., "Comments:") from being treated as section headings
+  • Archivev19 Fix 2: Complete multi-line questions where checkboxes appear mid-question (e.g., bisphosphonates)
+  • Previous (v2.17/Archivev18): Date template artifacts, instructional text filtering, explain field titles
   • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
   • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
