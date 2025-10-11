@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.19
+llm_text_to_modento.py — v2.20
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.18 (Archivev19 continued):
-  • Archivev19 Fix 3: Fix inline checkbox field title extraction to preserve labels on same line as options
-  • Previous (v2.18/Archivev19): Single-word field labels, multi-line questions with mid-line checkboxes
+What's new vs v2.19 (Archivev19 continued):
+  • Archivev19 Fix 4: Never treat lines with question marks as section headings (captures "Question? If so, detail:" patterns)
+  • Previous (v2.19/Archivev19 Fix 3): Inline checkbox field title extraction preserves labels on same line as options
+  • Previous (v2.18/Archivev19 Fix 1-2): Single-word field labels, multi-line questions with mid-line checkboxes
   • Previous (v2.17/Archivev18): Date template artifacts, instructional text filtering, explain field titles
   • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
   • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
-  • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
 """
 
 from __future__ import annotations
@@ -245,6 +245,11 @@ def is_heading(line: str) -> bool:
             common_field_labels = ['comments', 'notes', 'explanation', 'details', 'remarks']
             if label.lower() in common_field_labels:
                 return False
+    
+    # Archivev19 Fix 4: Lines with question marks are questions/fields, never headings
+    # e.g., "Have you ever had surgery? If so, what type:" should be a field
+    if "?" in t:
+        return False
     
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
