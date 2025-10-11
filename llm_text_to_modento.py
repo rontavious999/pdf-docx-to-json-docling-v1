@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.17
+llm_text_to_modento.py — v2.20
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.16 (Archivev18 fixes):
-  • Archivev18 Fix 1: Remove date template artifacts (e.g., "Birth Date#: / /" -> "Birth Date#")
-  • Archivev18 Fix 2: Filter instructional paragraph text from being captured as fields
-  • Archivev18 Fix 3: Improve "Please explain" field titles to use full parent question text
-  • Archivev18 Fix 4: Consolidate continuation checkbox options into parent field
+What's new vs v2.19 (Archivev19 continued):
+  • Archivev19 Fix 4: Never treat lines with question marks as section headings (captures "Question? If so, detail:" patterns)
+  • Previous (v2.19/Archivev19 Fix 3): Inline checkbox field title extraction preserves labels on same line as options
+  • Previous (v2.18/Archivev19 Fix 1-2): Single-word field labels, multi-line questions with mid-line checkboxes
+  • Previous (v2.17/Archivev18): Date template artifacts, instructional text filtering, explain field titles
   • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
   • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
-  • Previous (v2.12): Multi-column grid detection, category headers, grid consolidation
 """
 
 from __future__ import annotations
@@ -233,6 +232,23 @@ def is_heading(line: str) -> bool:
     parts = re.split(r'\s{3,}', t)
     if len(parts) >= 3 and all(len(p.split()) <= 4 for p in parts):
         # Looks like a multi-column grid header, not a section heading
+        return False
+    
+    # Archivev19 Fix 1: Don't treat short single-word field labels as headings
+    # e.g., "Comments:", "Notes:", "Explanation:" should be field labels, not headings
+    # Section headings are typically multi-word or clearly descriptive
+    if t.endswith(":"):
+        # Remove the colon and check the remaining text
+        label = t[:-1].strip()
+        # Single word that's not all caps -> likely a field label
+        if len(label.split()) == 1 and not label.isupper():
+            common_field_labels = ['comments', 'notes', 'explanation', 'details', 'remarks']
+            if label.lower() in common_field_labels:
+                return False
+    
+    # Archivev19 Fix 4: Lines with question marks are questions/fields, never headings
+    # e.g., "Have you ever had surgery? If so, what type:" should be a field
+    if "?" in t:
         return False
     
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
@@ -469,8 +485,18 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
             ends_with_question = a_end == "?"
             starts_with_paren = b_str.startswith("(")
             
-            # Join if: hyphen/slash at end, OR (not sentence-ending punctuation AND (starts lowercase OR small word OR starts with paren OR ends with ?))
-            if a_end in "-/" or (not ends_with_question and a_end not in ".:;?!" and (starts_lower or small_word or starts_with_paren)):
+            # Archivev19 Fix 2: Handle multi-line questions where line 1 ends with "/ [ ] Yes [ ] No"
+            # and line 2 starts with lowercase continuation (e.g., bisphosphonates question)
+            # Pattern: "...Actonel/ [ ] Yes [ ] No" followed by "other medications..."
+            ends_with_yes_no = bool(re.search(r'/\s*\[\s*\]\s*(?:Yes|No)\s*(?:\[\s*\]\s*(?:Yes|No)\s*)?$', merged, re.I))
+            
+            # Join if: 
+            # 1. hyphen/slash at end, OR
+            # 2. (not sentence-ending punctuation AND (starts lowercase OR small word OR starts with paren)), OR
+            # 3. Archivev19: ends with Yes/No checkboxes and next line starts with lowercase (continuation)
+            if (a_end in "-/" or 
+                (not ends_with_question and a_end not in ".:;?!" and (starts_lower or small_word or starts_with_paren)) or
+                (ends_with_yes_no and starts_lower)):
                 merged = (merged.rstrip("- ") + " " + b_str).strip()
                 i += 1; continue
             break
@@ -2136,6 +2162,23 @@ def extract_compound_yn_prompts(line: str) -> List[str]:
     for m in COMPOUND_YN_RE.finditer(normalize_glyphs_line(line)):
         p = collapse_spaced_caps(m.group("prompt")).strip(" :;-")
         if p:
+            # Archivev19 Fix 2: Check if there's continuation text after the Yes/No checkboxes
+            # Example: "...Actonel/ [ ] Yes [ ] No other medications containing bisphosphonates?"
+            # We want to include the continuation text in the prompt
+            match_end = m.end()
+            remaining_text = line[match_end:].strip()
+            
+            # If there's text after Yes/No and it starts with lowercase or connecting words,
+            # it's likely a continuation of the question
+            if remaining_text and (
+                re.match(r'^[a-z(]', remaining_text) or 
+                re.match(r'^(and|or|if|but|then|with|of|for|to|other|additional)\b', remaining_text, re.I)
+            ):
+                # Remove any leading "and" or similar connectors that might cause awkwardness
+                continuation = remaining_text
+                # Append continuation to prompt
+                p = p + " " + continuation
+            
             prompts.append(p)
     if not prompts:
         m2 = YN_SIMPLE_RE.search(line)
@@ -3319,16 +3362,25 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             
             # If we have inline options (especially multiple ones), check if title needs cleaning
             if opts_inline and len(opts_inline) >= 2:
-                # Title likely includes the options. Look back for a better title (skip blank lines).
-                lookback_idx = i - 1
-                while lookback_idx >= 0 and not lines[lookback_idx].strip():
-                    lookback_idx -= 1  # Skip blank lines
-                if lookback_idx >= 0:
-                    prev_line = collapse_spaced_caps(lines[lookback_idx].strip())
-                    if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
-                        # Use previous line if it looks like a question/prompt
-                        if len(prev_line) >= 5:
-                            clean_title = prev_line.rstrip(':').strip()
+                # Archivev19 Fix 3: Only look back if current line doesn't have a clear label before checkboxes
+                # Extract text before first checkbox to see if we have a meaningful title
+                extracted_title = extract_title_from_inline_checkboxes(line)
+                
+                # If we extracted a meaningful title from the current line, use it
+                if extracted_title and len(extracted_title) >= 5 and ':' in line[:line.find('[') if '[' in line else len(line)]:
+                    # Current line has "Label: [ ] options" format - use the extracted label
+                    clean_title = extracted_title
+                else:
+                    # Title likely includes the options. Look back for a better title (skip blank lines).
+                    lookback_idx = i - 1
+                    while lookback_idx >= 0 and not lines[lookback_idx].strip():
+                        lookback_idx -= 1  # Skip blank lines
+                    if lookback_idx >= 0:
+                        prev_line = collapse_spaced_caps(lines[lookback_idx].strip())
+                        if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                            # Use previous line if it looks like a question/prompt
+                            if len(prev_line) >= 5:
+                                clean_title = prev_line.rstrip(':').strip()
             
             # If title still has checkbox markers, try to extract clean text
             if re.search(CHECKBOX_ANY, clean_title):
