@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.18
+llm_text_to_modento.py — v2.19
 
 TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
 
-What's new vs v2.17 (Archivev19 fixes):
-  • Archivev19 Fix 1: Prevent single-word field labels (e.g., "Comments:") from being treated as section headings
-  • Archivev19 Fix 2: Complete multi-line questions where checkboxes appear mid-question (e.g., bisphosphonates)
+What's new vs v2.18 (Archivev19 continued):
+  • Archivev19 Fix 3: Fix inline checkbox field title extraction to preserve labels on same line as options
+  • Previous (v2.18/Archivev19): Single-word field labels, multi-line questions with mid-line checkboxes
   • Previous (v2.17/Archivev18): Date template artifacts, instructional text filtering, explain field titles
   • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
   • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
@@ -3357,16 +3357,25 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             
             # If we have inline options (especially multiple ones), check if title needs cleaning
             if opts_inline and len(opts_inline) >= 2:
-                # Title likely includes the options. Look back for a better title (skip blank lines).
-                lookback_idx = i - 1
-                while lookback_idx >= 0 and not lines[lookback_idx].strip():
-                    lookback_idx -= 1  # Skip blank lines
-                if lookback_idx >= 0:
-                    prev_line = collapse_spaced_caps(lines[lookback_idx].strip())
-                    if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
-                        # Use previous line if it looks like a question/prompt
-                        if len(prev_line) >= 5:
-                            clean_title = prev_line.rstrip(':').strip()
+                # Archivev19 Fix 3: Only look back if current line doesn't have a clear label before checkboxes
+                # Extract text before first checkbox to see if we have a meaningful title
+                extracted_title = extract_title_from_inline_checkboxes(line)
+                
+                # If we extracted a meaningful title from the current line, use it
+                if extracted_title and len(extracted_title) >= 5 and ':' in line[:line.find('[') if '[' in line else len(line)]:
+                    # Current line has "Label: [ ] options" format - use the extracted label
+                    clean_title = extracted_title
+                else:
+                    # Title likely includes the options. Look back for a better title (skip blank lines).
+                    lookback_idx = i - 1
+                    while lookback_idx >= 0 and not lines[lookback_idx].strip():
+                        lookback_idx -= 1  # Skip blank lines
+                    if lookback_idx >= 0:
+                        prev_line = collapse_spaced_caps(lines[lookback_idx].strip())
+                        if prev_line and not re.search(CHECKBOX_ANY, prev_line) and not is_heading(prev_line):
+                            # Use previous line if it looks like a question/prompt
+                            if len(prev_line) >= 5:
+                                clean_title = prev_line.rstrip(':').strip()
             
             # If title still has checkbox markers, try to extract clean text
             if re.search(CHECKBOX_ANY, clean_title):
