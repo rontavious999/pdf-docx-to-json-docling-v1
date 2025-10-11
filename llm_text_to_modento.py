@@ -235,6 +235,18 @@ def is_heading(line: str) -> bool:
         # Looks like a multi-column grid header, not a section heading
         return False
     
+    # Archivev19 Fix 1: Don't treat short single-word field labels as headings
+    # e.g., "Comments:", "Notes:", "Explanation:" should be field labels, not headings
+    # Section headings are typically multi-word or clearly descriptive
+    if t.endswith(":"):
+        # Remove the colon and check the remaining text
+        label = t[:-1].strip()
+        # Single word that's not all caps -> likely a field label
+        if len(label.split()) == 1 and not label.isupper():
+            common_field_labels = ['comments', 'notes', 'explanation', 'details', 'remarks']
+            if label.lower() in common_field_labels:
+                return False
+    
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
             return True
@@ -469,8 +481,18 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
             ends_with_question = a_end == "?"
             starts_with_paren = b_str.startswith("(")
             
-            # Join if: hyphen/slash at end, OR (not sentence-ending punctuation AND (starts lowercase OR small word OR starts with paren OR ends with ?))
-            if a_end in "-/" or (not ends_with_question and a_end not in ".:;?!" and (starts_lower or small_word or starts_with_paren)):
+            # Archivev19 Fix 2: Handle multi-line questions where line 1 ends with "/ [ ] Yes [ ] No"
+            # and line 2 starts with lowercase continuation (e.g., bisphosphonates question)
+            # Pattern: "...Actonel/ [ ] Yes [ ] No" followed by "other medications..."
+            ends_with_yes_no = bool(re.search(r'/\s*\[\s*\]\s*(?:Yes|No)\s*(?:\[\s*\]\s*(?:Yes|No)\s*)?$', merged, re.I))
+            
+            # Join if: 
+            # 1. hyphen/slash at end, OR
+            # 2. (not sentence-ending punctuation AND (starts lowercase OR small word OR starts with paren)), OR
+            # 3. Archivev19: ends with Yes/No checkboxes and next line starts with lowercase (continuation)
+            if (a_end in "-/" or 
+                (not ends_with_question and a_end not in ".:;?!" and (starts_lower or small_word or starts_with_paren)) or
+                (ends_with_yes_no and starts_lower)):
                 merged = (merged.rstrip("- ") + " " + b_str).strip()
                 i += 1; continue
             break
@@ -2136,6 +2158,23 @@ def extract_compound_yn_prompts(line: str) -> List[str]:
     for m in COMPOUND_YN_RE.finditer(normalize_glyphs_line(line)):
         p = collapse_spaced_caps(m.group("prompt")).strip(" :;-")
         if p:
+            # Archivev19 Fix 2: Check if there's continuation text after the Yes/No checkboxes
+            # Example: "...Actonel/ [ ] Yes [ ] No other medications containing bisphosphonates?"
+            # We want to include the continuation text in the prompt
+            match_end = m.end()
+            remaining_text = line[match_end:].strip()
+            
+            # If there's text after Yes/No and it starts with lowercase or connecting words,
+            # it's likely a continuation of the question
+            if remaining_text and (
+                re.match(r'^[a-z(]', remaining_text) or 
+                re.match(r'^(and|or|if|but|then|with|of|for|to|other|additional)\b', remaining_text, re.I)
+            ):
+                # Remove any leading "and" or similar connectors that might cause awkwardness
+                continuation = remaining_text
+                # Append continuation to prompt
+                p = p + " " + continuation
+            
             prompts.append(p)
     if not prompts:
         m2 = YN_SIMPLE_RE.search(line)
