@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-llm_text_to_modento.py — v2.20
+docling_text_to_modento.py — v2.20
 
-TXT (LLMWhisperer layout_preserving) -> Modento-compliant JSON
+TXT (Docling) -> Modento-compliant JSON
 
 What's new vs v2.19 (Archivev19 continued):
   • Archivev19 Fix 4: Never treat lines with question marks as section headings (captures "Question? If so, detail:" patterns)
