@@ -4674,7 +4674,7 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--in",  dest="in_dir",  default=DEFAULT_IN_DIR,  help="Folder with LLMWhisperer .txt files (default: output)")
+    ap.add_argument("--in",  dest="in_dir",  default=DEFAULT_IN_DIR,  help="Folder with extracted .txt files (default: output)")
     ap.add_argument("--out", dest="out_dir", default=DEFAULT_OUT_DIR, help="Folder to write JSONs (default: JSONs)")
     ap.add_argument("--debug", action="store_true", help="Verbose debug logs + near-miss reporting; write *.stats.json sidecars")
     args = ap.parse_args()

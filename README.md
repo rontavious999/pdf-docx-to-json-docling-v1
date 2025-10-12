@@ -21,7 +21,7 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
     - Extracts text locally without requiring external APIs or internet connection.
     - Saves the extracted plain text into the `output/` directory.
 
-2.  **JSON Conversion (`llm_text_to_modento.py`)**:
+2.  **JSON Conversion (`docling_text_to_modento.py`)**:
     - Reads the raw text files from the `output/` directory.
     - Applies a large set of rules and regular expressions to parse the text, identifying sections, questions, and options.
     - Matches the parsed fields against the `dental_form_dictionary.json` template to create a structured, standardized output.
@@ -36,7 +36,7 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
 ├── JSONs/              # Output: Final structured JSON files are saved here
 ├── run_all.py          # Main script to run the entire pipeline
 ├── docling_extract.py  # Script for local text extraction
-├── llm_text_to_modento.py # Script for parsing text and converting to JSON
+├── docling_text_to_modento.py # Script for parsing text and converting to JSON
 └── dental_form_dictionary.json # Template for standardizing form fields
 ```
 

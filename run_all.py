@@ -3,7 +3,7 @@
 run_all.py — Orchestrate Document Extraction ➜ Modento JSON
 
 1) Runs docling_extract.py (same folder; local extraction using PyMuPDF and python-docx)
-2) Then runs llm_text_to_modento.py --in output --out JSONs
+2) Then runs docling_text_to_modento.py --in output --out JSONs
 
 Usage:
   python3 run_all.py
