@@ -53,8 +53,8 @@ Follow these steps to set up and run the project.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/rontavious999/pdf-to-json-docling-v1.git
-    cd pdf-to-json-docling-v1
+    git clone https://github.com/rontavious999/pdf-docx-to-json-docling-v1.git
+    cd pdf-docx-to-json-docling-v1
     ```
 
 2.  **Install dependencies:**
@@ -81,7 +81,7 @@ To run the extraction and conversion steps separately:
 python3 docling_extract.py --in documents --out output
 
 # Step 2: Convert text to JSON (with debug mode)
-python3 llm_text_to_modento.py --in output --out JSONs --debug
+python3 docling_text_to_modento.py --in output --out JSONs --debug
 ```
 
 *(Note: The `run_all.py` script runs both steps automatically and enables debug mode by default for the conversion step.)*
