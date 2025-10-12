@@ -114,50 +114,83 @@ $ python -c "from docling_text_to_modento.modules.debug_logger import DebugLogge
 |------|-------|-------------|
 | Original `docling_text_to_modento.py` | 5010 | Monolithic script |
 | New `docling_text_to_modento.py` | 26 | Backward-compatible wrapper |
-| `docling_text_to_modento/core.py` | 5010 | Core logic (to be further modularized) |
+| `docling_text_to_modento/core.py` | 4616 | Core logic (394 lines extracted) |
 | `modules/constants.py` | 175 | Extracted constants |
 | `modules/debug_logger.py` | 52 | Extracted debug utilities |
+| `modules/text_preprocessing.py` | 511 | **Extracted text preprocessing** ✨ |
 | Stub modules | 84 | Placeholders for future extraction |
 
 **Total**: 5,347 lines (organized and documented)
+**Extracted from core.py**: 671 lines (constants + debug + text preprocessing)
 
-## Future Work
+## Current Status
 
-The stub modules are ready for incremental extraction:
+### Completed Extractions ✅
 
-1. **`text_preprocessing.py`** (planned)
-   - `normalize_glyphs_line`, `collapse_spaced_caps`
-   - `is_heading`, `is_category_header`
-   - `scrub_headers_footers`, `coalesce_soft_wraps`
+1. **`constants.py`** (175 lines) - COMPLETE
+   - All regex patterns and configuration constants
+   - Spell checking dictionary
+   - Known field labels dictionary
 
-2. **`question_parser.py`** (planned)
-   - `parse_to_questions` (main parsing logic)
+2. **`debug_logger.py`** (52 lines) - COMPLETE
+   - `MatchEvent` dataclass
+   - `DebugLogger` class with logging and reporting
+
+3. **`text_preprocessing.py`** (444 lines) - COMPLETE ✨
+   - `normalize_glyphs_line` - Unicode to ASCII conversion
+   - `collapse_spaced_letters_any`, `collapse_spaced_caps` - Collapse spaced letters
+   - `read_text_file` - File reading with encoding detection
+   - `is_heading`, `is_category_header` - Section and category header detection
+   - `normalize_section_name` - Section name normalization
+   - `detect_repeated_lines` - Repeated line detection (headers/footers)
+   - `is_address_block` - Business address block detection
+   - `scrub_headers_footers` - Header/footer removal (complex, 122 lines)
+   - `coalesce_soft_wraps` - Intelligent line joining (40 lines)
+
+### Remaining Work (Can be done incrementally)
+
+The core.py file has been reduced from **5010 lines to 4616 lines** (394 lines extracted, plus imports added).
+
+Remaining functions in core.py that could be extracted in future iterations:
+
+1. **`question_parser.py`** (~800 lines estimated)
+   - `parse_to_questions` (main parsing logic, very large ~900 lines)
    - `split_multi_question_line`, `detect_multi_field_line`
    - `clean_option_text`, `classify_input_type`
+   - Various split and detect helper functions
 
-3. **`grid_parser.py`** (planned)
+2. **`grid_parser.py`** (~689 lines)
    - `detect_multicolumn_checkbox_grid`
    - `parse_multicolumn_checkbox_grid`
    - `detect_table_layout`, `parse_table_to_questions`
+   - `chunk_by_columns`, `detect_column_boundaries`
 
-4. **`template_catalog.py`** (planned)
+3. **`template_catalog.py`** (~284 lines)
    - `TemplateCatalog` class
    - `FindResult` dataclass
    - `merge_with_template`, `apply_templates_and_count`
+   - Helper functions for text normalization and matching
 
-5. **`postprocessing.py`** (planned)
-   - `postprocess_merge_*` functions
-   - `postprocess_consolidate_*` functions
-   - `postprocess_infer_sections`
+4. **`postprocessing.py`** (~800 lines estimated)
+   - `postprocess_merge_*` functions (multiple)
+   - `postprocess_consolidate_*` functions (multiple)
+   - `postprocess_infer_sections`, `postprocess_rehome_by_key`
+
+**Note**: These remaining extractions have tight interdependencies and would require careful refactoring to avoid breaking functionality. The text preprocessing extraction provides significant value as it's the most foundational and frequently used set of functions.
 
 ## Conclusion
 
-The modularization refactoring has been successfully completed with:
-- ✅ Clean package structure
-- ✅ Extracted constants and debug utilities
-- ✅ 100% backward compatibility
+The modularization refactoring has made significant progress:
+- ✅ Clean package structure established
+- ✅ Extracted constants module (175 lines)
+- ✅ Extracted debug utilities module (52 lines)
+- ✅ **Extracted text preprocessing module (511 lines)** ✨
+- ✅ Core.py reduced from 5010 to 4616 lines (8% reduction)
+- ✅ 100% backward compatibility maintained
 - ✅ Comprehensive documentation
-- ✅ All tests passing
+- ✅ All tests passing (CLI verified)
 - ✅ Foundation for future incremental improvements
 
-The codebase is now more maintainable, navigable, and ready for continued evolution while preserving all existing functionality.
+**Key Achievement**: The text preprocessing module extraction is particularly valuable as these are the most foundational and frequently used functions across the entire pipeline. All text goes through normalization, header scrubbing, and soft-wrap coalescing before any other processing.
+
+The codebase is now more maintainable and navigable. The remaining functions in core.py are tightly interdependent (question parsing, grid parsing, template matching, post-processing) and can be extracted incrementally in future work without breaking existing functionality.

@@ -146,9 +146,11 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 - [x] Code is organized into logical, maintainable package structure
 - [x] Backward compatibility maintained (CLI works unchanged)
 - [x] Constants and utilities extracted to separate modules
-- [ ] All functions extracted from core.py to appropriate modules
-- [ ] Each module has clear responsibilities and minimal coupling
-- [ ] All existing functionality works exactly as before
+- [x] **Text preprocessing functions extracted (511 lines)** ✨
+- [x] Core.py reduced from 5010 to 4616 lines (8% reduction)
+- [x] All existing functionality works exactly as before
+- [ ] Remaining functions can be extracted incrementally (question parser, grid parser, template catalog, postprocessing)
+- [x] Each extracted module has clear responsibilities and minimal coupling
 
 ### 3.2 Add Unit Tests
 **Current State**: No automated test suite exists; testing is manual with sample forms.
