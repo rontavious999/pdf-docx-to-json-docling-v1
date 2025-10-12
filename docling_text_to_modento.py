@@ -3343,6 +3343,15 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             # NEW: Also collect inline checkbox options from following lines (Fix 1 enhancement)
             inline_opts = options_from_inline_line(cand)
             if inline_opts:  # Any checkboxes found
+                # Archivev20 Fix 5: Don't collect options from a line that has its own label
+                # (e.g., "Marital Status: [ ] Married [ ] Single" should not be collected by "Ext#")
+                bracket_pos = cand.find('[')
+                line_has_own_label = bracket_pos > 0 and ':' in cand[:bracket_pos]
+                
+                if line_has_own_label:
+                    # This line has its own label, don't collect its options
+                    break
+                
                 if len(inline_opts) >= 2:  # Multiple options on this line - definitely collect
                     opts_block.extend(inline_opts)
                     j += 1
@@ -3431,9 +3440,16 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Extract text before first checkbox to see if we have a meaningful title
                 extracted_title = extract_title_from_inline_checkboxes(line)
                 
+                # Archivev20 Fix 3: If we extracted a title with proper formatting (has colon), ALWAYS use it
+                # Don't look back even if it's short - this fixes "Marital Status:" being replaced by "Ext#"
+                has_proper_label = extracted_title and ':' in line[:line.find('[') if '[' in line else len(line)]
+                
                 # If we extracted a meaningful title from the current line, use it
-                if extracted_title and len(extracted_title) >= 5 and ':' in line[:line.find('[') if '[' in line else len(line)]:
+                if extracted_title and len(extracted_title) >= 3 and has_proper_label:
                     # Current line has "Label: [ ] options" format - use the extracted label
+                    clean_title = extracted_title
+                elif extracted_title and len(extracted_title) >= 5:
+                    # Extracted title is long enough even without colon
                     clean_title = extracted_title
                 else:
                     # Title likely includes the options. Look back for a better title (skip blank lines).
@@ -3528,15 +3544,37 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Default: input
         # Fix 1: Skip if next line has inline options that will use this as title
+        # BUT only if the next line doesn't have its own label (e.g., "Label: [ ] options")
         if i + 1 < len(lines):
             next_line = lines[i + 1].strip()
             if next_line and re.search(CHECKBOX_ANY, next_line):
                 # Check if next line has inline options
                 next_opts = options_from_inline_line(next_line)
                 if len(next_opts) >= 2:
-                    # Next line will create a field using this line as title, so skip
-                    i += 1
-                    continue
+                    # Archivev20 Fix 4: Only skip if next line doesn't have its own label
+                    # Check if next line has a colon before the checkboxes (indicates it has its own label)
+                    bracket_pos = next_line.find('[')
+                    has_own_label = bracket_pos > 0 and ':' in next_line[:bracket_pos]
+                    
+                    if not has_own_label:
+                        # Next line will create a field using this line as title, so skip
+                        i += 1
+                        continue
+        
+        # Fix 2: Skip obvious business/practice address lines (Archivev20)
+        # These should have been filtered by scrub_headers_footers but some slip through
+        # Examples: "3138 N Lincoln Ave Chicago, IL", "60657", "Chicago, IL 60632"
+        skip_patterns = [
+            r'^\d{5}$',  # Just a zip code
+            r'^\d+\s+[NS]?\s*\w+\s+(Ave|Avenue|Rd|Road|St|Street|Blvd|Boulevard)\b',  # Street address
+            r',\s*[A-Z]{2}\s+\d{5}$',  # City, State Zip
+            r'^\d+[A-Z]?\s+S\s+\w+\s+(Ave|Rd|St|Blvd)',  # Address starting with number
+        ]
+        should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
+        if should_skip:
+            if debug: print(f"  [debug] skipping business address line: '{title[:60]}'")
+            i += 1
+            continue
         
         itype = classify_input_type(title)
         key = slugify(title)
