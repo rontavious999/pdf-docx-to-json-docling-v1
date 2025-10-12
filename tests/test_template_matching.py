@@ -10,7 +10,8 @@ from pathlib import Path
 # Add parent directory to path so we can import the main module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_text_to_modento import TemplateCatalog
+# Import from core (TemplateCatalog hasn't been extracted yet)
+from docling_text_to_modento.core import TemplateCatalog
 
 
 class TestTemplateCatalog:
