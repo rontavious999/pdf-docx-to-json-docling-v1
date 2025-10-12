@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-docling_text_to_modento.py — v2.20
+docling_text_to_modento.py — v2.21
 
 TXT (Docling) -> Modento-compliant JSON
 
-What's new vs v2.19 (Archivev19 continued):
-  • Archivev19 Fix 4: Never treat lines with question marks as section headings (captures "Question? If so, detail:" patterns)
-  • Previous (v2.19/Archivev19 Fix 3): Inline checkbox field title extraction preserves labels on same line as options
-  • Previous (v2.18/Archivev19 Fix 1-2): Single-word field labels, multi-line questions with mid-line checkboxes
-  • Previous (v2.17/Archivev18): Date template artifacts, instructional text filtering, explain field titles
-  • Previous (v2.16): Multi-sub-field label splitting, enhanced employer/insurance patterns
-  • Previous (v2.15): OCR typo correction for "rregular" -> "Irregular"
-  • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
+What's new vs v2.20 (Priority Improvements):
+  • Priority 1.1: OCR Auto-Detection - Automatically detects and processes scanned PDFs
+  • Priority 2.1: Multi-Field Label Splitting - Enhanced detection of multi-subfield patterns
+  • Priority 2.2: Grid Column Headers - Option A implementation (prefix approach)
+  • Priority 2.3: Inline Checkbox Detection - Enhanced mid-sentence checkbox recognition
+  • Fixed module exports for proper test compatibility
+  • All implementations use generic patterns - NO form-specific hardcoding
+  
+Previous versions:
+  • v2.20/Archivev19 Fix 4: Never treat lines with question marks as section headings
+  • v2.19/Archivev19 Fix 3: Inline checkbox field title extraction preserves labels
+  • v2.18/Archivev19 Fix 1-2: Single-word field labels, multi-line questions
 """
 
 from __future__ import annotations

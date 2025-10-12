@@ -26,9 +26,27 @@ backward compatibility. The original CLI interface via docling_text_to_modento.p
 remains unchanged.
 """
 
-__version__ = "2.20"
+__version__ = "2.21"
 
-# Re-export main function for programmatic access
-from .core import main
+# Re-export main function and utility functions for programmatic access
+from .core import (
+    main, detect_multi_field_line, detect_inline_checkbox_with_text, 
+    extract_compound_yn_prompts, slugify, PARENT_RE
+)
+from .modules.constants import (
+    DATE_LABEL_RE, STATE_LABEL_RE, CHECKBOX_ANY
+)
+from .modules.text_preprocessing import (
+    normalize_glyphs_line, normalize_section_name, coalesce_soft_wraps
+)
+from .modules.template_catalog import (
+    _norm_text
+)
 
-__all__ = ['main', '__version__']
+__all__ = [
+    'main', '__version__',
+    'detect_multi_field_line', 'detect_inline_checkbox_with_text', 'extract_compound_yn_prompts',
+    'slugify', '_norm_text', 'PARENT_RE',
+    'DATE_LABEL_RE', 'STATE_LABEL_RE', 'CHECKBOX_ANY',
+    'normalize_glyphs_line', 'normalize_section_name', 'coalesce_soft_wraps'
+]

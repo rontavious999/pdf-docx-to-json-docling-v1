@@ -119,14 +119,20 @@ def extract_text_with_ocr(pdf_doc: fitz.Document) -> str:
     return "\n".join(text_parts)
 
 
-def extract_text_from_pdf(file_path: Path, use_ocr: bool = False, force_ocr: bool = False) -> str:
+def extract_text_from_pdf(file_path: Path, use_ocr: bool = False, force_ocr: bool = False, auto_ocr: bool = True) -> str:
     """
-    Extract text from a PDF file using PyMuPDF, with optional OCR fallback.
+    Extract text from a PDF file using PyMuPDF, with automatic OCR fallback.
+    
+    Priority 1.1: OCR Auto-Detection Enhancement
+    - Automatically detects when a PDF has no text layer
+    - Triggers OCR automatically if OCR dependencies are available
+    - Provides clear feedback about OCR usage
     
     Args:
         file_path: Path to the PDF file
-        use_ocr: Enable OCR fallback for scanned PDFs (default: False)
+        use_ocr: Enable OCR fallback for scanned PDFs (default: False, deprecated - use auto_ocr)
         force_ocr: Force OCR even if text layer exists (default: False)
+        auto_ocr: Automatically use OCR if no text layer detected (default: True, new in Priority 1.1)
         
     Returns:
         Extracted text content
@@ -141,14 +147,25 @@ def extract_text_from_pdf(file_path: Path, use_ocr: bool = False, force_ocr: boo
         else:
             print(f"  [WARN] Force OCR requested but OCR not available", file=sys.stderr)
             text = extract_text_normally(doc)
-    # Check if PDF has text layer
+    # Priority 1.1: Automatic OCR detection
     elif not has_text_layer(doc):
-        if use_ocr:
+        # Automatically use OCR if available (unless disabled by auto_ocr=False)
+        if auto_ocr and OCR_AVAILABLE:
+            print(f"  [AUTO-OCR] PDF appears to be scanned, automatically using OCR for {file_path.name}")
+            text = extract_text_with_ocr(doc)
+        elif use_ocr and OCR_AVAILABLE:
+            # Legacy path for backward compatibility
             print(f"  [OCR] No text layer detected, using OCR for {file_path.name}")
             text = extract_text_with_ocr(doc)
+        elif not OCR_AVAILABLE:
+            print(f"  [WARN] No text layer detected in {file_path.name}. OCR dependencies not installed.", file=sys.stderr)
+            print(f"  [WARN] Install with: pip install pytesseract pillow && sudo apt-get install tesseract-ocr", file=sys.stderr)
+            text = "[NO TEXT LAYER] This PDF appears to be scanned but OCR is not available.\n" \
+                   "Install OCR: pip install pytesseract pillow && sudo apt-get install tesseract-ocr"
         else:
+            # auto_ocr disabled and use_ocr not set
             print(f"  [WARN] No text layer detected in {file_path.name}. Use --ocr to enable OCR.", file=sys.stderr)
-            text = "[NO TEXT LAYER] This PDF appears to be scanned. Re-run with --ocr flag to extract text via OCR."
+            text = "[NO TEXT LAYER] This PDF appears to be scanned. Re-run with --ocr flag or enable auto-OCR."
     else:
         # Normal text extraction
         text = extract_text_normally(doc)
@@ -229,22 +246,25 @@ def unique_txt_path(dst: Path) -> Path:
         i += 1
 
 
-def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr: bool = False) -> None:
+def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr: bool = False, auto_ocr: bool = True) -> None:
     """
     Process a single document file and extract text to output directory.
+    
+    Priority 1.1: OCR Auto-Detection Enhancement
     
     Args:
         file_path: Path to the input document
         out_dir: Directory to save the extracted text
-        use_ocr: Enable OCR fallback for scanned PDFs
+        use_ocr: Enable OCR fallback for scanned PDFs (legacy, prefer auto_ocr)
         force_ocr: Force OCR even if text layer exists
+        auto_ocr: Automatically use OCR if no text layer detected (default: True)
     """
     print(f"[+] {file_path.name}")
     
     try:
         # Extract text based on file type
         if file_path.suffix.lower() == ".pdf":
-            text = extract_text_from_pdf(file_path, use_ocr=use_ocr, force_ocr=force_ocr)
+            text = extract_text_from_pdf(file_path, use_ocr=use_ocr, force_ocr=force_ocr, auto_ocr=auto_ocr)
         elif file_path.suffix.lower() == ".docx":
             text = extract_text_from_docx(file_path)
         else:
@@ -269,9 +289,9 @@ def process_one_wrapper(args_tuple):
     - Enables parallel processing of multiple documents
     - Returns tuple of (success, filename, error_message)
     """
-    file_path, out_dir, use_ocr, force_ocr = args_tuple
+    file_path, out_dir, use_ocr, force_ocr, auto_ocr = args_tuple
     try:
-        process_one(file_path=file_path, out_dir=out_dir, use_ocr=use_ocr, force_ocr=force_ocr)
+        process_one(file_path=file_path, out_dir=out_dir, use_ocr=use_ocr, force_ocr=force_ocr, auto_ocr=auto_ocr)
         return (True, file_path.name, None)
     except Exception as e:
         return (False, file_path.name, str(e))
@@ -304,6 +324,11 @@ def main():
         help="Force OCR for all PDFs, even if they have text layer"
     )
     ap.add_argument(
+        "--no-auto-ocr",
+        action="store_true",
+        help="Disable automatic OCR for scanned PDFs (Priority 1.1: OCR Auto-Detection)"
+    )
+    ap.add_argument(
         "--jobs",
         type=int,
         default=1,
@@ -319,12 +344,22 @@ def main():
         print(f"ERROR: Input folder does not exist: {in_dir}", file=sys.stderr)
         sys.exit(2)
 
-    # Check OCR availability if requested
-    if (args.ocr or args.force_ocr) and not OCR_AVAILABLE:
-        print("WARNING: OCR requested but pytesseract not installed.", file=sys.stderr)
-        print("Install with: pip install pytesseract pillow", file=sys.stderr)
-        print("Also install: sudo apt-get install tesseract-ocr", file=sys.stderr)
-        print("Continuing without OCR...\n", file=sys.stderr)
+    # Priority 1.1: Auto-OCR is enabled by default (can be disabled with --no-auto-ocr)
+    auto_ocr = not args.no_auto_ocr
+    
+    # Check OCR availability if requested or if auto_ocr is enabled
+    if (args.ocr or args.force_ocr or auto_ocr) and not OCR_AVAILABLE:
+        if auto_ocr:
+            print("INFO: Auto-OCR is enabled but pytesseract not installed.", file=sys.stderr)
+            print("Scanned PDFs will not be processed. Install with:", file=sys.stderr)
+        else:
+            print("WARNING: OCR requested but pytesseract not installed.", file=sys.stderr)
+        print("  pip install pytesseract pillow", file=sys.stderr)
+        print("  sudo apt-get install tesseract-ocr", file=sys.stderr)
+        if not args.force_ocr and not args.ocr:
+            print("Continuing with auto-OCR disabled...\n", file=sys.stderr)
+        else:
+            print("Continuing without OCR...\n", file=sys.stderr)
 
     # Find all PDF and DOCX files
     exts = {".pdf", ".docx"}
@@ -340,6 +375,10 @@ def main():
         mode_desc += " (Force OCR mode)"
     elif args.ocr:
         mode_desc += " (OCR fallback enabled)"
+    elif auto_ocr and OCR_AVAILABLE:
+        mode_desc += " (Auto-OCR enabled - Priority 1.1)"
+    elif auto_ocr:
+        mode_desc += " (Auto-OCR enabled but OCR not available)"
     
     # Priority 6.1: Determine number of jobs
     num_jobs = args.jobs
@@ -353,7 +392,7 @@ def main():
     if num_jobs <= 1:
         for f in files:
             try:
-                process_one(file_path=f, out_dir=out_dir, use_ocr=args.ocr, force_ocr=args.force_ocr)
+                process_one(file_path=f, out_dir=out_dir, use_ocr=args.ocr, force_ocr=args.force_ocr, auto_ocr=auto_ocr)
             except Exception as e:
                 print(f"[x] Failed on {f.name}: {e}", file=sys.stderr)
     
@@ -363,7 +402,7 @@ def main():
         print(f"Processing {len(files)} file(s) with {num_jobs} parallel jobs...")
         
         # Prepare arguments for workers
-        work_items = [(f, out_dir, args.ocr, args.force_ocr) for f in files]
+        work_items = [(f, out_dir, args.ocr, args.force_ocr, auto_ocr) for f in files]
         
         # Process in parallel
         failed_files = []
