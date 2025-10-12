@@ -1902,8 +1902,18 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     first_line = lines[start_idx]
     checkboxes = list(checkbox_pattern.finditer(first_line))
     
-    # If first line doesn't have checkboxes, look ahead (skip category headers)
+    # Priority 2.2: Capture category headers if present
+    category_header = None
+    
+    # If first line doesn't have checkboxes, look ahead (might be category headers)
     if len(checkboxes) < 3 and start_idx + 3 < len(lines):
+        # Check if the first line might be a category header
+        first_line_text = lines[start_idx].strip()
+        if first_line_text and len(first_line_text.split()) <= 6:
+            # Might be a category header - look for slashes, pipes, or multiple spaced words
+            if '/' in first_line_text or '|' in first_line_text or re.search(r'\s{3,}', first_line_text):
+                category_header = first_line_text
+        
         for look_ahead in range(1, min(4, len(lines) - start_idx)):
             candidate_line = lines[start_idx + look_ahead]
             candidate_checkboxes = list(checkbox_pattern.finditer(candidate_line))
@@ -1959,7 +1969,7 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     
     # Valid grid if we found at least 3 data lines
     if len(data_lines) >= 3:
-        return {
+        result = {
             'start_line': start_idx,
             'first_data_line': first_data_line_idx,
             'data_lines': data_lines,
@@ -1967,6 +1977,10 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
             'column_positions': column_positions,
             'section': section
         }
+        # Priority 2.2: Include category header if found
+        if category_header:
+            result['category_header'] = category_header
+        return result
     
     return None
 
@@ -2137,10 +2151,27 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
     Extracts all checkbox items across all rows and columns, creating clean option names.
     Uses Archivev10 Fix 3 for enhanced column-aware text extraction.
     Uses Archivev11 Fix 2 for text-only item detection.
+    Priority 2.2: Uses category headers to prefix option names when available.
     """
     data_lines = grid_info['data_lines']
     column_positions = grid_info['column_positions']
     section = grid_info['section']
+    
+    # Priority 2.2: Parse category headers if present
+    category_headers = None
+    if 'category_header' in grid_info:
+        category_header_text = grid_info['category_header']
+        # Parse headers (separated by slashes, pipes, or significant spacing)
+        if '/' in category_header_text:
+            category_headers = [h.strip() for h in category_header_text.split('/')]
+        elif '|' in category_header_text:
+            category_headers = [h.strip() for h in category_header_text.split('|')]
+        else:
+            # Split by 3+ spaces
+            category_headers = [h.strip() for h in re.split(r'\s{3,}', category_header_text) if h.strip()]
+        
+        if debug and category_headers:
+            print(f"  [debug] grid category headers: {category_headers}")
     
     # Collect all options
     all_options = []
@@ -2177,6 +2208,17 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
                 'appearance', 'function', 'habits', 'social', 'women', 'type'
             ]:
                 continue
+            
+            # Priority 2.2: Prefix with category header if available
+            if category_headers and len(category_headers) == len(column_positions):
+                # Determine which column this checkbox is in
+                col_idx = 0
+                for idx, col_pos in enumerate(column_positions):
+                    if cb_pos >= col_pos:
+                        col_idx = idx
+                
+                if col_idx < len(category_headers) and category_headers[col_idx]:
+                    item_text = f"{category_headers[col_idx]} - {item_text}"
             
             all_options.append((item_text, None))
         
