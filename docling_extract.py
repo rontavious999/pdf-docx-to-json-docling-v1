@@ -261,6 +261,22 @@ def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr
         raise
 
 
+def process_one_wrapper(args_tuple):
+    """
+    Wrapper for process_one to support multiprocessing.
+    
+    Priority 6.1: Parallel Processing Support
+    - Enables parallel processing of multiple documents
+    - Returns tuple of (success, filename, error_message)
+    """
+    file_path, out_dir, use_ocr, force_ocr = args_tuple
+    try:
+        process_one(file_path=file_path, out_dir=out_dir, use_ocr=use_ocr, force_ocr=force_ocr)
+        return (True, file_path.name, None)
+    except Exception as e:
+        return (False, file_path.name, str(e))
+
+
 def main():
     ap = argparse.ArgumentParser(
         description="Extract text from PDF and DOCX files using local extraction"
@@ -286,6 +302,12 @@ def main():
         "--force-ocr",
         action="store_true",
         help="Force OCR for all PDFs, even if they have text layer"
+    )
+    ap.add_argument(
+        "--jobs",
+        type=int,
+        default=1,
+        help="Number of parallel jobs (default: 1 for sequential). Use -1 for CPU count."
     )
     args = ap.parse_args()
 
@@ -318,13 +340,46 @@ def main():
         mode_desc += " (Force OCR mode)"
     elif args.ocr:
         mode_desc += " (OCR fallback enabled)"
+    
+    # Priority 6.1: Determine number of jobs
+    num_jobs = args.jobs
+    if num_jobs == -1:
+        import multiprocessing
+        num_jobs = multiprocessing.cpu_count()
+    
     print(f"Using local extraction ({mode_desc})")
     
-    for f in files:
-        try:
-            process_one(file_path=f, out_dir=out_dir, use_ocr=args.ocr, force_ocr=args.force_ocr)
-        except Exception as e:
-            print(f"[x] Failed on {f.name}: {e}", file=sys.stderr)
+    # Sequential processing (default)
+    if num_jobs <= 1:
+        for f in files:
+            try:
+                process_one(file_path=f, out_dir=out_dir, use_ocr=args.ocr, force_ocr=args.force_ocr)
+            except Exception as e:
+                print(f"[x] Failed on {f.name}: {e}", file=sys.stderr)
+    
+    # Parallel processing (Priority 6.1)
+    else:
+        import multiprocessing
+        print(f"Processing {len(files)} file(s) with {num_jobs} parallel jobs...")
+        
+        # Prepare arguments for workers
+        work_items = [(f, out_dir, args.ocr, args.force_ocr) for f in files]
+        
+        # Process in parallel
+        failed_files = []
+        with multiprocessing.Pool(processes=num_jobs) as pool:
+            results = pool.map(process_one_wrapper, work_items)
+        
+        # Report results
+        successful = sum(1 for success, _, _ in results if success)
+        for success, filename, error_msg in results:
+            if not success:
+                failed_files.append((filename, error_msg))
+                print(f"[x] Failed on {filename}: {error_msg}", file=sys.stderr)
+        
+        print(f"\n✅ Completed: {successful}/{len(files)} files processed successfully")
+        if failed_files:
+            print(f"❌ Failed: {len(failed_files)} file(s) - see errors above")
 
 
 if __name__ == "__main__":

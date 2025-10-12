@@ -89,9 +89,21 @@ python3 docling_extract.py --in documents --out output
 # Step 1 (with OCR for scanned PDFs):
 python3 docling_extract.py --in documents --out output --ocr
 
+# Step 1 (with parallel processing for large batches):
+python3 docling_extract.py --in documents --out output --jobs 4
+
 # Step 2: Convert text to JSON (with debug mode)
 python3 docling_text_to_modento.py --in output --out JSONs --debug
+
+# Step 2 (with parallel processing for large batches):
+python3 docling_text_to_modento.py --in output --out JSONs --jobs 4
 ```
+
+**Parallel Processing (Priority 6.1):**
+- Use `--jobs N` to process N files in parallel (e.g., `--jobs 4` for 4 parallel processes)
+- Use `--jobs -1` to automatically use all available CPU cores
+- Parallel processing significantly speeds up large batches (50+ forms)
+- Default is sequential processing (`--jobs 1`) for better debugging
 
 *(Note: The `run_all.py` script runs both steps automatically and enables debug mode by default for the conversion step.)*
 

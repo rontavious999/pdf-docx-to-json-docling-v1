@@ -4913,11 +4913,36 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     write_stats_sidecar(out_path, payload, used, dbg, extraction_metadata, parsing_metadata)
     return out_path
 
+def process_one_wrapper(args_tuple):
+    """
+    Wrapper for process_one to support multiprocessing.
+    
+    Priority 6.1: Parallel Processing Support
+    - Enables parallel processing of multiple forms
+    - Returns tuple of (success, filename, error_message)
+    """
+    txt_path, out_dir, dict_path, debug = args_tuple
+    try:
+        # Load catalog in each worker (can't pickle catalog across processes)
+        catalog = None
+        if dict_path and dict_path.exists():
+            try:
+                catalog = TemplateCatalog.from_path(dict_path)
+            except Exception:
+                pass  # Silently ignore catalog errors in workers
+        
+        process_one(txt_path, out_dir, catalog=catalog, debug=debug)
+        return (True, txt_path.name, None)
+    except Exception as e:
+        return (False, txt_path.name, str(e))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in",  dest="in_dir",  default=DEFAULT_IN_DIR,  help="Folder with extracted .txt files (default: output)")
     ap.add_argument("--out", dest="out_dir", default=DEFAULT_OUT_DIR, help="Folder to write JSONs (default: JSONs)")
     ap.add_argument("--debug", action="store_true", help="Verbose debug logs + near-miss reporting; write *.stats.json sidecars")
+    ap.add_argument("--jobs", type=int, default=1, help="Number of parallel jobs (default: 1 for sequential). Use -1 for CPU count.")
     args = ap.parse_args()
 
     in_dir = Path(args.in_dir); out_dir = Path(args.out_dir)
@@ -4925,27 +4950,61 @@ def main():
         print(f"ERROR: input folder not found: {in_dir}", file=sys.stderr); sys.exit(2)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load dictionary
+    # Load dictionary path (will be loaded in each worker if parallel)
     dict_path = Path(__file__).resolve().parent / "dental_form_dictionary.json"
-    catalog: Optional[TemplateCatalog] = None
-    if dict_path.exists():
-        try:
-            catalog = TemplateCatalog.from_path(dict_path)
-        except Exception as e:
-            print(f"[warn] dictionary unavailable ({e}). Proceeding without templates.")
-    else:
-        print(f"[warn] dictionary file not found at {dict_path.name}. Proceeding without templates.")
-
+    
     txts = sorted([p for p in in_dir.rglob("*.txt") if p.is_file()])
     if not txts:
         print(f"WARNING: no .txt files found under {in_dir}")
         return
-
-    for p in txts:
-        try:
-            process_one(p, out_dir, catalog=catalog, debug=args.debug)
-        except Exception as e:
-            print(f"[x] failed on {p.name}: {e}", file=sys.stderr)
+    
+    # Priority 6.1: Determine number of jobs
+    num_jobs = args.jobs
+    if num_jobs == -1:
+        import multiprocessing
+        num_jobs = multiprocessing.cpu_count()
+    
+    # Sequential processing (default)
+    if num_jobs <= 1:
+        # Load dictionary once for sequential processing
+        catalog: Optional[TemplateCatalog] = None
+        if dict_path.exists():
+            try:
+                catalog = TemplateCatalog.from_path(dict_path)
+            except Exception as e:
+                print(f"[warn] dictionary unavailable ({e}). Proceeding without templates.")
+        else:
+            print(f"[warn] dictionary file not found at {dict_path.name}. Proceeding without templates.")
+        
+        for p in txts:
+            try:
+                process_one(p, out_dir, catalog=catalog, debug=args.debug)
+            except Exception as e:
+                print(f"[x] failed on {p.name}: {e}", file=sys.stderr)
+    
+    # Parallel processing (Priority 6.1)
+    else:
+        import multiprocessing
+        print(f"Processing {len(txts)} file(s) with {num_jobs} parallel jobs...")
+        
+        # Prepare arguments for workers
+        work_items = [(p, out_dir, dict_path, args.debug) for p in txts]
+        
+        # Process in parallel
+        failed_files = []
+        with multiprocessing.Pool(processes=num_jobs) as pool:
+            results = pool.map(process_one_wrapper, work_items)
+        
+        # Report results
+        successful = sum(1 for success, _, _ in results if success)
+        for success, filename, error_msg in results:
+            if not success:
+                failed_files.append((filename, error_msg))
+                print(f"[x] failed on {filename}: {error_msg}", file=sys.stderr)
+        
+        print(f"\n✅ Completed: {successful}/{len(txts)} files processed successfully")
+        if failed_files:
+            print(f"❌ Failed: {len(failed_files)} file(s) - see errors above")
 
 if __name__ == "__main__":
     main()
