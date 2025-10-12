@@ -3391,7 +3391,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Archivev20 Fix 5: Don't collect options from a line that has its own label
                 # (e.g., "Marital Status: [ ] Married [ ] Single" should not be collected by "Ext#")
                 bracket_pos = cand.find('[')
-                line_has_own_label = bracket_pos > 0 and ':' in cand[:bracket_pos]
+                
+                # Archivev20 Fix 10: Enhanced label detection - check for label even without colon
+                # Patterns: "Sex [ ] Male [ ] Female" or "Marital Status: [ ] Married"
+                line_has_own_label = False
+                if bracket_pos > 0:
+                    text_before_bracket = cand[:bracket_pos].strip()
+                    # Has label if: contains colon OR has meaningful text (3+ chars, not just numbers/symbols)
+                    if ':' in text_before_bracket:
+                        line_has_own_label = True
+                    elif len(text_before_bracket) >= 3 and re.search(r'[A-Za-z]{3,}', text_before_bracket):
+                        # Has at least 3 letters in a row (meaningful word), likely a label
+                        line_has_own_label = True
                 
                 # Archivev20 Fix 8: Also don't collect if line starts with checkbox (standalone checkbox field)
                 # (e.g., "[ ] Yes, send me Text Message alerts" should not be collected by "Zip:")
