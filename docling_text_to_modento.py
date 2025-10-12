@@ -196,10 +196,40 @@ def normalize_glyphs_line(s: str) -> str:
     return s
 
 def collapse_spaced_letters_any(s: str) -> str:
-    s = re.sub(r"(?<!\w)(?:[A-Za-z]\s+){3,}[A-Za-z](?!\w)", lambda m: m.group(0).replace(" ", ""), s)
+    """Collapse spaced-out letters while preserving word boundaries."""
+    # Archivev20 Fix 6: Improved spaced letter collapsing
+    # Pattern: "H o w  d i d  y o u" → "How did you"
+    # Observation: 1 space between letters within words, 2+ spaces between words
+    
+    def collapse_match(match):
+        text = match.group(0)
+        # Find all letters with their positions
+        letters_with_pos = [(m.start(), m.group()) for m in re.finditer(r'[A-Za-z]', text)]
+        
+        if not letters_with_pos:
+            return text
+        
+        # Build result
+        result = [letters_with_pos[0][1]]  # Start with first letter
+        
+        for i in range(1, len(letters_with_pos)):
+            prev_pos = letters_with_pos[i-1][0]
+            curr_pos, curr_letter = letters_with_pos[i]
+            spaces = curr_pos - prev_pos - 1
+            
+            # If 2+ spaces, add a word boundary
+            if spaces >= 2:
+                result.append(' ')
+            
+            result.append(curr_letter)
+        
+        return ''.join(result)
+    
+    s = re.sub(r"(?<!\w)(?:[A-Za-z]\s+){3,}[A-Za-z](?!\w)", collapse_match, s)
     return re.sub(r"\s{2,}", " ", s).strip()
 
 def collapse_spaced_caps(s: str) -> str:
+    """Collapse spaced capital letters."""
     s2 = re.sub(r"(?:(?<=\b)|^)(?:[A-Z]\s+){2,}(?=[A-Z]\b)", lambda m: m.group(0).replace(" ", ""), s)
     s2 = collapse_spaced_letters_any(s2)
     return s2.strip()
@@ -1138,6 +1168,18 @@ def clean_field_title(title: str) -> str:
     cleaned = re.sub(r':\s*/\s*/\s*$', '', cleaned)  # Remove ": / /" at end
     cleaned = re.sub(r'/\s*/\s*$', '', cleaned)      # Remove "/ /" at end
     
+    # Archivev20 Fix 7: OCR error correction
+    # Common OCR misreads from Docling output
+    ocr_corrections = {
+        r'\bN\s+o\s+D\s+ental\b': 'No Dental',
+        r'\bPrim\s+ary\b': 'Primary',
+        r'\bsom\s+eone\b': 'someone',
+        r'\bH\s+older\b': 'Holder',
+        # Add more patterns as needed, but keep generic
+    }
+    for pattern, replacement in ocr_corrections.items():
+        cleaned = re.sub(pattern, replacement, cleaned, flags=re.I)
+    
     # Remove multiple spaces
     cleaned = re.sub(r'\s{2,}', ' ', cleaned)
     
@@ -1556,9 +1598,12 @@ def try_split_known_labels(line: str) -> List[str]:
     hits: List[Tuple[int, str]] = []
     for phrase in LABEL_ALTS:
         p = _sanitize_words(phrase)
-        idx = s_sanit.find(p)
-        if idx >= 0:
-            hits.append((idx, CANON_LABELS.get(phrase, phrase.title())))
+        # Archivev20 Fix 9: Use word boundary matching to avoid false positives
+        # "message alerts" was matching "age" and "ss", causing incorrect label extraction
+        pattern = r'\b' + re.escape(p) + r'\b'
+        match = re.search(pattern, s_sanit)
+        if match:
+            hits.append((match.start(), CANON_LABELS.get(phrase, phrase.title())))
     if len(hits) < 2:
         return []
     hits.sort(key=lambda t: t[0])
@@ -3348,8 +3393,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 bracket_pos = cand.find('[')
                 line_has_own_label = bracket_pos > 0 and ':' in cand[:bracket_pos]
                 
-                if line_has_own_label:
-                    # This line has its own label, don't collect its options
+                # Archivev20 Fix 8: Also don't collect if line starts with checkbox (standalone checkbox field)
+                # (e.g., "[ ] Yes, send me Text Message alerts" should not be collected by "Zip:")
+                line_starts_with_checkbox = bracket_pos <= 2  # Allow for leading whitespace
+                
+                if line_has_own_label or (len(inline_opts) == 1 and line_starts_with_checkbox):
+                    # This line has its own label OR is a standalone checkbox field, don't collect
                     break
                 
                 if len(inline_opts) >= 2:  # Multiple options on this line - definitely collect
