@@ -174,6 +174,61 @@ class TestExtractCompoundYesNoPrompts:
         assert len(result) >= 1
 
 
+class TestInlineCheckboxDetection:
+    """Test inline checkbox with continuation text (Priority 2.3)."""
+    
+    def test_detects_yes_with_continuation(self):
+        """Checkbox with Yes and continuation text should be detected."""
+        from docling_text_to_modento import detect_inline_checkbox_with_text
+        
+        line = "[ ] Yes, send me text alerts"
+        result = detect_inline_checkbox_with_text(line)
+        assert result is not None
+        key, title, field_type = result
+        assert "yes" in title.lower()
+        assert "text alerts" in title.lower()
+        assert field_type == "radio"
+    
+    def test_detects_no_with_continuation(self):
+        """Checkbox with No and continuation text should be detected."""
+        from docling_text_to_modento import detect_inline_checkbox_with_text
+        
+        line = "[ ] No, I do not want to receive updates"
+        result = detect_inline_checkbox_with_text(line)
+        assert result is not None
+        key, title, field_type = result
+        assert "no" in title.lower()
+        assert "updates" in title.lower()
+    
+    def test_ignores_short_continuation(self):
+        """Checkbox with short continuation should be ignored."""
+        from docling_text_to_modento import detect_inline_checkbox_with_text
+        
+        line = "[ ] Yes"
+        result = detect_inline_checkbox_with_text(line)
+        assert result is None
+    
+    def test_ignores_regular_text(self):
+        """Regular text without checkbox should not be detected."""
+        from docling_text_to_modento import detect_inline_checkbox_with_text
+        
+        line = "This is regular text"
+        result = detect_inline_checkbox_with_text(line)
+        assert result is None
+    
+    def test_generates_valid_key(self):
+        """Generated key should be valid identifier."""
+        from docling_text_to_modento import detect_inline_checkbox_with_text
+        
+        line = "[ ] Yes, please contact me about special offers"
+        result = detect_inline_checkbox_with_text(line)
+        assert result is not None
+        key, _, _ = result
+        # Key should be lowercase, use underscores, no spaces
+        assert key.islower() or '_' in key
+        assert ' ' not in key
+
+
 class TestMultiFieldDetection:
     """Test multi-field label splitting (Priority 2.1)."""
     

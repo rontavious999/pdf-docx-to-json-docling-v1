@@ -2864,6 +2864,46 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     return None
 
 
+def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
+    """
+    Detect inline checkboxes with continuation text.
+    
+    Example: "[ ] Yes, send me text alerts"
+    Returns: ("yes_text_alerts", "Yes, send me text alerts", "radio")
+    
+    Priority 2.3: Inline Checkbox with Continuation Text
+    - Detects checkboxes embedded mid-sentence
+    - Extracts the boolean option and the continuation text
+    - Pattern: "[ ] Yes/No, [descriptive text]"
+    """
+    # Pattern: checkbox followed by Yes/No and then continuation text with comma
+    pattern = r'^\s*' + CHECKBOX_ANY + r'\s*(Yes|No|Y|N)[\s,]+(.*?)$'
+    match = re.match(pattern, line, re.I)
+    
+    if not match:
+        return None
+    
+    option = match.group(1).capitalize()  # "Yes" or "No"
+    continuation = match.group(2).strip()
+    
+    # Need meaningful continuation text (at least 10 chars)
+    if len(continuation) < 10:
+        return None
+    
+    # Generate a descriptive key from the continuation
+    key = slugify(continuation)
+    if len(key) > 40:
+        key = key[:40]
+    
+    # Title includes both the option and the description
+    title = f"{option}, {continuation}"
+    
+    # Determine field type - usually a boolean/radio
+    field_type = "radio"
+    
+    return (key, title, field_type)
+
+
 def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     """
     Detect lines with a single label followed by multiple blank fields.
@@ -3601,6 +3641,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     input_type = "email"
                 questions.append(Question(field_key, field_title, cur_section, "input",
                                           control={"input_type": input_type}))
+            i += 1
+            continue
+        
+        # Priority 2.3: Check for inline checkbox with continuation text
+        inline_checkbox_field = detect_inline_checkbox_with_text(line)
+        if inline_checkbox_field:
+            field_key, field_title, field_type = inline_checkbox_field
+            if debug:
+                print(f"  [debug] inline checkbox with text: {line[:60]}... -> {field_key}")
+            # Create a boolean/radio field with the option and description
+            questions.append(Question(field_key, field_title, cur_section, field_type,
+                                      control={"options": [make_option("Yes", True), make_option("No", False)]}))
             i += 1
             continue
 
