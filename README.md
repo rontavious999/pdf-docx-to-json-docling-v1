@@ -119,3 +119,34 @@ For optimal results:
 - ✅ **Follow common form conventions** - Standard layouts with clear labels, checkboxes, and sections work best
 - ✅ **Test with debug mode** - Use `--debug` flag to see detailed parsing logs and field statistics
 - ✅ **Review the stats.json output** - Check the generated `.stats.json` files to verify field capture accuracy
+
+## Testing
+
+The project includes a comprehensive test suite to ensure reliability and catch regressions.
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run with verbose output
+pytest tests/ -v
+
+# Run a specific test file
+pytest tests/test_text_preprocessing.py -v
+
+# Run with coverage report (requires pytest-cov)
+pip install pytest-cov
+pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Text preprocessing**: Line coalescing, normalization
+- **Question parsing**: Field extraction, option cleaning, splitting
+- **Template matching**: Catalog loading, fuzzy matching, aliases
+- **Pattern recognition**: Dates, states, checkboxes, Yes/No questions
+
+See `tests/README.md` for detailed documentation on the test suite.

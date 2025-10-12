@@ -24,6 +24,8 @@ __MACOSX/
 # Test outputs
 /tmp/
 *.stats.json
+.pytest_cache/
+__pycache__/
 
 # Output directories (generated files)
 output/*.txt
