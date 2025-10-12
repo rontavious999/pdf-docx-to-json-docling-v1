@@ -62,6 +62,12 @@ Follow these steps to set up and run the project.
     pip install pymupdf python-docx
     ```
 
+3.  **Install OCR support (optional, for scanned PDFs):**
+    ```bash
+    pip install pytesseract pillow
+    sudo apt-get install tesseract-ocr
+    ```
+
 ### Usage
 
 1.  **Add Documents**: Place your dental form files (`.pdf` or `.docx`) into the `documents/` directory.
@@ -79,6 +85,9 @@ To run the extraction and conversion steps separately:
 ```bash
 # Step 1: Extract text from documents
 python3 docling_extract.py --in documents --out output
+
+# Step 1 (with OCR for scanned PDFs):
+python3 docling_extract.py --in documents --out output --ocr
 
 # Step 2: Convert text to JSON (with debug mode)
 python3 docling_text_to_modento.py --in output --out JSONs --debug
@@ -101,7 +110,7 @@ The parser uses intelligent pattern matching to handle various form layouts with
 While the pipeline achieves 95%+ field capture accuracy on most forms, there are some current limitations:
 
 ### Text Extraction
-- **No OCR support**: The pipeline requires PDFs with embedded text layers. Scanned forms (image-based PDFs) will not be processed correctly. If you have scanned forms, convert them to text-searchable PDFs using OCR software first.
+- **OCR support available but optional**: The pipeline now includes OCR support via Tesseract. Use the `--ocr` flag to automatically process scanned PDFs. Without the flag, PDFs must have embedded text layers. Install OCR dependencies with: `pip install pytesseract pillow` and `sudo apt-get install tesseract-ocr`.
 
 ### Edge Cases in Parsing
 - **Multi-sub-field labels**: Fields like "Phone: __Mobile__ __Home__ __Work__" with multiple blanks on one line are captured as a single field rather than split into separate entries.
