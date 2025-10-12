@@ -53,8 +53,8 @@ Follow these steps to set up and run the project.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/rontavious999/pdf-to-json-llm.git
-    cd pdf-to-json-llm
+    git clone https://github.com/rontavious999/pdf-to-json-docling-v1.git
+    cd pdf-to-json-docling-v1
     ```
 
 2.  **Install dependencies:**
