@@ -10,7 +10,8 @@ from pathlib import Path
 # Add parent directory to path so we can import the main module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_text_to_modento import coalesce_soft_wraps
+# Import from the new modular structure
+from docling_text_to_modento.modules.text_preprocessing import coalesce_soft_wraps
 
 
 class TestCoalesceSoftWraps:
