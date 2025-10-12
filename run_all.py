@@ -17,7 +17,7 @@ from pathlib import Path
 def main() -> None:
     script_dir = Path(__file__).resolve().parent
     extractor = script_dir / "docling_extract.py"
-    converter = script_dir / "llm_text_to_modento.py"
+    converter = script_dir / "docling_text_to_modento.py"
 
     if not extractor.exists():
         print(f"ERROR: {extractor.name} not found next to this script.", file=sys.stderr)
