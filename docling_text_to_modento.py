@@ -279,9 +279,25 @@ def is_category_header(line: str, next_line: str = "") -> bool:
     if cleaned.endswith("?"):
         return False
     
-    # Must NOT end with a colon followed by content (that's a field label)
+    # Must NOT end with a colon (that's a field label, not a category header)
+    # Examples: "Last Name:", "Work Phone:", "Zip:"
+    if cleaned.endswith(":"):
+        return False
+    
+    # Must NOT end with a colon followed by content (that's also a field label)
     if re.search(r':\s*\S', cleaned):
         return False
+    
+    # Must NOT be a common form field pattern (even without colon)
+    # Examples: "Ext#", "Apt#", "SSN", "DOB", "Zip", "State"
+    form_field_patterns = [
+        r'\b(ext|extension|apt|apartment|ssn|dob|zip|zipcode|state)\s*#?\b',
+        r'\b(phone|email|fax|mobile|cell|home|work)\b',
+        r'\b(first|last|middle|full)\s+name\b',
+    ]
+    for pattern in form_field_patterns:
+        if re.search(pattern, cleaned, re.I):
+            return False
     
     # Archivev11 Fix 4: Check for common label patterns
     # These are often found in forms and should be treated as headers/labels, not fields
@@ -349,8 +365,43 @@ def detect_repeated_lines(lines: List[str], min_count: int = 3, max_len: int = 8
     return {s for s, c in counter.items() if c >= min_count}
 
 def is_address_block(block: List[str]) -> bool:
-    hits = sum(1 for ln in block if ADDRESS_LIKE_RE.search(ln))
-    return len(block) >= 3 and hits >= 2
+    """
+    Check if a block is primarily business/practice address information (not form content).
+    
+    Returns True only if the block looks like header/footer practice info,
+    not if it contains actual form fields.
+    """
+    # Count different types of content
+    address_hits = 0
+    form_field_hits = 0
+    business_hits = 0
+    
+    for ln in block:
+        ln_lower = ln.lower()
+        
+        # Check for actual street addresses (with numbers + street type)
+        if re.search(r'\b\d+\s+[NS]?\s*\w+\s+(ave|avenue|rd|road|st|street|blvd|boulevard)\b', ln, re.I):
+            address_hits += 1
+        
+        # Check for business/practice names
+        if re.search(r'\b(dental|dentistry)\s+(care|center|design|solutions|office)\b', ln, re.I):
+            business_hits += 1
+        
+        # Check for form field labels (labels with colons that indicate form fields)
+        if re.search(r'\b(last\s+name|first\s+name|patient\s+name|birth\s+date|dob|address|city|state|zip\s*code?|phone|email|gender|marital|emergency|ssn|insurance)\s*:', ln, re.I):
+            form_field_hits += 1
+    
+    # Only consider it an address block if:
+    # 1. It has business/address information AND
+    # 2. It has NO form field labels (or very few relative to address content)
+    has_business_content = (address_hits >= 2 or business_hits >= 1)
+    has_form_content = form_field_hits >= 3
+    
+    # If it has significant form content, it's not just an address block
+    if has_form_content:
+        return False
+    
+    return len(block) >= 3 and has_business_content
 
 def scrub_headers_footers(text: str) -> List[str]:
     raw_lines = text.splitlines()
@@ -391,19 +442,33 @@ def scrub_headers_footers(text: str) -> List[str]:
     keep = []
     first_block = True
     block_hits = 0
+    form_field_hits = 0  # Count form field indicators
     for ln in lines:
         s = collapse_spaced_caps(ln.strip())
         if s:
             if first_block:
-                if ADDRESS_LIKE_RE.search(s):
+                # Check for actual business addresses (not form field labels)
+                # Business addresses have: street name + Ave/Rd/St + city/state pattern
+                is_business_address = bool(re.search(r'\b\d+\s+[NS]?\s*\w+\s+(Ave|Avenue|Rd|Road|St|Street|Blvd|Boulevard)\b', s, re.I))
+                # Also check for practice names
+                is_practice_name = bool(re.search(r'\b(dental|dentistry)\s+(care|center|design|solutions)\b', s, re.I))
+                
+                if is_business_address or is_practice_name:
                     block_hits += 1
+                
+                # Count form field indicators (fields with colons that are form labels)
+                if re.search(r'\b(name|phone|email|address|city|state|zip|birth|date|ssn|gender|marital)\s*:', s, re.I):
+                    form_field_hits += 1
         else:
             if first_block:
-                if block_hits >= 2:
-                    # drop first block entirely
+                # Only drop first block if it has business addresses AND no form fields
+                # This prevents dropping the patient registration section
+                if block_hits >= 2 and form_field_hits == 0:
+                    # drop first block entirely - it's just header/practice info
                     keep = []
                     first_block = False
                     block_hits = 0
+                    form_field_hits = 0
                     continue
                 first_block = False
         if not s:
