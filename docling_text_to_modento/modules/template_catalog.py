@@ -22,7 +22,7 @@ from difflib import SequenceMatcher
 from typing import Dict, List, Optional, Set, Tuple
 
 # Import constants
-from .constants import PRIMARY_SUFFIX, SECONDARY_SUFFIX
+from .constants import PRIMARY_SUFFIX, SECONDARY_SUFFIX, PARENT_RE, HEAR_ABOUT_RE
 
 # Note: DebugLogger will be imported from modules.debug_logger when needed
 
