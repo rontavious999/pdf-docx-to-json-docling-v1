@@ -2821,6 +2821,78 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
         return [("insurance_id_number", "input", {"input_type":"text"}), ("ssn", "input", {"input_type":"ssn"})]
     return None
 
+
+def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
+    """
+    Detect lines with a single label followed by multiple blank fields.
+    
+    Example: "Phone: Mobile _____ Home _____ Work _____"
+    Returns: [("phone_mobile", "Mobile"), ("phone_home", "Home"), ("phone_work", "Work")]
+    
+    Priority 2.1: Multi-Field Label Splitting
+    - Detects multiple underscores or blanks after a single label
+    - Identifies common sub-field keywords (Home/Work/Cell, Mobile/Office, Primary/Secondary)
+    - Uses spacing analysis to detect distinct blank columns
+    """
+    # Pattern: Label: followed by multiple keywords with blanks/underscores
+    # Common keywords for sub-fields
+    sub_field_keywords = {
+        'mobile': 'mobile',
+        'cell': 'mobile',
+        'home': 'home',
+        'work': 'work',
+        'office': 'work',
+        'primary': 'primary',
+        'secondary': 'secondary',
+        'personal': 'personal',
+        'business': 'business',
+        'other': 'other',
+        'fax': 'fax',
+        'preferred': 'preferred',
+    }
+    
+    # Look for a label (word/phrase ending with colon) followed by multiple sub-fields
+    # Pattern: "Label: Keyword1 ____ Keyword2 ____ Keyword3 ____"
+    label_match = re.match(r'^([A-Za-z\s]+?):\s+(.+)$', line)
+    if not label_match:
+        return None
+    
+    base_label = label_match.group(1).strip()
+    remainder = label_match.group(2)
+    
+    # Look for multiple keywords separated by blanks/underscores
+    # Pattern: keyword followed by blanks/underscores (at least 2)
+    blank_pattern = r'[_\s]{2,}'
+    
+    # Split by significant blank sequences
+    parts = re.split(blank_pattern, remainder)
+    
+    # Filter to get only meaningful keywords
+    keywords_found = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Check if this part is a known sub-field keyword
+        part_lower = part.lower()
+        if part_lower in sub_field_keywords:
+            keywords_found.append((part, sub_field_keywords[part_lower]))
+    
+    # Need at least 2 keywords to be a multi-field line
+    if len(keywords_found) < 2:
+        return None
+    
+    # Generate field descriptors
+    base_key = slugify(base_label)
+    result = []
+    for display_name, suffix_key in keywords_found:
+        field_key = f"{base_key}_{suffix_key}"
+        field_title = f"{base_label} ({display_name})"
+        result.append((field_key, field_title))
+    
+    return result
+
+
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
     lines = coalesce_soft_wraps(lines)
@@ -3472,6 +3544,23 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     if tok: opts_block.append((tok, None))
                 k += 1; extra_lines += 1
             j = max(j, k)
+
+        # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
+        multi_fields = detect_multi_field_line(line)
+        if multi_fields:
+            if debug:
+                print(f"  [debug] multi-field detected: {line[:60]}... -> {len(multi_fields)} fields")
+            for field_key, field_title in multi_fields:
+                # Determine input type based on base field
+                input_type = "text"
+                if "phone" in field_key or "fax" in field_key:
+                    input_type = "phone"
+                elif "email" in field_key:
+                    input_type = "email"
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                          control={"input_type": input_type}))
+            i += 1
+            continue
 
         # Simple labeled fields
         if STATE_LABEL_RE.match(title):

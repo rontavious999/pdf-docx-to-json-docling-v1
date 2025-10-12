@@ -174,6 +174,72 @@ class TestExtractCompoundYesNoPrompts:
         assert len(result) >= 1
 
 
+class TestMultiFieldDetection:
+    """Test multi-field label splitting (Priority 2.1)."""
+    
+    def test_detects_phone_multi_fields(self):
+        """Phone fields with multiple sub-types should be detected."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Phone: Mobile _____ Home _____ Work _____"
+        result = detect_multi_field_line(line)
+        assert result is not None
+        assert len(result) == 3
+        assert any("mobile" in key for key, _ in result)
+        assert any("home" in key for key, _ in result)
+        assert any("work" in key for key, _ in result)
+    
+    def test_detects_email_multi_fields(self):
+        """Email fields with multiple sub-types should be detected."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Email: Personal _____ Work _____"
+        result = detect_multi_field_line(line)
+        assert result is not None
+        assert len(result) == 2
+        assert any("personal" in key for key, _ in result)
+        assert any("work" in key for key, _ in result)
+    
+    def test_detects_fields_with_spacing(self):
+        """Fields separated by spaces should be detected."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Phone:    Mobile    Home    Work"
+        result = detect_multi_field_line(line)
+        assert result is not None
+        assert len(result) == 3
+    
+    def test_ignores_single_field(self):
+        """Single fields should not be detected as multi-field."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Name: First Last"
+        result = detect_multi_field_line(line)
+        assert result is None
+    
+    def test_ignores_phone_with_value(self):
+        """Fields with actual values should not be detected."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Phone: (555) 123-4567"
+        result = detect_multi_field_line(line)
+        assert result is None
+    
+    def test_generates_proper_keys(self):
+        """Generated keys should follow proper naming convention."""
+        from docling_text_to_modento import detect_multi_field_line
+        
+        line = "Contact: Primary _____ Secondary _____"
+        result = detect_multi_field_line(line)
+        if result:
+            for key, title in result:
+                # Keys should be lowercase with underscores
+                assert key.islower() or '_' in key
+                assert ' ' not in key
+                # Titles should be readable
+                assert len(title) > 0
+
+
 if __name__ == "__main__":
     import pytest
     pytest.main([__file__, "-v"])
