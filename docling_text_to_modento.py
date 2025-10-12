@@ -4782,13 +4782,37 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
     out = _dedupe_keys_dicts(out)
     return out, used
 
-def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: DebugLogger):
+def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: DebugLogger, 
+                        extraction_metadata: Optional[dict] = None, parsing_metadata: Optional[dict] = None):
+    """
+    Write enhanced statistics sidecar file.
+    
+    Priority 8.1: Enhanced Debug Output and Stats
+    - Adds extraction metadata (file type, size, character count)
+    - Adds parsing statistics (grids detected, options parsed)
+    - Lists unmatched fields that might need dictionary entries
+    """
     total = len(payload)
     counts_by_section = defaultdict(int)
     counts_by_type = defaultdict(int)
     for q in payload:
         counts_by_section[q.get("section","General")] += 1
         counts_by_type[q.get("type","input")] += 1
+    
+    # Priority 8.1: Collect unmatched fields for dictionary enhancement suggestions
+    unmatched_fields = []
+    if dbg.enabled:
+        matched_keys = {ev.matched_key for ev in dbg.events if hasattr(ev, 'matched_key') and ev.matched_key}
+        for q in payload:
+            q_key = q.get("key", "")
+            if q_key not in matched_keys:
+                unmatched_fields.append({
+                    "key": q_key,
+                    "title": q.get("title", ""),
+                    "section": q.get("section", ""),
+                    "type": q.get("type", "")
+                })
+    
     stats = {
         "file": out_path.name,
         "total_items": total,
@@ -4800,6 +4824,23 @@ def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: Deb
         "near_misses": [ev.__dict__ for ev in dbg.near_misses] if dbg.enabled else [],
         "gates": dbg.gates if dbg.enabled else [],
     }
+    
+    # Priority 8.1: Add extraction metadata if available
+    if extraction_metadata:
+        stats["extraction"] = extraction_metadata
+    
+    # Priority 8.1: Add parsing metadata if available
+    if parsing_metadata:
+        stats["parsing"] = parsing_metadata
+    
+    # Priority 8.1: Add unmatched fields suggestions
+    if unmatched_fields:
+        stats["unmatched_fields"] = unmatched_fields
+        stats["dictionary_suggestions"] = {
+            "count": len(unmatched_fields),
+            "message": "Consider adding these fields to dental_form_dictionary.json for better matching"
+        }
+    
     sidecar = out_path.with_suffix(".stats.json")
     sidecar.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -4810,8 +4851,25 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     if not raw.strip():
         print(f"[skip] empty file: {txt_path.name}")
         return None
+    
+    # Priority 8.1: Collect extraction metadata
+    extraction_metadata = {
+        "source_file": txt_path.name,
+        "file_size_bytes": txt_path.stat().st_size if txt_path.exists() else 0,
+        "character_count": len(raw),
+        "line_count": len(raw.split('\n'))
+    }
+    
     # Parse → normalize JSON
     questions = parse_to_questions(raw, debug=debug)
+    
+    # Priority 8.1: Collect parsing metadata
+    parsing_metadata = {
+        "raw_questions_parsed": len(questions),
+        "sections_detected": len(set(q.section for q in questions)),
+        "unique_sections": sorted(set(q.section for q in questions))
+    }
+    
     payload = questions_to_json(questions)
 
     # Post-process merges + normalization
@@ -4852,7 +4910,7 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
 
     if debug:
         dbg.print_summary()
-    write_stats_sidecar(out_path, payload, used, dbg)
+    write_stats_sidecar(out_path, payload, used, dbg, extraction_metadata, parsing_metadata)
     return out_path
 
 def main():
