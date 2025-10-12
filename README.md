@@ -1,11 +1,11 @@
 # PDF to JSON Converter with LLM for Dental Forms
 
-This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It leverages the Unstract LLMWhisperer API for high-accuracy text extraction and uses a sophisticated Python script to parse and structure the data.
+This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It uses local document extraction libraries (PyMuPDF and python-docx) for text extraction and a sophisticated Python script to parse and structure the data.
 
 ## Features
 
 - **Automated Two-Step Pipeline**: A single command orchestrates the entire workflow from PDF to JSON.
-- **High-Accuracy Text Extraction**: Uses the Unstract LLMWhisperer API to accurately extract text from complex form layouts.
+- **Local Text Extraction**: Uses PyMuPDF (for PDFs) and python-docx (for DOCX files) to extract text locally without requiring external APIs.
 - **Intelligent Form Parsing**: The script intelligently identifies and parses various form elements like checkboxes, grids, repeating sections, and composite fields.
 - **Data Normalization**: Cleans, normalizes, and structures the extracted data using a predefined form dictionary to ensure consistency.
 - **Modento-Compliant Output**: Generates JSON files that are structured to be compatible with the Modento system.
@@ -15,9 +15,10 @@ This project is a powerful two-step pipeline that automates the conversion of de
 
 The conversion process is handled by a sequence of scripts orchestrated by `run_all.py`:
 
-1.  **Text Extraction (`llmwhisperer.py`)**:
+1.  **Text Extraction (`docling_extract.py`)**:
     - Scans the `documents/` directory for `.pdf` and `.docx` files.
-    - Sends each file to the **Unstract LLMWhisperer API** to extract text while preserving the form's layout.
+    - Uses **PyMuPDF** (fitz) for PDF text extraction and **python-docx** for DOCX files.
+    - Extracts text locally without requiring external APIs or internet connection.
     - Saves the extracted plain text into the `output/` directory.
 
 2.  **JSON Conversion (`llm_text_to_modento.py`)**:
@@ -34,7 +35,7 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
 ├── output/             # Intermediate: Extracted plain text files are stored here
 ├── JSONs/              # Output: Final structured JSON files are saved here
 ├── run_all.py          # Main script to run the entire pipeline
-├── llmwhisperer.py     # Script for text extraction via API
+├── docling_extract.py  # Script for local text extraction
 ├── llm_text_to_modento.py # Script for parsing text and converting to JSON
 └── dental_form_dictionary.json # Template for standardizing form fields
 ```
@@ -57,31 +58,8 @@ Follow these steps to set up and run the project.
     ```
 
 2.  **Install dependencies:**
-    The only external dependency is `requests`.
     ```bash
-    pip install requests
-    ```
-
-### Configuration
-
-You need an API key from **Unstract LLMWhisperer** to run this project.
-
-1.  **Set the API Key**:
-    The recommended way is to set an environment variable named `LLMWHISPERER_API_KEY`.
-
-    - On macOS/Linux:
-      ```bash
-      export LLMWHISPERER_API_KEY="your_api_key_here"
-      ```
-    - On Windows:
-      ```bash
-      set LLMWHISPERER_API_KEY="your_api_key_here"
-      ```
-
-    Alternatively, you can directly edit the `llmwhisperer.py` file and replace the placeholder with your key:
-    ```python
-    # in llmwhisperer.py
-    UNSTRACT_API_KEY = os.getenv("LLMWHISPERER_API_KEY", "your_api_key_here")
+    pip install pymupdf python-docx
     ```
 
 ### Usage
@@ -96,8 +74,14 @@ You need an API key from **Unstract LLMWhisperer** to run this project.
 
 3.  **Check the Output**: The final structured JSON files will be created in the `JSONs/` directory. Each output file will be named after the original input file (e.g., `PatientForm.pdf` -> `PatientForm.modento.json`).
 
-To run in debug mode for more verbose output and statistics, use the `--debug` flag:
+To run the extraction and conversion steps separately:
+
 ```bash
+# Step 1: Extract text from documents
+python3 docling_extract.py --in documents --out output
+
+# Step 2: Convert text to JSON (with debug mode)
 python3 llm_text_to_modento.py --in output --out JSONs --debug
 ```
-*(Note: The `run_all.py` script also enables debug mode by default for the conversion step.)*
+
+*(Note: The `run_all.py` script runs both steps automatically and enables debug mode by default for the conversion step.)*
