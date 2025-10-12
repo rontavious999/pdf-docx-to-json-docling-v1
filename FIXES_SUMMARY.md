@@ -45,7 +45,7 @@ JSON had:     "I live" (truncated!)
 - Multi-field lines like `"First Name:     Last Name:"` are properly split into separate fields
 - Fields separated by spacing are detected and parsed correctly
 
-**Code location:** `llm_text_to_modento.py`, lines 533-580
+**Code location:** `docling_text_to_modento.py`, lines 533-580
 
 ### Fix #2: Smart Slash Handling
 
@@ -68,7 +68,7 @@ JSON had:     "I live" (truncated!)
   - Starts with common words (I, you, work, or, and) = valid
   - >2 words after slash + mixed formatting = malformed
 
-**Code location:** `llm_text_to_modento.py`, lines 1197-1230
+**Code location:** `docling_text_to_modento.py`, lines 1197-1230
 
 ---
 
@@ -158,14 +158,14 @@ These remaining issues affect **<10% of fields** and would require significant a
 
 ## How to Use
 
-The fixes are already integrated into `llm_text_to_modento.py`. Simply run your existing pipeline:
+The fixes are already integrated into `docling_text_to_modento.py`. Simply run your existing pipeline:
 
 ```bash
 # Process your PDFs as usual
 python3 run_all.py
 
 # Or process text files directly
-python3 llm_text_to_modento.py --in output --out JSONs
+python3 docling_text_to_modento.py --in output --out JSONs
 ```
 
 The improved parsing will automatically:
@@ -179,10 +179,10 @@ The improved parsing will automatically:
 ## Technical Details
 
 **Files Modified:**
-- `llm_text_to_modento.py` (2 focused changes, ~60 lines total)
+- `docling_text_to_modento.py` (2 focused changes, ~60 lines total)
 
 **No Changes Required To:**
-- `llmwhisperer.py` (text extraction)
+- `docling_extract.py` (text extraction)
 - `run_all.py` (pipeline orchestration)
 - `dental_form_dictionary.json` (templates)
 

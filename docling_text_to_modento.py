@@ -1902,8 +1902,18 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     first_line = lines[start_idx]
     checkboxes = list(checkbox_pattern.finditer(first_line))
     
-    # If first line doesn't have checkboxes, look ahead (skip category headers)
+    # Priority 2.2: Capture category headers if present
+    category_header = None
+    
+    # If first line doesn't have checkboxes, look ahead (might be category headers)
     if len(checkboxes) < 3 and start_idx + 3 < len(lines):
+        # Check if the first line might be a category header
+        first_line_text = lines[start_idx].strip()
+        if first_line_text and len(first_line_text.split()) <= 6:
+            # Might be a category header - look for slashes, pipes, or multiple spaced words
+            if '/' in first_line_text or '|' in first_line_text or re.search(r'\s{3,}', first_line_text):
+                category_header = first_line_text
+        
         for look_ahead in range(1, min(4, len(lines) - start_idx)):
             candidate_line = lines[start_idx + look_ahead]
             candidate_checkboxes = list(checkbox_pattern.finditer(candidate_line))
@@ -1959,7 +1969,7 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
     
     # Valid grid if we found at least 3 data lines
     if len(data_lines) >= 3:
-        return {
+        result = {
             'start_line': start_idx,
             'first_data_line': first_data_line_idx,
             'data_lines': data_lines,
@@ -1967,6 +1977,10 @@ def detect_multicolumn_checkbox_grid(lines: List[str], start_idx: int, section: 
             'column_positions': column_positions,
             'section': section
         }
+        # Priority 2.2: Include category header if found
+        if category_header:
+            result['category_header'] = category_header
+        return result
     
     return None
 
@@ -2137,10 +2151,27 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
     Extracts all checkbox items across all rows and columns, creating clean option names.
     Uses Archivev10 Fix 3 for enhanced column-aware text extraction.
     Uses Archivev11 Fix 2 for text-only item detection.
+    Priority 2.2: Uses category headers to prefix option names when available.
     """
     data_lines = grid_info['data_lines']
     column_positions = grid_info['column_positions']
     section = grid_info['section']
+    
+    # Priority 2.2: Parse category headers if present
+    category_headers = None
+    if 'category_header' in grid_info:
+        category_header_text = grid_info['category_header']
+        # Parse headers (separated by slashes, pipes, or significant spacing)
+        if '/' in category_header_text:
+            category_headers = [h.strip() for h in category_header_text.split('/')]
+        elif '|' in category_header_text:
+            category_headers = [h.strip() for h in category_header_text.split('|')]
+        else:
+            # Split by 3+ spaces
+            category_headers = [h.strip() for h in re.split(r'\s{3,}', category_header_text) if h.strip()]
+        
+        if debug and category_headers:
+            print(f"  [debug] grid category headers: {category_headers}")
     
     # Collect all options
     all_options = []
@@ -2177,6 +2208,17 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
                 'appearance', 'function', 'habits', 'social', 'women', 'type'
             ]:
                 continue
+            
+            # Priority 2.2: Prefix with category header if available
+            if category_headers and len(category_headers) == len(column_positions):
+                # Determine which column this checkbox is in
+                col_idx = 0
+                for idx, col_pos in enumerate(column_positions):
+                    if cb_pos >= col_pos:
+                        col_idx = idx
+                
+                if col_idx < len(category_headers) and category_headers[col_idx]:
+                    item_text = f"{category_headers[col_idx]} - {item_text}"
             
             all_options.append((item_text, None))
         
@@ -2820,6 +2862,118 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     if has_id and has_ss:
         return [("insurance_id_number", "input", {"input_type":"text"}), ("ssn", "input", {"input_type":"ssn"})]
     return None
+
+
+def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
+    """
+    Detect inline checkboxes with continuation text.
+    
+    Example: "[ ] Yes, send me text alerts"
+    Returns: ("yes_text_alerts", "Yes, send me text alerts", "radio")
+    
+    Priority 2.3: Inline Checkbox with Continuation Text
+    - Detects checkboxes embedded mid-sentence
+    - Extracts the boolean option and the continuation text
+    - Pattern: "[ ] Yes/No, [descriptive text]"
+    """
+    # Pattern: checkbox followed by Yes/No and then continuation text with comma
+    pattern = r'^\s*' + CHECKBOX_ANY + r'\s*(Yes|No|Y|N)[\s,]+(.*?)$'
+    match = re.match(pattern, line, re.I)
+    
+    if not match:
+        return None
+    
+    option = match.group(1).capitalize()  # "Yes" or "No"
+    continuation = match.group(2).strip()
+    
+    # Need meaningful continuation text (at least 10 chars)
+    if len(continuation) < 10:
+        return None
+    
+    # Generate a descriptive key from the continuation
+    key = slugify(continuation)
+    if len(key) > 40:
+        key = key[:40]
+    
+    # Title includes both the option and the description
+    title = f"{option}, {continuation}"
+    
+    # Determine field type - usually a boolean/radio
+    field_type = "radio"
+    
+    return (key, title, field_type)
+
+
+def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
+    """
+    Detect lines with a single label followed by multiple blank fields.
+    
+    Example: "Phone: Mobile _____ Home _____ Work _____"
+    Returns: [("phone_mobile", "Mobile"), ("phone_home", "Home"), ("phone_work", "Work")]
+    
+    Priority 2.1: Multi-Field Label Splitting
+    - Detects multiple underscores or blanks after a single label
+    - Identifies common sub-field keywords (Home/Work/Cell, Mobile/Office, Primary/Secondary)
+    - Uses spacing analysis to detect distinct blank columns
+    """
+    # Pattern: Label: followed by multiple keywords with blanks/underscores
+    # Common keywords for sub-fields
+    sub_field_keywords = {
+        'mobile': 'mobile',
+        'cell': 'mobile',
+        'home': 'home',
+        'work': 'work',
+        'office': 'work',
+        'primary': 'primary',
+        'secondary': 'secondary',
+        'personal': 'personal',
+        'business': 'business',
+        'other': 'other',
+        'fax': 'fax',
+        'preferred': 'preferred',
+    }
+    
+    # Look for a label (word/phrase ending with colon) followed by multiple sub-fields
+    # Pattern: "Label: Keyword1 ____ Keyword2 ____ Keyword3 ____"
+    label_match = re.match(r'^([A-Za-z\s]+?):\s+(.+)$', line)
+    if not label_match:
+        return None
+    
+    base_label = label_match.group(1).strip()
+    remainder = label_match.group(2)
+    
+    # Look for multiple keywords separated by blanks/underscores
+    # Pattern: keyword followed by blanks/underscores (at least 2)
+    blank_pattern = r'[_\s]{2,}'
+    
+    # Split by significant blank sequences
+    parts = re.split(blank_pattern, remainder)
+    
+    # Filter to get only meaningful keywords
+    keywords_found = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Check if this part is a known sub-field keyword
+        part_lower = part.lower()
+        if part_lower in sub_field_keywords:
+            keywords_found.append((part, sub_field_keywords[part_lower]))
+    
+    # Need at least 2 keywords to be a multi-field line
+    if len(keywords_found) < 2:
+        return None
+    
+    # Generate field descriptors
+    base_key = slugify(base_label)
+    result = []
+    for display_name, suffix_key in keywords_found:
+        field_key = f"{base_key}_{suffix_key}"
+        field_title = f"{base_label} ({display_name})"
+        result.append((field_key, field_title))
+    
+    return result
+
 
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
@@ -3472,6 +3626,35 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     if tok: opts_block.append((tok, None))
                 k += 1; extra_lines += 1
             j = max(j, k)
+
+        # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
+        multi_fields = detect_multi_field_line(line)
+        if multi_fields:
+            if debug:
+                print(f"  [debug] multi-field detected: {line[:60]}... -> {len(multi_fields)} fields")
+            for field_key, field_title in multi_fields:
+                # Determine input type based on base field
+                input_type = "text"
+                if "phone" in field_key or "fax" in field_key:
+                    input_type = "phone"
+                elif "email" in field_key:
+                    input_type = "email"
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                          control={"input_type": input_type}))
+            i += 1
+            continue
+        
+        # Priority 2.3: Check for inline checkbox with continuation text
+        inline_checkbox_field = detect_inline_checkbox_with_text(line)
+        if inline_checkbox_field:
+            field_key, field_title, field_type = inline_checkbox_field
+            if debug:
+                print(f"  [debug] inline checkbox with text: {line[:60]}... -> {field_key}")
+            # Create a boolean/radio field with the option and description
+            questions.append(Question(field_key, field_title, cur_section, field_type,
+                                      control={"options": [make_option("Yes", True), make_option("No", False)]}))
+            i += 1
+            continue
 
         # Simple labeled fields
         if STATE_LABEL_RE.match(title):
@@ -4599,13 +4782,37 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
     out = _dedupe_keys_dicts(out)
     return out, used
 
-def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: DebugLogger):
+def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: DebugLogger, 
+                        extraction_metadata: Optional[dict] = None, parsing_metadata: Optional[dict] = None):
+    """
+    Write enhanced statistics sidecar file.
+    
+    Priority 8.1: Enhanced Debug Output and Stats
+    - Adds extraction metadata (file type, size, character count)
+    - Adds parsing statistics (grids detected, options parsed)
+    - Lists unmatched fields that might need dictionary entries
+    """
     total = len(payload)
     counts_by_section = defaultdict(int)
     counts_by_type = defaultdict(int)
     for q in payload:
         counts_by_section[q.get("section","General")] += 1
         counts_by_type[q.get("type","input")] += 1
+    
+    # Priority 8.1: Collect unmatched fields for dictionary enhancement suggestions
+    unmatched_fields = []
+    if dbg.enabled:
+        matched_keys = {ev.matched_key for ev in dbg.events if hasattr(ev, 'matched_key') and ev.matched_key}
+        for q in payload:
+            q_key = q.get("key", "")
+            if q_key not in matched_keys:
+                unmatched_fields.append({
+                    "key": q_key,
+                    "title": q.get("title", ""),
+                    "section": q.get("section", ""),
+                    "type": q.get("type", "")
+                })
+    
     stats = {
         "file": out_path.name,
         "total_items": total,
@@ -4617,6 +4824,23 @@ def write_stats_sidecar(out_path: Path, payload: List[dict], used: int, dbg: Deb
         "near_misses": [ev.__dict__ for ev in dbg.near_misses] if dbg.enabled else [],
         "gates": dbg.gates if dbg.enabled else [],
     }
+    
+    # Priority 8.1: Add extraction metadata if available
+    if extraction_metadata:
+        stats["extraction"] = extraction_metadata
+    
+    # Priority 8.1: Add parsing metadata if available
+    if parsing_metadata:
+        stats["parsing"] = parsing_metadata
+    
+    # Priority 8.1: Add unmatched fields suggestions
+    if unmatched_fields:
+        stats["unmatched_fields"] = unmatched_fields
+        stats["dictionary_suggestions"] = {
+            "count": len(unmatched_fields),
+            "message": "Consider adding these fields to dental_form_dictionary.json for better matching"
+        }
+    
     sidecar = out_path.with_suffix(".stats.json")
     sidecar.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -4627,8 +4851,25 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     if not raw.strip():
         print(f"[skip] empty file: {txt_path.name}")
         return None
+    
+    # Priority 8.1: Collect extraction metadata
+    extraction_metadata = {
+        "source_file": txt_path.name,
+        "file_size_bytes": txt_path.stat().st_size if txt_path.exists() else 0,
+        "character_count": len(raw),
+        "line_count": len(raw.split('\n'))
+    }
+    
     # Parse → normalize JSON
     questions = parse_to_questions(raw, debug=debug)
+    
+    # Priority 8.1: Collect parsing metadata
+    parsing_metadata = {
+        "raw_questions_parsed": len(questions),
+        "sections_detected": len(set(q.section for q in questions)),
+        "unique_sections": sorted(set(q.section for q in questions))
+    }
+    
     payload = questions_to_json(questions)
 
     # Post-process merges + normalization
@@ -4669,14 +4910,39 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
 
     if debug:
         dbg.print_summary()
-    write_stats_sidecar(out_path, payload, used, dbg)
+    write_stats_sidecar(out_path, payload, used, dbg, extraction_metadata, parsing_metadata)
     return out_path
+
+def process_one_wrapper(args_tuple):
+    """
+    Wrapper for process_one to support multiprocessing.
+    
+    Priority 6.1: Parallel Processing Support
+    - Enables parallel processing of multiple forms
+    - Returns tuple of (success, filename, error_message)
+    """
+    txt_path, out_dir, dict_path, debug = args_tuple
+    try:
+        # Load catalog in each worker (can't pickle catalog across processes)
+        catalog = None
+        if dict_path and dict_path.exists():
+            try:
+                catalog = TemplateCatalog.from_path(dict_path)
+            except Exception:
+                pass  # Silently ignore catalog errors in workers
+        
+        process_one(txt_path, out_dir, catalog=catalog, debug=debug)
+        return (True, txt_path.name, None)
+    except Exception as e:
+        return (False, txt_path.name, str(e))
+
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--in",  dest="in_dir",  default=DEFAULT_IN_DIR,  help="Folder with LLMWhisperer .txt files (default: output)")
+    ap.add_argument("--in",  dest="in_dir",  default=DEFAULT_IN_DIR,  help="Folder with extracted .txt files (default: output)")
     ap.add_argument("--out", dest="out_dir", default=DEFAULT_OUT_DIR, help="Folder to write JSONs (default: JSONs)")
     ap.add_argument("--debug", action="store_true", help="Verbose debug logs + near-miss reporting; write *.stats.json sidecars")
+    ap.add_argument("--jobs", type=int, default=1, help="Number of parallel jobs (default: 1 for sequential). Use -1 for CPU count.")
     args = ap.parse_args()
 
     in_dir = Path(args.in_dir); out_dir = Path(args.out_dir)
@@ -4684,27 +4950,61 @@ def main():
         print(f"ERROR: input folder not found: {in_dir}", file=sys.stderr); sys.exit(2)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load dictionary
+    # Load dictionary path (will be loaded in each worker if parallel)
     dict_path = Path(__file__).resolve().parent / "dental_form_dictionary.json"
-    catalog: Optional[TemplateCatalog] = None
-    if dict_path.exists():
-        try:
-            catalog = TemplateCatalog.from_path(dict_path)
-        except Exception as e:
-            print(f"[warn] dictionary unavailable ({e}). Proceeding without templates.")
-    else:
-        print(f"[warn] dictionary file not found at {dict_path.name}. Proceeding without templates.")
-
+    
     txts = sorted([p for p in in_dir.rglob("*.txt") if p.is_file()])
     if not txts:
         print(f"WARNING: no .txt files found under {in_dir}")
         return
-
-    for p in txts:
-        try:
-            process_one(p, out_dir, catalog=catalog, debug=args.debug)
-        except Exception as e:
-            print(f"[x] failed on {p.name}: {e}", file=sys.stderr)
+    
+    # Priority 6.1: Determine number of jobs
+    num_jobs = args.jobs
+    if num_jobs == -1:
+        import multiprocessing
+        num_jobs = multiprocessing.cpu_count()
+    
+    # Sequential processing (default)
+    if num_jobs <= 1:
+        # Load dictionary once for sequential processing
+        catalog: Optional[TemplateCatalog] = None
+        if dict_path.exists():
+            try:
+                catalog = TemplateCatalog.from_path(dict_path)
+            except Exception as e:
+                print(f"[warn] dictionary unavailable ({e}). Proceeding without templates.")
+        else:
+            print(f"[warn] dictionary file not found at {dict_path.name}. Proceeding without templates.")
+        
+        for p in txts:
+            try:
+                process_one(p, out_dir, catalog=catalog, debug=args.debug)
+            except Exception as e:
+                print(f"[x] failed on {p.name}: {e}", file=sys.stderr)
+    
+    # Parallel processing (Priority 6.1)
+    else:
+        import multiprocessing
+        print(f"Processing {len(txts)} file(s) with {num_jobs} parallel jobs...")
+        
+        # Prepare arguments for workers
+        work_items = [(p, out_dir, dict_path, args.debug) for p in txts]
+        
+        # Process in parallel
+        failed_files = []
+        with multiprocessing.Pool(processes=num_jobs) as pool:
+            results = pool.map(process_one_wrapper, work_items)
+        
+        # Report results
+        successful = sum(1 for success, _, _ in results if success)
+        for success, filename, error_msg in results:
+            if not success:
+                failed_files.append((filename, error_msg))
+                print(f"[x] failed on {filename}: {error_msg}", file=sys.stderr)
+        
+        print(f"\n✅ Completed: {successful}/{len(txts)} files processed successfully")
+        if failed_files:
+            print(f"❌ Failed: {len(failed_files)} file(s) - see errors above")
 
 if __name__ == "__main__":
     main()
