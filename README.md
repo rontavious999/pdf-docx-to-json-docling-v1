@@ -1,4 +1,4 @@
-# PDF to JSON Converter with LLM for Dental Forms
+# PDF to JSON Converter with Docling for Dental Forms
 
 This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It uses local document extraction libraries (PyMuPDF and python-docx) for text extraction and a sophisticated Python script to parse and structure the data.
 
