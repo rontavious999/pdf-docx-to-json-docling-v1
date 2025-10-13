@@ -257,9 +257,11 @@ def chunk_by_columns(line: str, ncols: int) -> List[str]:
 
 def detect_column_boundaries(lines: List[str], start_idx: int, max_lines: int = 10) -> Optional[List[int]]:
     """
-    Archivev10 Fix 3: Whitespace-Based Column Detection.
+    Archivev10 Fix 3 + Enhancement 3: Whitespace-Based Column Detection.
     
     Analyzes multiple lines to detect consistent column positions based on checkbox locations.
+    Enhanced to be more robust with irregular spacing and partial column data.
+    
     Returns list of character positions where columns start, or None if no pattern found.
     
     Example:
@@ -275,7 +277,9 @@ def detect_column_boundaries(lines: List[str], start_idx: int, max_lines: int = 
         line = lines[i]
         checkboxes = list(checkbox_pattern.finditer(line))
         
-        if len(checkboxes) >= 2:  # Need at least 2 checkboxes to define columns
+        # Enhancement 3: Be more lenient - accept lines with just 1 checkbox
+        # as they might be part of an irregular grid
+        if len(checkboxes) >= 1:
             positions = [cb.start() for cb in checkboxes]
             all_positions.append(positions)
     

@@ -574,21 +574,84 @@ def split_conditional_field_line(line: str) -> List[str]:
     return segments if len(segments) >= 2 else [line]
 
 
+def split_compound_field_with_slashes(line: str) -> List[str]:
+    """
+    Enhancement 1: Split compound fields with slashes into separate fields.
+    
+    Examples:
+        "Apt/Unit/Suite____" -> ["Apt", "Unit", "Suite"]
+        "Name/Date/SSN____" -> ["Name", "Date", "SSN"]
+        "Plan/Group Number____" -> ["Plan Number", "Group Number"]
+    
+    Only splits if:
+    - Line contains field label(s) followed by slashes
+    - Followed by underscores or other input markers (indicating it's a fillable field)
+    - Each component is a reasonable field label (2+ characters)
+    
+    Returns:
+        List of field segments (original line if no split needed)
+    """
+    # Pattern: One or more words/labels separated by slashes, followed by input markers
+    # Example: "Apt/Unit/Suite________" or "Name/Date/SSN_______"
+    pattern = r'^([A-Za-z][A-Za-z\s]*(?:/[A-Za-z][A-Za-z\s]*)+)\s*[:\-]?\s*([_\-\(\)]{3,})'
+    match = re.match(pattern, line.strip())
+    
+    if not match:
+        return [line]
+    
+    compound_label = match.group(1)
+    input_marker = match.group(2)
+    
+    # Split by slash
+    components = [c.strip() for c in compound_label.split('/') if c.strip()]
+    
+    # Only split if we have 2+ meaningful components
+    if len(components) < 2:
+        return [line]
+    
+    # Filter out single-letter components unless they're common abbreviations
+    common_abbrevs = {'mi', 'm', 'f', 'n', 'y', 'apt', 'st', 'no'}
+    valid_components = []
+    for comp in components:
+        # Keep if: 2+ chars, or is common abbreviation
+        if len(comp) >= 2 or comp.lower() in common_abbrevs:
+            valid_components.append(comp)
+    
+    if len(valid_components) < 2:
+        return [line]
+    
+    # Create separate field lines
+    segments = []
+    for comp in valid_components:
+        # Preserve some input markers for each field
+        # Use proportional markers based on component count
+        marker_len = max(3, len(input_marker) // len(valid_components))
+        segments.append(f"{comp} {input_marker[:marker_len]}")
+    
+    return segments
+
+
 def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
-    Archivev12 Fix 1: Enhanced multi-field line splitting.
+    Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
-    1. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
-    2. Conditional field patterns (Archivev13)
-    3. Existing pattern (colon + checkbox)
-    4. Checkboxes without colons
-    5. Known label patterns with spacing
+    1. Enhancement 1: Compound fields with slashes (Apt/Unit/Suite)
+    2. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
+    3. Conditional field patterns (Archivev13)
+    4. Existing pattern (colon + checkbox)
+    5. Checkboxes without colons
+    6. Known label patterns with spacing
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
         return [line]
+    
+    # Enhancement 1: Try compound field splitting with slashes
+    result = split_compound_field_with_slashes(line)
+    if len(result) > 1:
+        return result
     
     # Archivev17 Fix: Check if this is "Label: Sub1  Sub2  Sub3" pattern
     result = split_label_with_subfields(line)
@@ -717,6 +780,7 @@ def preprocess_lines(lines: List[str]) -> List[str]:
     """
     Preprocess lines before main parsing.
     Currently handles: splitting multi-question lines with enhanced strategies.
+    Enhancement: Recursively processes split segments to handle compound fields.
     """
     processed = []
     for line in lines:
@@ -740,7 +804,16 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             # Strategy 2: Enhanced multi-field splitting for regular cases
             split_lines = enhanced_split_multi_field_line(line)
         
-        processed.extend(split_lines)
+        # Enhancement: Recursively process split segments
+        # This catches compound fields like "Apt/Unit/Suite" that were created from splitting
+        if len(split_lines) > 1:
+            for segment in split_lines:
+                # Try to split each segment further (e.g., compound fields with slashes)
+                # But avoid infinite recursion by only trying compound splitting
+                compound_split = split_compound_field_with_slashes(segment)
+                processed.extend(compound_split)
+        else:
+            processed.extend(split_lines)
     
     return processed
 
@@ -1546,6 +1619,68 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     return result
 
 
+def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple[str, str]]]]:
+    """
+    Enhancement 2: Detect questions with inline text options.
+    
+    Patterns to detect:
+    - "Question? Y or N" -> Yes/No options
+    - "Question? Yes or No" -> Yes/No options
+    - "Sex M or F" -> Male/Female options
+    - "Gender: Male/Female" -> Male/Female options
+    
+    Returns:
+        Tuple of (question_text, option_type, options) where options is [(name, value), ...]
+        None if no inline options detected
+    """
+    line_stripped = line.strip()
+    
+    # Pattern 1: Y or N (with optional question mark and "If yes/no" continuation)
+    yn_pattern = r'^(.+?)\s+([Yy]\s+or\s+[Nn])\s*(?:,?\s*[Ii]f\s+(?:yes|no).*)?$'
+    yn_match = re.match(yn_pattern, line_stripped)
+    if yn_match:
+        question_text = yn_match.group(1)
+        # Clean up the question text
+        question_text = re.sub(r'\s+$', '', question_text)
+        
+        options = [
+            ("Yes", "yes"),
+            ("No", "no")
+        ]
+        return (question_text, "yes_no", options)
+    
+    # Pattern 2: Yes or No (full words)
+    yesno_pattern = r'^(.+?)\s+(Yes\s+or\s+No)\s*(?:,?\s*[Ii]f\s+(?:yes|no).*)?$'
+    yesno_match = re.match(yesno_pattern, line_stripped, re.I)
+    if yesno_match:
+        question_text = yesno_match.group(1)
+        question_text = re.sub(r'\s+$', '', question_text)
+        
+        options = [
+            ("Yes", "yes"),
+            ("No", "no")
+        ]
+        return (question_text, "yes_no", options)
+    
+    # Pattern 3: M or F / Male or Female (Sex/Gender)
+    sex_pattern = r'^(.+?)\s+(?:M\s+or\s+F|Male\s+or\s+Female|M/F|Male/Female)\s*'
+    sex_match = re.match(sex_pattern, line_stripped, re.I)
+    if sex_match:
+        question_text = sex_match.group(1)
+        # If question text is just "Sex" or "Gender", that's the label
+        question_text = re.sub(r'[:\-]?\s*$', '', question_text)
+        
+        options = [
+            ("Male", "male"),
+            ("Female", "female"),
+            ("Other", "other"),
+            ("Prefer not to self identify", "not_say")
+        ]
+        return (question_text, "sex_gender", options)
+    
+    return None
+
+
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
     lines = coalesce_soft_wraps(lines)
@@ -2058,7 +2193,32 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if emitted_compound:
             i += 1; continue
 
-        # Archivev12 Fix 3: Special handling for Sex/Gender with text options (M or F)
+        # Enhancement 2: Enhanced inline option detection
+        # Detect questions with inline text options: "Question? Y or N", "Sex M or F", etc.
+        inline_option_match = detect_inline_text_options(line)
+        if inline_option_match:
+            question_text, option_type, options = inline_option_match
+            
+            # Create question from the text before the options
+            title = question_text.strip()
+            if title.endswith('?'):
+                title = title[:-1].strip()
+            
+            key = slugify(title)
+            
+            # Create control with detected options
+            control = {"options": [{"name": opt[0], "value": opt[1]} for opt in options]}
+            
+            questions.append(Question(key, title, cur_section, "radio", control=control))
+            
+            if debug:
+                print(f"  [debug] gate: inline_text_options -> '{title}' with {len(options)} options")
+            
+            i += 1
+            continue
+        
+        # Archivev12 Fix 3: Special handling for Sex/Gender with text options (M or F) - LEGACY fallback
+        # Keep for backward compatibility, but the new detect_inline_text_options should catch these
         sex_match = re.search(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female|Mor\s*F)', line, re.I)
         if sex_match:
             key = "sex"
