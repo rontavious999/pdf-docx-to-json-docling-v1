@@ -121,7 +121,23 @@ def classify_date_input(label: str) -> str:
 
 def slugify(s: str, maxlen: int = 64) -> str:
     s = collapse_spaced_caps(s.strip()).lower()
-    s = re.sub(r"[^\w\s-]", "", s)
+    
+    # Fix Unicode ligatures and special characters (Production readiness)
+    unicode_fixes = {
+        'ﬁ': 'fi',
+        'ﬂ': 'fl',
+        'ﬀ': 'ff',
+        'ﬃ': 'ffi',
+        'ﬄ': 'ffl',
+        'ﬆ': 'st',
+        '–': '-',  # en dash
+        '—': '-',  # em dash
+    }
+    for old, new in unicode_fixes.items():
+        s = s.replace(old, new)
+    
+    # Remove all non-alphanumeric except spaces (no hyphens in keys)
+    s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", "_", s)
     s = re.sub(r"_+", "_", s).strip("_")
     if not s:
