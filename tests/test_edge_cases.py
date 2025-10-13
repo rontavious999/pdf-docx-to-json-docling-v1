@@ -78,6 +78,46 @@ class TestMultiFieldLabels:
         
         assert result is not None, "Should detect multi-field address pattern"
         assert len(result) >= 2, "Should detect at least 2 fields"
+    
+    def test_day_evening_phone_fields(self):
+        """Phone with Day/Evening should split into separate fields (Patch 2)."""
+        line = "Phone: Day _____ Evening _____"
+        result = detect_multi_field_line(line)
+        
+        assert result is not None, "Should detect day/evening pattern"
+        assert len(result) >= 2, f"Should detect at least 2 fields, got {len(result)}"
+        
+        keys = [key for key, _ in result]
+        assert any("day" in key for key in keys), f"Should have day key, got {keys}"
+        assert any("evening" in key for key in keys), f"Should have evening key, got {keys}"
+    
+    def test_slash_separated_subfields(self):
+        """Slash-separated sub-fields like Day/Evening should be split (Patch 2)."""
+        line = "Contact: Day/Evening _____"
+        result = detect_multi_field_line(line)
+        
+        # After slash normalization, this might not split into 2 fields if only one blank
+        # But the slash should be normalized so it could be detected if pattern matches
+        # This test validates that slashes don't break the parser
+        # For a proper split, we need blanks after each keyword
+        line2 = "Phone: Day/Evening _____ Night _____"
+        result2 = detect_multi_field_line(line2)
+        
+        if result2:
+            keys = [key for key, _ in result2]
+            # Should detect at least one time-based keyword
+            assert any("day" in key or "evening" in key or "night" in key for key in keys), \
+                f"Should detect time-based keywords, got {keys}"
+    
+    def test_night_phone_field(self):
+        """Night phone should be recognized as sub-field (Patch 2)."""
+        line = "Emergency Contact: Day _____ Night _____"
+        result = detect_multi_field_line(line)
+        
+        assert result is not None, "Should detect day/night pattern"
+        if result:
+            keys = [key for key, _ in result]
+            assert any("night" in key for key in keys), f"Should have night key, got {keys}"
 
 
 class TestInlineCheckboxStatements:

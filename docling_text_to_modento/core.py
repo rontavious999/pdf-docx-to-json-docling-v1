@@ -1608,6 +1608,10 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
         'other': 'other',
         'fax': 'fax',
         'preferred': 'preferred',
+        # Patch 2: Add time-of-day keywords for phone fields
+        'day': 'day',
+        'evening': 'evening',
+        'night': 'night',
     }
     
     # Look for a label (word/phrase ending with colon) followed by multiple sub-fields
@@ -1618,6 +1622,9 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     
     base_label = label_match.group(1).strip()
     remainder = label_match.group(2)
+    
+    # Patch 2: Normalize slashes to spaces (e.g., "Day/Evening" -> "Day Evening")
+    remainder = re.sub(r'/', ' ', remainder)
     
     # Look for multiple keywords separated by blanks/underscores
     # Pattern: keyword followed by blanks/underscores (at least 2)
