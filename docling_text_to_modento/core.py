@@ -2223,7 +2223,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             questions.append(Question(key, title or "State", cur_section, "states", control={}))
             i += 1; continue
 
-        if DATE_LABEL_RE.search(title):
+        # Production readiness: Remove trailing underscores before date detection
+        title_for_check = re.sub(r'_+$', '', title).strip()
+        if DATE_LABEL_RE.search(title_for_check):
             key = slugify(title or "date")
             if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
             # Archivev18 Fix 1: Clean date field titles to remove template artifacts
