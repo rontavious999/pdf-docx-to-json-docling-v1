@@ -542,10 +542,30 @@ def split_conditional_field_line(line: str) -> List[str]:
     Archivev13 Fix: Handle conditional multi-field lines.
     Pattern: "Question? ... If condition: field1 ... field2"
     Example: "Are you a student? Yes or No If patient is a minor: Mother's DOB    Father's DOB"
+    
+    Note: Do NOT split yes/no questions with follow-up instructions like:
+    "Are you taking medications? [ ] Yes [ ] No If yes, please explain:______"
+    These should be handled by the compound yes/no logic instead.
     """
     # Look for "If ... :" pattern
     conditional_match = re.search(r'\b(if\s+[^:]{5,40}:)', line, re.I)
     if not conditional_match:
+        return [line]
+    
+    # Check if this is a yes/no question with follow-up instructions
+    # Pattern: checkbox or "Yes/No" before the "if" statement
+    before_conditional = line[:conditional_match.start()]
+    has_yesno_checkbox = bool(re.search(r'(?:yes|no|y|n)(?:\s*\[|\s*or\s)', before_conditional, re.I))
+    
+    # If it's "if yes" or "if no" followed by common follow-up keywords, don't split
+    conditional_text = conditional_match.group(0).lower()
+    is_followup_instruction = (
+        ('if yes' in conditional_text or 'if no' in conditional_text) and
+        any(keyword in conditional_text for keyword in ['explain', 'specify', 'list', 'describe', 'comment'])
+    )
+    
+    if has_yesno_checkbox and is_followup_instruction:
+        # This is a yes/no question with follow-up instructions, don't split
         return [line]
     
     conditional_text = conditional_match.group(0)
@@ -1419,7 +1439,19 @@ def create_yn_question_with_followup(
         control={"options": [make_option("Yes", True), make_option("No", False)]}
     )
     
-    # Follow-up input field
+    # Follow-up input field (conditional on Yes)
+    followup_key = f"{key_base}_explanation"
+    followup_q = Question(
+        followup_key,
+        "Please explain",
+        section,
+        "input",
+        control={"input_type": "text", "hint": "Please provide details"}
+    )
+    followup_q.conditional_on = [(key_base, "yes")]
+    
+    return [main_q, followup_q]
+
 
 # Template matching functions now imported from modules.template_catalog
 # These functions handle field standardization against the template dictionary:
@@ -1427,19 +1459,6 @@ def create_yn_question_with_followup(
 # - FindResult dataclass for match results
 # - merge_with_template for merging parsed fields with templates
 # - Helper functions for text normalization and matching
-
-    for q in items:
-        key = q.get("key") or "q"
-        if q.get("type") == "signature":
-            q["key"] = "signature"
-            out.append(q); continue
-        base = key
-        if base not in seen:
-            seen[base] = 1; q["key"] = base
-        else:
-            seen[base] += 1; q["key"] = f"{base}_{seen[base]}"
-        out.append(q)
-    return out
 
 # ---------- Parsing
 
@@ -2150,7 +2169,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         emitted_compound = False
         if compound_prompts:
             for ptxt in compound_prompts:
-                key = slugify(ptxt)
+                # Fix: Strip follow-up instructions from prompt to get clean question
+                # Pattern: "Question? If yes, please explain:______" -> "Question?"
+                clean_ptxt = re.sub(r'\s+(if\s+yes|if\s+so|please\s+explain|explain\s+below).*$', '', ptxt, flags=re.I).strip()
+                if not clean_ptxt:
+                    clean_ptxt = ptxt  # Fallback if regex removes everything
+                
+                key = slugify(clean_ptxt)
                 if insurance_scope and "insurance" in cur_section.lower():
                     key = f"{key}{insurance_scope}"
                 control = {"options":[make_option("Yes",True),make_option("No",False)]}
@@ -2187,7 +2212,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                         follow_up_q.conditional_on = [(key, "yes")]
                         questions.append(follow_up_q)
                 
-                questions.append(Question(key, ptxt, cur_section, "radio", control=control))
+                questions.append(Question(key, clean_ptxt, cur_section, "radio", control=control))
                 emitted_compound = True
             if re.search(r"name\s+of\s+school", line, re.I):
                 questions.append(Question("name_of_school","Name of School",cur_section,"input",control={"input_type":"text"}))
