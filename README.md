@@ -86,8 +86,14 @@ To run the extraction and conversion steps separately:
 # Step 1: Extract text from documents
 python3 docling_extract.py --in documents --out output
 
-# Step 1 (with OCR for scanned PDFs):
-python3 docling_extract.py --in documents --out output --ocr
+# Step 1 (OCR is now automatic for scanned PDFs by default!)
+# No flags needed - OCR will be used automatically when needed
+
+# Step 1 (disable auto-OCR if you want to skip scanned PDFs):
+python3 docling_extract.py --in documents --out output --no-auto-ocr
+
+# Step 1 (force OCR for all PDFs, even with text):
+python3 docling_extract.py --in documents --out output --force-ocr
 
 # Step 1 (with parallel processing for large batches):
 python3 docling_extract.py --in documents --out output --jobs 4
@@ -122,12 +128,16 @@ The parser uses intelligent pattern matching to handle various form layouts with
 While the pipeline achieves 95%+ field capture accuracy on most forms, there are some current limitations:
 
 ### Text Extraction
-- **OCR support available but optional**: The pipeline now includes OCR support via Tesseract. Use the `--ocr` flag to automatically process scanned PDFs. Without the flag, PDFs must have embedded text layers. Install OCR dependencies with: `pip install pytesseract pillow` and `sudo apt-get install tesseract-ocr`.
+- **Automatic OCR for scanned PDFs**: ✓ **Now enabled by default** - The pipeline automatically detects PDFs without text layers and uses OCR when needed. No manual flag required! To disable this behavior, use `--no-auto-ocr`. Install OCR dependencies with: `pip install pytesseract pillow` and `sudo apt-get install tesseract-ocr`.
+  - Use `--ocr` to force OCR fallback even for PDFs with text (legacy option)
+  - Use `--force-ocr` to force OCR for all PDFs regardless of text layer
+  - Use `--no-auto-ocr` to disable automatic OCR detection
 
 ### Edge Cases in Parsing
-- **Multi-sub-field labels**: Fields like "Phone: __Mobile__ __Home__ __Work__" with multiple blanks on one line are captured as a single field rather than split into separate entries.
-- **Grid column headers**: In multi-column checkbox grids, category headers (e.g., "Appearance / Function / Habits") are currently not associated with their options.
-- **Inline checkboxes**: Checkboxes embedded within sentences (e.g., "[ ] Yes, send me text alerts") may not be captured as separate boolean fields.
+Most common edge cases are now handled automatically:
+- **Multi-sub-field labels**: ✓ **Now supported** - Fields like "Phone: Mobile ___ Home ___ Work ___" are automatically split into separate phone_mobile, phone_home, and phone_work fields.
+- **Grid column headers**: ✓ **Now supported** - In multi-column checkbox grids, category headers (e.g., "Appearance / Function / Habits") are now captured and prefixed to option names (e.g., "Habits - Smoking").
+- **Inline checkboxes**: ✓ **Now supported** - Checkboxes embedded within sentences (e.g., "[ ] Yes, send me text alerts") are now captured as separate boolean fields with meaningful labels.
 
 These edge cases affect less than 5% of fields on typical forms and are documented in `ACTIONABLE_ITEMS.md` for future improvement.
 
