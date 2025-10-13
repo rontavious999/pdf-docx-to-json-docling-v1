@@ -3516,7 +3516,7 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Load dictionary path (will be loaded in each worker if parallel)
-    dict_path = Path(__file__).resolve().parent / "dental_form_dictionary.json"
+    dict_path = Path(__file__).resolve().parent.parent / "dental_form_dictionary.json"
     
     txts = sorted([p for p in in_dir.rglob("*.txt") if p.is_file()])
     if not txts:

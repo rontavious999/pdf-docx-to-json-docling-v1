@@ -14,6 +14,7 @@ Functions:
 - Helper functions for text normalization and matching
 """
 
+import copy
 import re
 import json
 from pathlib import Path
