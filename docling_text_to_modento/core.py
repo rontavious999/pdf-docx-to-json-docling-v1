@@ -300,63 +300,65 @@ def split_multi_question_line(line: str) -> List[str]:
 # ---------- Archivev12 Fix 1: Enhanced Multi-Field Line Splitting
 
 # Known field labels dictionary for pattern matching
+# Production Improvement: Use lookahead to handle underscores/dashes/punctuation after labels
+# (?=[^a-zA-Z]|$) means "followed by non-letter or end of string"
 KNOWN_FIELD_LABELS = {
     # Name fields
-    'first_name': r'\bfirst\s+name\b',
-    'last_name': r'\blast\s+name\b',
-    'preferred_name': r'\bpreferred\s+name\b',
-    'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)\b',
-    'patient_name': r'\bpatient\s+name\b',
-    'parent_name': r'\bparent\s+name\b',
+    'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
+    'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
+    'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
+    'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
+    'patient_name': r'\bpatient\s+name(?=[^a-zA-Z]|$)',
+    'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
     # Date/Age fields
-    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)\b',
-    'dob': r'\bdob\b',
-    'age': r'\bage\b',
-    'mother_dob': r"\bmother'?s?\s+dob\b",
-    'father_dob': r"\bfather'?s?\s+dob\b",
+    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
+    'dob': r'\bdob(?=[^a-zA-Z]|$)',
+    'age': r'\bage(?=[^a-zA-Z]|$)',
+    'mother_dob': r"\bmother'?s?\s+dob(?=[^a-zA-Z]|$)",
+    'father_dob': r"\bfather'?s?\s+dob(?=[^a-zA-Z]|$)",
     # Demographics
-    'sex': r'\bsex\b',
-    'gender': r'\bgender\b',
-    'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)\b',
+    'sex': r'\bsex(?=[^a-zA-Z]|$)',
+    'gender': r'\bgender(?=[^a-zA-Z]|$)',
+    'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)(?=[^a-zA-Z]|$)',
     # Contact fields
-    'work_phone': r'\bwork\s+phone\b',
-    'home_phone': r'\bhome\s+phone\b',
-    'cell_phone': r'\b(?:cell|mobile)\s+phone\b',
-    'parent_phone': r'\bparent\s+phone\b',
-    'email': r'\be-?mail(?:\s+address)?\b',
-    'emergency_contact': r'\bemergency\s+contact\b',
-    'phone': r'\bphone\b',
-    'ext': r'\bext\s*#?\b',
-    'extension': r'\bextension\b',
+    'work_phone': r'\bwork\s+phone(?=[^a-zA-Z]|$)',
+    'home_phone': r'\bhome\s+phone(?=[^a-zA-Z]|$)',
+    'cell_phone': r'\b(?:cell|mobile)\s+phone(?=[^a-zA-Z]|$)',
+    'parent_phone': r'\bparent\s+phone(?=[^a-zA-Z]|$)',
+    'email': r'\be-?mail(?:\s+address)?(?=[^a-zA-Z]|$)',
+    'emergency_contact': r'\bemergency\s+contact(?=[^a-zA-Z]|$)',
+    'phone': r'\bphone(?=[^a-zA-Z]|$)',
+    'ext': r'\bext\s*#?(?=[^a-zA-Z]|$)',
+    'extension': r'\bextension(?=[^a-zA-Z]|$)',
     # Employment/Education
-    'occupation': r'\boccupation\b',
-    'employer': r'\b(?:employer|employed\s+by)\b',
-    'parent_employer': r'\bparent\s+employer\b',
-    'patient_employer': r'\bpatient\s+employed\s+by\b',
-    'student': r'\b(?:full\s+time\s+)?student\b',
+    'occupation': r'\boccupation(?=[^a-zA-Z]|$)',
+    'employer': r'\b(?:employer|employed\s+by)(?=[^a-zA-Z]|$)',
+    'parent_employer': r'\bparent\s+employer(?=[^a-zA-Z]|$)',
+    'patient_employer': r'\bpatient\s+employed\s+by(?=[^a-zA-Z]|$)',
+    'student': r'\b(?:full\s+time\s+)?student(?=[^a-zA-Z]|$)',
     # ID fields
-    'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
-    'drivers_license': r'\bdrivers?\s+license\s*#?',
-    'member_id': r'\bmember\s+id\b',
-    'policy_holder': r'\bpolicy\s+holder\b',
+    'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)(?=[^a-zA-Z]|$)',
+    'drivers_license': r'\bdrivers?\s+license\s*#?(?=[^a-zA-Z]|$)',
+    'member_id': r'\bmember\s+id(?=[^a-zA-Z]|$)',
+    'policy_holder': r'\bpolicy\s+holder(?=[^a-zA-Z]|$)',
     # Address fields
-    'address': r'\b(?:mailing\s+)?address\b',
-    'city': r'\bcity\b',
-    'state': r'\bstate\b',
-    'zip': r'\bzip(?:\s+code)?\b',
-    'apt': r'\bapt\s*#?\b',
+    'address': r'\b(?:mailing\s+)?address(?=[^a-zA-Z]|$)',
+    'city': r'\bcity(?=[^a-zA-Z]|$)',
+    'state': r'\bstate(?=[^a-zA-Z]|$)',
+    'zip': r'\bzip(?:\s+code)?(?=[^a-zA-Z]|$)',
+    'apt': r'\bapt\s*#?(?=[^a-zA-Z]|$)',
     # Insurance fields
-    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)\b',
-    'local_number': r'\blocal\s*#',
-    'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)\b',
-    'dental_plan_name': r'\bdental\s+plan\s+name\b',
-    'plan_group_number': r'\bplan\s*/\s*group\s+number\b',
-    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name\b",
-    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured\b',
-    'id_number': r'\bid\s+number\b',
+    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)(?=[^a-zA-Z]|$)',
+    'local_number': r'\blocal\s*#(?=[^a-zA-Z]|$)',
+    'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)(?=[^a-zA-Z]|$)',
+    'dental_plan_name': r'\bdental\s+plan\s+name(?=[^a-zA-Z]|$)',
+    'plan_group_number': r'\bplan\s*/\s*group\s+number(?=[^a-zA-Z]|$)',
+    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name(?=[^a-zA-Z]|$)",
+    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured(?=[^a-zA-Z]|$)',
+    'id_number': r'\bid\s+number(?=[^a-zA-Z]|$)',
     # Misc
-    'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit\b',
-    'previous_dentist': r'\bprevious\s+dentist\b',
+    'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
+    'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
 }
 
 
@@ -400,9 +402,10 @@ def split_by_checkboxes_no_colon(line: str) -> List[str]:
 
 def split_by_known_labels(line: str) -> List[str]:
     """
-    Archivev12 Fix 1b: Split lines based on known field labels with spacing.
+    Archivev12 Fix 1b + Production Improvement: Split lines based on known field labels.
     Handles: Work Phone (   )         Occupation
     Also handles: Are you a student? ... Mother's DOB ... Father's DOB
+    NEW: Also handles adjacent labels with underscores (SSN_______ Date of Birth______)
     """
     # Find all known label matches in the line
     label_matches = []
@@ -435,7 +438,7 @@ def split_by_known_labels(line: str) -> List[str]:
     if len(label_matches) < 2:
         return [line]
     
-    # Check if labels are separated by sufficient spacing (4+ spaces)
+    # Production Improvement: Use more flexible splitting criteria
     segments = []
     last_added_idx = -1
     
@@ -463,8 +466,16 @@ def split_by_known_labels(line: str) -> List[str]:
             start_next = label_matches[i + 1][0]
             between = line[end_this:start_next]
             
-            # Must have 4+ consecutive spaces to be considered separate fields
-            if not re.search(r'\s{4,}', between):
+            # Production Improvement: More flexible split criteria
+            # Accept split if ANY of these conditions are met:
+            # 1. 4+ consecutive spaces (original criterion)
+            # 2. Underscores/dashes followed by 1+ space and the next label (e.g., "______ Date of Birth")
+            # 3. Multiple underscores/dashes/slashes between labels (indicating separate input fields)
+            has_wide_spacing = bool(re.search(r'\s{4,}', between))
+            has_underscore_separator = bool(re.search(r'[_\-/]{3,}\s+', between))
+            has_input_pattern = bool(re.search(r'[_\-]{3,}.*[_\-/()]{3,}', between))
+            
+            if not (has_wide_spacing or has_underscore_separator or has_input_pattern):
                 continue
             
             # This is a valid split point
@@ -563,21 +574,84 @@ def split_conditional_field_line(line: str) -> List[str]:
     return segments if len(segments) >= 2 else [line]
 
 
+def split_compound_field_with_slashes(line: str) -> List[str]:
+    """
+    Enhancement 1: Split compound fields with slashes into separate fields.
+    
+    Examples:
+        "Apt/Unit/Suite____" -> ["Apt", "Unit", "Suite"]
+        "Name/Date/SSN____" -> ["Name", "Date", "SSN"]
+        "Plan/Group Number____" -> ["Plan Number", "Group Number"]
+    
+    Only splits if:
+    - Line contains field label(s) followed by slashes
+    - Followed by underscores or other input markers (indicating it's a fillable field)
+    - Each component is a reasonable field label (2+ characters)
+    
+    Returns:
+        List of field segments (original line if no split needed)
+    """
+    # Pattern: One or more words/labels separated by slashes, followed by input markers
+    # Example: "Apt/Unit/Suite________" or "Name/Date/SSN_______"
+    pattern = r'^([A-Za-z][A-Za-z\s]*(?:/[A-Za-z][A-Za-z\s]*)+)\s*[:\-]?\s*([_\-\(\)]{3,})'
+    match = re.match(pattern, line.strip())
+    
+    if not match:
+        return [line]
+    
+    compound_label = match.group(1)
+    input_marker = match.group(2)
+    
+    # Split by slash
+    components = [c.strip() for c in compound_label.split('/') if c.strip()]
+    
+    # Only split if we have 2+ meaningful components
+    if len(components) < 2:
+        return [line]
+    
+    # Filter out single-letter components unless they're common abbreviations
+    common_abbrevs = {'mi', 'm', 'f', 'n', 'y', 'apt', 'st', 'no'}
+    valid_components = []
+    for comp in components:
+        # Keep if: 2+ chars, or is common abbreviation
+        if len(comp) >= 2 or comp.lower() in common_abbrevs:
+            valid_components.append(comp)
+    
+    if len(valid_components) < 2:
+        return [line]
+    
+    # Create separate field lines
+    segments = []
+    for comp in valid_components:
+        # Preserve some input markers for each field
+        # Use proportional markers based on component count
+        marker_len = max(3, len(input_marker) // len(valid_components))
+        segments.append(f"{comp} {input_marker[:marker_len]}")
+    
+    return segments
+
+
 def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
-    Archivev12 Fix 1: Enhanced multi-field line splitting.
+    Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
-    1. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
-    2. Conditional field patterns (Archivev13)
-    3. Existing pattern (colon + checkbox)
-    4. Checkboxes without colons
-    5. Known label patterns with spacing
+    1. Enhancement 1: Compound fields with slashes (Apt/Unit/Suite)
+    2. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
+    3. Conditional field patterns (Archivev13)
+    4. Existing pattern (colon + checkbox)
+    5. Checkboxes without colons
+    6. Known label patterns with spacing
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
         return [line]
+    
+    # Enhancement 1: Try compound field splitting with slashes
+    result = split_compound_field_with_slashes(line)
+    if len(result) > 1:
+        return result
     
     # Archivev17 Fix: Check if this is "Label: Sub1  Sub2  Sub3" pattern
     result = split_label_with_subfields(line)
@@ -706,6 +780,7 @@ def preprocess_lines(lines: List[str]) -> List[str]:
     """
     Preprocess lines before main parsing.
     Currently handles: splitting multi-question lines with enhanced strategies.
+    Enhancement: Recursively processes split segments to handle compound fields.
     """
     processed = []
     for line in lines:
@@ -729,7 +804,16 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             # Strategy 2: Enhanced multi-field splitting for regular cases
             split_lines = enhanced_split_multi_field_line(line)
         
-        processed.extend(split_lines)
+        # Enhancement: Recursively process split segments
+        # This catches compound fields like "Apt/Unit/Suite" that were created from splitting
+        if len(split_lines) > 1:
+            for segment in split_lines:
+                # Try to split each segment further (e.g., compound fields with slashes)
+                # But avoid infinite recursion by only trying compound splitting
+                compound_split = split_compound_field_with_slashes(segment)
+                processed.extend(compound_split)
+        else:
+            processed.extend(split_lines)
     
     return processed
 
@@ -1535,6 +1619,68 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     return result
 
 
+def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple[str, str]]]]:
+    """
+    Enhancement 2: Detect questions with inline text options.
+    
+    Patterns to detect:
+    - "Question? Y or N" -> Yes/No options
+    - "Question? Yes or No" -> Yes/No options
+    - "Sex M or F" -> Male/Female options
+    - "Gender: Male/Female" -> Male/Female options
+    
+    Returns:
+        Tuple of (question_text, option_type, options) where options is [(name, value), ...]
+        None if no inline options detected
+    """
+    line_stripped = line.strip()
+    
+    # Pattern 1: Y or N (with optional question mark and "If yes/no" continuation)
+    yn_pattern = r'^(.+?)\s+([Yy]\s+or\s+[Nn])\s*(?:,?\s*[Ii]f\s+(?:yes|no).*)?$'
+    yn_match = re.match(yn_pattern, line_stripped)
+    if yn_match:
+        question_text = yn_match.group(1)
+        # Clean up the question text
+        question_text = re.sub(r'\s+$', '', question_text)
+        
+        options = [
+            ("Yes", "yes"),
+            ("No", "no")
+        ]
+        return (question_text, "yes_no", options)
+    
+    # Pattern 2: Yes or No (full words)
+    yesno_pattern = r'^(.+?)\s+(Yes\s+or\s+No)\s*(?:,?\s*[Ii]f\s+(?:yes|no).*)?$'
+    yesno_match = re.match(yesno_pattern, line_stripped, re.I)
+    if yesno_match:
+        question_text = yesno_match.group(1)
+        question_text = re.sub(r'\s+$', '', question_text)
+        
+        options = [
+            ("Yes", "yes"),
+            ("No", "no")
+        ]
+        return (question_text, "yes_no", options)
+    
+    # Pattern 3: M or F / Male or Female (Sex/Gender)
+    sex_pattern = r'^(.+?)\s+(?:M\s+or\s+F|Male\s+or\s+Female|M/F|Male/Female)\s*'
+    sex_match = re.match(sex_pattern, line_stripped, re.I)
+    if sex_match:
+        question_text = sex_match.group(1)
+        # If question text is just "Sex" or "Gender", that's the label
+        question_text = re.sub(r'[:\-]?\s*$', '', question_text)
+        
+        options = [
+            ("Male", "male"),
+            ("Female", "female"),
+            ("Other", "other"),
+            ("Prefer not to self identify", "not_say")
+        ]
+        return (question_text, "sex_gender", options)
+    
+    return None
+
+
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
     lines = coalesce_soft_wraps(lines)
@@ -2047,7 +2193,32 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if emitted_compound:
             i += 1; continue
 
-        # Archivev12 Fix 3: Special handling for Sex/Gender with text options (M or F)
+        # Enhancement 2: Enhanced inline option detection
+        # Detect questions with inline text options: "Question? Y or N", "Sex M or F", etc.
+        inline_option_match = detect_inline_text_options(line)
+        if inline_option_match:
+            question_text, option_type, options = inline_option_match
+            
+            # Create question from the text before the options
+            title = question_text.strip()
+            if title.endswith('?'):
+                title = title[:-1].strip()
+            
+            key = slugify(title)
+            
+            # Create control with detected options
+            control = {"options": [{"name": opt[0], "value": opt[1]} for opt in options]}
+            
+            questions.append(Question(key, title, cur_section, "radio", control=control))
+            
+            if debug:
+                print(f"  [debug] gate: inline_text_options -> '{title}' with {len(options)} options")
+            
+            i += 1
+            continue
+        
+        # Archivev12 Fix 3: Special handling for Sex/Gender with text options (M or F) - LEGACY fallback
+        # Keep for backward compatibility, but the new detect_inline_text_options should catch these
         sex_match = re.search(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female|Mor\s*F)', line, re.I)
         if sex_match:
             key = "sex"

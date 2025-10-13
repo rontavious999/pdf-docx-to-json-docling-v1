@@ -150,6 +150,11 @@ def is_heading(line: str) -> bool:
     if "?" in t:
         return False
     
+    # Enhancement: Lines with underscores/dashes/parentheses are fillable fields, not headings
+    # e.g., "Unit ___", "Apt ____", "Phone (   )"
+    if re.search(r'_{3,}|[\-]{3,}|\(\s*\)', t):
+        return False
+    
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
             return True
