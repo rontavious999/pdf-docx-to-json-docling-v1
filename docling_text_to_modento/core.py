@@ -3043,12 +3043,22 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
     Reassign fields from 'General' to more specific sections based on content.
     Uses keyword matching to identify medical and dental questions.
     """
+    # Strong keywords that alone indicate medical history
+    STRONG_MEDICAL_KEYWORDS = [
+        'physician', 'hospitalized', 'surgery', 'surgical', 'operation',
+        'medication', 'medicine', 'prescription', 
+        'allergy', 'allergic',
+        # Common disease/condition patterns
+        'hiv', 'aids', 'diabetes', 'cancer', 'heart', 'blood pressure',
+        'hepatitis', 'asthma', 'arthritis', 'alzheimer', 'anemia'
+    ]
+    
     MEDICAL_KEYWORDS = [
-        'physician', 'doctor', 'hospital', 'surgery', 'surgical', 'operation',
-        'medication', 'medicine', 'prescription', 'drug',
+        'doctor', 'hospital', 
+        'drug', 'pills',
         'illness', 'disease', 'condition', 'diagnosis',
-        'allergy', 'allergic', 'reaction',
-        'symptom', 'pain', 'discomfort', 'health'
+        'reaction', 'symptom', 'discomfort', 'health',
+        'care now', 'taking any', 'have you had', 'have you ever'
     ]
     
     DENTAL_KEYWORDS = [
@@ -3064,12 +3074,21 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
             key_lower = item.get('key', '').lower()
             combined = title_lower + ' ' + key_lower
             
-            # Count keyword matches
+            # Check for strong medical keywords (single match is enough)
+            has_strong_medical = any(kw in combined for kw in STRONG_MEDICAL_KEYWORDS)
+            
+            # Count regular keyword matches
             medical_score = sum(1 for kw in MEDICAL_KEYWORDS if kw in combined)
             dental_score = sum(1 for kw in DENTAL_KEYWORDS if kw in combined)
             
-            # Reassign if strong signal (2+ matching keywords)
-            if medical_score >= 2 and medical_score > dental_score:
+            # Reassign based on signals
+            # Strong keyword alone is enough for medical history
+            if has_strong_medical and dental_score == 0:
+                if dbg:
+                    dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (strong keyword match)")
+                item['section'] = 'Medical History'
+            # Or 2+ regular keywords
+            elif medical_score >= 2 and medical_score > dental_score:
                 if dbg:
                     dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (score={medical_score})")
                 item['section'] = 'Medical History'
