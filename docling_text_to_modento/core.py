@@ -1061,6 +1061,7 @@ class Question:
     type: str
     optional: bool = False
     control: Dict = field(default_factory=dict)
+    conditional_on: Optional[List[Tuple[str, str]]] = None
 
 # slugify moved to modules/question_parser.py (Patch 7 Phase 1)
 
