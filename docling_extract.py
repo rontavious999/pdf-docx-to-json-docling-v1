@@ -167,19 +167,24 @@ def extract_text_from_pdf(file_path: Path, use_ocr: bool = False, force_ocr: boo
             print(f"  [WARN] No text layer detected in {file_path.name}. Use --ocr to enable OCR.", file=sys.stderr)
             text = "[NO TEXT LAYER] This PDF appears to be scanned. Re-run with --ocr flag or enable auto-OCR."
     else:
-        # Normal text extraction
-        text = extract_text_normally(doc)
+        # Normal text extraction (with page-level OCR fallback if enabled)
+        text = extract_text_normally(doc, auto_ocr=auto_ocr)
     
     doc.close()
     return text
 
 
-def extract_text_normally(pdf_doc: fitz.Document) -> str:
+def extract_text_normally(pdf_doc: fitz.Document, auto_ocr: bool = True) -> str:
     """
     Extract text normally from PDF with embedded text layer.
     
+    Patch 1: Page-Level OCR Fallback
+    - If auto_ocr is enabled and a page has no text, attempts OCR on that page
+    - Handles mixed-content PDFs (some pages scanned, some with text)
+    
     Args:
         pdf_doc: Opened PDF document
+        auto_ocr: Enable automatic OCR for blank pages (default: True)
         
     Returns:
         Extracted text content
@@ -189,9 +194,28 @@ def extract_text_normally(pdf_doc: fitz.Document) -> str:
     for page_num in range(len(pdf_doc)):
         page = pdf_doc[page_num]
         # Use "text" mode for simple text extraction
-        text = page.get_text("text")
-        if text.strip():
-            text_parts.append(text)
+        page_text = page.get_text("text").strip()
+        
+        # Patch 1: If page is blank and OCR available, try OCR on just this page
+        if auto_ocr and OCR_AVAILABLE and not page_text:
+            print(f"  [AUTO-OCR] Page {page_num+1} has no text, performing OCR")
+            try:
+                # Render page to image at 300 DPI
+                mat = fitz.Matrix(300/72, 300/72)
+                pix = page.get_pixmap(matrix=mat)
+                
+                # Convert to PIL Image
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                
+                # Run OCR
+                ocr_text = pytesseract.image_to_string(img)
+                if ocr_text.strip():
+                    text_parts.append(ocr_text)
+            except Exception as e:
+                print(f"  [WARN] OCR failed for page {page_num+1}: {e}")
+                # Continue without this page's text
+        elif page_text:
+            text_parts.append(page_text)
     
     return "\n".join(text_parts)
 

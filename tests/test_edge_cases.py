@@ -292,6 +292,31 @@ class TestOCRAutoDetection:
         assert '--no-auto-ocr' in content, "--no-auto-ocr flag should be defined"
         assert 'Disable automatic OCR' in content or 'disable automatic' in content.lower(), \
             "Flag should have documentation about disabling auto-OCR"
+    
+    def test_page_level_ocr_parameter(self):
+        """extract_text_normally should accept auto_ocr parameter (Patch 1)."""
+        from pathlib import Path
+        
+        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
+        content = extract_path.read_text()
+        
+        # Check function signature includes auto_ocr parameter
+        assert 'def extract_text_normally' in content, "extract_text_normally function should exist"
+        # Look for the auto_ocr parameter in the function signature or body
+        lines = content.split('\n')
+        in_function = False
+        found_auto_ocr = False
+        for i, line in enumerate(lines):
+            if 'def extract_text_normally' in line:
+                in_function = True
+                # Check next few lines for parameter
+                for j in range(i, min(i+10, len(lines))):
+                    if 'auto_ocr' in lines[j]:
+                        found_auto_ocr = True
+                        break
+                break
+        
+        assert found_auto_ocr, "extract_text_normally should have auto_ocr parameter for page-level OCR"
 
 
 if __name__ == "__main__":
