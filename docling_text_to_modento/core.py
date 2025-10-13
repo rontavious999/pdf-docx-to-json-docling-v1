@@ -1405,8 +1405,10 @@ def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]
     - Extracts the boolean option and the continuation text
     - Pattern: "[ ] Yes/No, [descriptive text]"
     """
-    # Pattern: checkbox followed by Yes/No and then continuation text with comma
-    pattern = r'^\s*' + CHECKBOX_ANY + r'\s*(Yes|No|Y|N)[\s,]+(.*?)$'
+    # Archivev21 Fix 6: Make pattern more strict to avoid false positives
+    # Require comma or "send" after Yes/No to ensure it's a continuation, not a separate field
+    # Pattern: checkbox followed by Yes/No, then comma/space and continuation text
+    pattern = r'^\s*' + CHECKBOX_ANY + r'\s*(Yes|No)[\s,]+(.*?)$'
     match = re.match(pattern, line, re.I)
     
     if not match:
@@ -1416,16 +1418,26 @@ def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]
     continuation = match.group(2).strip()
     
     # Need meaningful continuation text (at least 10 chars)
+    # Archivev21 Fix 6: Also check that continuation doesn't look like a standalone field label
+    # (i.e., doesn't start with a capital letter followed by lowercase and end with "Insurance", "Plan", etc.)
     if len(continuation) < 10:
         return None
     
-    # Generate a descriptive key from the continuation
-    key = slugify(continuation)
+    # Check if this looks like a false positive (e.g., "[ ] N o D ental Insurance")
+    # If continuation starts with lowercase or has spaces between capital letters, likely OCR error
+    if re.match(r'^[a-z]\s+[A-Z]', continuation):
+        return None  # Likely "N o D ental" pattern - not a real continuation
+    
+    # Archivev21 Fix 6: Clean continuation text to fix any remaining OCR errors
+    continuation_cleaned = clean_field_title(continuation)
+    
+    # Generate a descriptive key from the cleaned continuation
+    key = slugify(continuation_cleaned)
     if len(key) > 40:
         key = key[:40]
     
-    # Title includes both the option and the description
-    title = f"{option}, {continuation}"
+    # Title includes both the option and the cleaned description
+    title = f"{option}, {continuation_cleaned}"
     
     # Determine field type - usually a boolean/radio
     field_type = "radio"
@@ -1464,6 +1476,13 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
         'day': 'day',
         'evening': 'evening',
         'night': 'night',
+        # Archivev21 Fix 3: Add common name field keywords
+        'first': 'first',
+        'last': 'last',
+        'middle': 'middle',
+        'mi': 'middle_initial',
+        'nickname': 'nickname',
+        'preferred': 'preferred',
     }
     
     # Look for a label (word/phrase ending with colon) followed by multiple sub-fields
@@ -1505,7 +1524,12 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     result = []
     for display_name, suffix_key in keywords_found:
         field_key = f"{base_key}_{suffix_key}"
-        field_title = f"{base_label} ({display_name})"
+        # Archivev21 Fix 3: For name fields, use simpler titles
+        if base_label.lower() in ['patient name', 'name', 'insured name', "insured's name"]:
+            # Use just the subfield name as title (e.g., "First Name", "Last Name")
+            field_title = f"{display_name.title()} Name" if display_name.lower() in ['first', 'last', 'middle'] else display_name.title()
+        else:
+            field_title = f"{base_label} ({display_name})"
         result.append((field_key, field_title))
     
     return result
@@ -2259,26 +2283,29 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     else:
                         clean_title = "Please select"
             
+            # Archivev21 Fix 7: Clean title before creating key to fix OCR errors in keys
+            cleaned_question_title = clean_field_title(clean_title)
+            
             lowset = {n.lower() for (n,_b) in collected}
             if {"yes","no"} <= lowset or lowset <= YESNO_SET:
                 control = {"options":[make_option("Yes",True), make_option("No",False)]}
-                if re.search(IF_GUIDANCE_RE, clean_title):
+                if re.search(IF_GUIDANCE_RE, cleaned_question_title):
                     control["extra"] = {"type":"Input","hint":"If yes, please explain"}
                     # --- Fix 2: Add separate input for "if yes" (enhanced) ---
                     if j < len(lines):
                         next_line = collapse_spaced_caps(lines[j].strip())
                         if re.search(r"\b(list|explain|if so|name of)\b", next_line, re.I):
-                            follow_up_title = f"{clean_title} - Details"
+                            follow_up_title = f"{cleaned_question_title} - Details"
                             follow_up_key = slugify(follow_up_title)
                             questions.append(Question(follow_up_key, follow_up_title, cur_section, "input", control={"input_type": "text"}))
-                key = slugify(clean_title)
+                key = slugify(cleaned_question_title)
                 if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
-                questions.append(Question(key, clean_field_title(clean_title), cur_section, "radio", control=control))
+                questions.append(Question(key, cleaned_question_title, cur_section, "radio", control=control))
             else:
-                make_radio = bool(SINGLE_SELECT_TITLES_RE.search(clean_title))
+                make_radio = bool(SINGLE_SELECT_TITLES_RE.search(cleaned_question_title))
                 options = [make_option(n, b) for (n,b) in collected]
-                if not options and ("," in clean_title or "/" in clean_title or ";" in clean_title):
-                    for tok in re.split(r"[,/;]", clean_title):
+                if not options and ("," in cleaned_question_title or "/" in cleaned_question_title or ";" in cleaned_question_title):
+                    for tok in re.split(r"[,/;]", cleaned_question_title):
                         tok = clean_token(tok)
                         if tok: options.append(make_option(tok, None))
                 control: Dict = {"options": options}
@@ -2286,12 +2313,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     control["multi"] = True
                 if is_hear:
                     control["extra"] = {"type":"Input","hint":"Other (please specify)"}
-                    if (REFERRED_BY_RE.search(clean_title) or (j < len(lines) and REFERRED_BY_RE.search(lines[j]))):
+                    if (REFERRED_BY_RE.search(cleaned_question_title) or (j < len(lines) and REFERRED_BY_RE.search(lines[j]))):
                         questions.append(Question("referred_by","Referred by",cur_section,"input",control={"input_type":"text"}))
-                key = slugify(clean_title)
+                key = slugify(cleaned_question_title)
                 if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
                 qtype = "radio" if make_radio else "dropdown"
-                questions.append(Question(key, clean_field_title(clean_title), cur_section, qtype, control=control))
+                questions.append(Question(key, cleaned_question_title, cur_section, qtype, control=control))
             i = j if not opts_inline else i + 1
             continue
 
@@ -2355,20 +2382,22 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             i += 1
             continue
         
-        itype = classify_input_type(title)
-        key = slugify(title)
+        # Archivev21 Fix 2: Clean field title before creating Question (removes underscores, artifacts)
+        cleaned_title = clean_field_title(title)
+        itype = classify_input_type(cleaned_title)
+        key = slugify(cleaned_title)
         # parent/guardian routing
-        key, qtype, ctrl = _emit_parent_guardian_override(title, key, "input", {"input_type": itype} if itype else {}, cur_section, insurance_scope, debug)
+        key, qtype, ctrl = _emit_parent_guardian_override(cleaned_title, key, "input", {"input_type": itype} if itype else {}, cur_section, insurance_scope, debug)
         # employer patient-first: only map to insurance_employer if insurance context tokens are present
         if key == "employer":
-            if "insurance" in cur_section.lower() or re.search(r"\b(insured|subscriber|policy|member|insurance)\b", title.lower()):
+            if "insurance" in cur_section.lower() or re.search(r"\b(insured|subscriber|policy|member|insurance)\b", cleaned_title.lower()):
                 pass  # allow later dictionary to map to insurance_employer if template title says so
             else:
-                if debug: print(f"  [debug] gate: employer_patient_first -> '{title}' -> employer (patient)")
-        key = _insurance_scope_key(key, cur_section, insurance_scope, title, debug)
+                if debug: print(f"  [debug] gate: employer_patient_first -> '{cleaned_title}' -> employer (patient)")
+        key = _insurance_scope_key(key, cur_section, insurance_scope, cleaned_title, debug)
         if insurance_scope and "insurance" in cur_section.lower() and not key.endswith((PRIMARY_SUFFIX, SECONDARY_SUFFIX)) and key in {"ssn","insurance_id_number"}:
             key = f"{key}{insurance_scope}"
-        questions.append(Question(key, title, cur_section, qtype, control=ctrl))
+        questions.append(Question(key, cleaned_title, cur_section, qtype, control=ctrl))
         i += 1
 
     # Final sanitation & signature rule

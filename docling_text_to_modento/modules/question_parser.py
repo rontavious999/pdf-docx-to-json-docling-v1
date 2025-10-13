@@ -55,13 +55,22 @@ def clean_field_title(title: str) -> str:
     cleaned = re.sub(r':\s*/\s*/\s*$', '', cleaned)  # Remove ": / /" at end
     cleaned = re.sub(r'/\s*/\s*$', '', cleaned)      # Remove "/ /" at end
     
+    # Archivev21 Fix 1: Remove blank line placeholders (underscores)
+    # These appear as fill-in-the-blank indicators in forms
+    # Examples: "Today's Date ______________" -> "Today's Date"
+    #           "Reason for visit? ____________" -> "Reason for visit?"
+    # Remove sequences of 3 or more underscores (preserve single/double underscores in actual field names)
+    cleaned = re.sub(r'_{3,}', '', cleaned)
+    
     # Archivev20 Fix 7: OCR error correction
-    # Common OCR misreads from Docling output
+    # Archivev21 Fix 4: Enhanced OCR patterns to match collapsed text
+    # Common OCR misreads from Docling output (after collapse_spaced_caps)
     ocr_corrections = {
-        r'\bN\s+o\s+D\s+ental\b': 'No Dental',
-        r'\bPrim\s+ary\b': 'Primary',
-        r'\bsom\s+eone\b': 'someone',
-        r'\bH\s+older\b': 'Holder',
+        r'\bN[,\s]*o\s+D\s*ental\b': 'No Dental',  # "N o D ental" or "N, o D ental"
+        r'\bPrim\s*ary\b': 'Primary',
+        r'\bsom\s*eone\b': 'someone',
+        r'\bH\s*older\b': 'Holder',
+        r'\bP\s*olicy\b': 'Policy',
         # Add more patterns as needed, but keep generic
     }
     for pattern, replacement in ocr_corrections.items():
@@ -203,11 +212,18 @@ def clean_option_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
     
     # Fix 4: Correct common OCR typos (Archivev16, Archivev17)
+    # Archivev21 Fix 5: Extended OCR corrections for spaced text
     # Common patterns where OCR misreads "I" as "r" or "u" as "rn"
     OCR_CORRECTIONS = {
         r'\brregular\b': 'Irregular',
         r'\brrregular\b': 'Irregular',
         r'\brheurnatism\b': 'Rheumatism',
+        # Archivev21: Handle spaced OCR errors
+        r'\bN[,\s]*o\s+D\s*ental\b': 'No Dental',  # "N o D ental" or "N, o D ental"
+        r'\bPrim\s+ary\b': 'Primary',
+        r'\bH\s+older\b': 'Holder',
+        r'\bP\s+olicy\b': 'Policy',
+        r'\bsom\s+eone\b': 'someone',
     }
     
     for pattern, replacement in OCR_CORRECTIONS.items():
