@@ -2499,6 +2499,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         para = [lines[i]]; k = i+1
         while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
             if is_heading(lines[k]): break
+            # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
+            if extract_compound_yn_prompts(lines[k]):
+                break
             para.append(lines[k]); k += 1
         joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
         if len(joined) > 250 and joined.count(".") >= 2:
