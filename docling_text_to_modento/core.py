@@ -300,63 +300,65 @@ def split_multi_question_line(line: str) -> List[str]:
 # ---------- Archivev12 Fix 1: Enhanced Multi-Field Line Splitting
 
 # Known field labels dictionary for pattern matching
+# Production Improvement: Use lookahead to handle underscores/dashes/punctuation after labels
+# (?=[^a-zA-Z]|$) means "followed by non-letter or end of string"
 KNOWN_FIELD_LABELS = {
     # Name fields
-    'first_name': r'\bfirst\s+name\b',
-    'last_name': r'\blast\s+name\b',
-    'preferred_name': r'\bpreferred\s+name\b',
-    'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)\b',
-    'patient_name': r'\bpatient\s+name\b',
-    'parent_name': r'\bparent\s+name\b',
+    'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
+    'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
+    'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
+    'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
+    'patient_name': r'\bpatient\s+name(?=[^a-zA-Z]|$)',
+    'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
     # Date/Age fields
-    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)\b',
-    'dob': r'\bdob\b',
-    'age': r'\bage\b',
-    'mother_dob': r"\bmother'?s?\s+dob\b",
-    'father_dob': r"\bfather'?s?\s+dob\b",
+    'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
+    'dob': r'\bdob(?=[^a-zA-Z]|$)',
+    'age': r'\bage(?=[^a-zA-Z]|$)',
+    'mother_dob': r"\bmother'?s?\s+dob(?=[^a-zA-Z]|$)",
+    'father_dob': r"\bfather'?s?\s+dob(?=[^a-zA-Z]|$)",
     # Demographics
-    'sex': r'\bsex\b',
-    'gender': r'\bgender\b',
-    'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)\b',
+    'sex': r'\bsex(?=[^a-zA-Z]|$)',
+    'gender': r'\bgender(?=[^a-zA-Z]|$)',
+    'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)(?=[^a-zA-Z]|$)',
     # Contact fields
-    'work_phone': r'\bwork\s+phone\b',
-    'home_phone': r'\bhome\s+phone\b',
-    'cell_phone': r'\b(?:cell|mobile)\s+phone\b',
-    'parent_phone': r'\bparent\s+phone\b',
-    'email': r'\be-?mail(?:\s+address)?\b',
-    'emergency_contact': r'\bemergency\s+contact\b',
-    'phone': r'\bphone\b',
-    'ext': r'\bext\s*#?\b',
-    'extension': r'\bextension\b',
+    'work_phone': r'\bwork\s+phone(?=[^a-zA-Z]|$)',
+    'home_phone': r'\bhome\s+phone(?=[^a-zA-Z]|$)',
+    'cell_phone': r'\b(?:cell|mobile)\s+phone(?=[^a-zA-Z]|$)',
+    'parent_phone': r'\bparent\s+phone(?=[^a-zA-Z]|$)',
+    'email': r'\be-?mail(?:\s+address)?(?=[^a-zA-Z]|$)',
+    'emergency_contact': r'\bemergency\s+contact(?=[^a-zA-Z]|$)',
+    'phone': r'\bphone(?=[^a-zA-Z]|$)',
+    'ext': r'\bext\s*#?(?=[^a-zA-Z]|$)',
+    'extension': r'\bextension(?=[^a-zA-Z]|$)',
     # Employment/Education
-    'occupation': r'\boccupation\b',
-    'employer': r'\b(?:employer|employed\s+by)\b',
-    'parent_employer': r'\bparent\s+employer\b',
-    'patient_employer': r'\bpatient\s+employed\s+by\b',
-    'student': r'\b(?:full\s+time\s+)?student\b',
+    'occupation': r'\boccupation(?=[^a-zA-Z]|$)',
+    'employer': r'\b(?:employer|employed\s+by)(?=[^a-zA-Z]|$)',
+    'parent_employer': r'\bparent\s+employer(?=[^a-zA-Z]|$)',
+    'patient_employer': r'\bpatient\s+employed\s+by(?=[^a-zA-Z]|$)',
+    'student': r'\b(?:full\s+time\s+)?student(?=[^a-zA-Z]|$)',
     # ID fields
-    'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)\b',
-    'drivers_license': r'\bdrivers?\s+license\s*#?',
-    'member_id': r'\bmember\s+id\b',
-    'policy_holder': r'\bpolicy\s+holder\b',
+    'ssn': r'\b(?:ssn|soc\.?\s*sec\.?|social\s+security)(?=[^a-zA-Z]|$)',
+    'drivers_license': r'\bdrivers?\s+license\s*#?(?=[^a-zA-Z]|$)',
+    'member_id': r'\bmember\s+id(?=[^a-zA-Z]|$)',
+    'policy_holder': r'\bpolicy\s+holder(?=[^a-zA-Z]|$)',
     # Address fields
-    'address': r'\b(?:mailing\s+)?address\b',
-    'city': r'\bcity\b',
-    'state': r'\bstate\b',
-    'zip': r'\bzip(?:\s+code)?\b',
-    'apt': r'\bapt\s*#?\b',
+    'address': r'\b(?:mailing\s+)?address(?=[^a-zA-Z]|$)',
+    'city': r'\bcity(?=[^a-zA-Z]|$)',
+    'state': r'\bstate(?=[^a-zA-Z]|$)',
+    'zip': r'\bzip(?:\s+code)?(?=[^a-zA-Z]|$)',
+    'apt': r'\bapt\s*#?(?=[^a-zA-Z]|$)',
     # Insurance fields
-    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)\b',
-    'local_number': r'\blocal\s*#',
-    'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)\b',
-    'dental_plan_name': r'\bdental\s+plan\s+name\b',
-    'plan_group_number': r'\bplan\s*/\s*group\s+number\b',
-    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name\b",
-    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured\b',
-    'id_number': r'\bid\s+number\b',
+    'group_number': r'\b(?:group\s*#|plan\s*/\s*group\s+number)(?=[^a-zA-Z]|$)',
+    'local_number': r'\blocal\s*#(?=[^a-zA-Z]|$)',
+    'insurance_company': r'\b(?:insurance\s+company|name\s+of\s+insurance)(?=[^a-zA-Z]|$)',
+    'dental_plan_name': r'\bdental\s+plan\s+name(?=[^a-zA-Z]|$)',
+    'plan_group_number': r'\bplan\s*/\s*group\s+number(?=[^a-zA-Z]|$)',
+    'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name(?=[^a-zA-Z]|$)",
+    'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured(?=[^a-zA-Z]|$)',
+    'id_number': r'\bid\s+number(?=[^a-zA-Z]|$)',
     # Misc
-    'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit\b',
-    'previous_dentist': r'\bprevious\s+dentist\b',
+    'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
+    'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
 }
 
 
@@ -400,9 +402,10 @@ def split_by_checkboxes_no_colon(line: str) -> List[str]:
 
 def split_by_known_labels(line: str) -> List[str]:
     """
-    Archivev12 Fix 1b: Split lines based on known field labels with spacing.
+    Archivev12 Fix 1b + Production Improvement: Split lines based on known field labels.
     Handles: Work Phone (   )         Occupation
     Also handles: Are you a student? ... Mother's DOB ... Father's DOB
+    NEW: Also handles adjacent labels with underscores (SSN_______ Date of Birth______)
     """
     # Find all known label matches in the line
     label_matches = []
@@ -435,7 +438,7 @@ def split_by_known_labels(line: str) -> List[str]:
     if len(label_matches) < 2:
         return [line]
     
-    # Check if labels are separated by sufficient spacing (4+ spaces)
+    # Production Improvement: Use more flexible splitting criteria
     segments = []
     last_added_idx = -1
     
@@ -463,8 +466,16 @@ def split_by_known_labels(line: str) -> List[str]:
             start_next = label_matches[i + 1][0]
             between = line[end_this:start_next]
             
-            # Must have 4+ consecutive spaces to be considered separate fields
-            if not re.search(r'\s{4,}', between):
+            # Production Improvement: More flexible split criteria
+            # Accept split if ANY of these conditions are met:
+            # 1. 4+ consecutive spaces (original criterion)
+            # 2. Underscores/dashes followed by 1+ space and the next label (e.g., "______ Date of Birth")
+            # 3. Multiple underscores/dashes/slashes between labels (indicating separate input fields)
+            has_wide_spacing = bool(re.search(r'\s{4,}', between))
+            has_underscore_separator = bool(re.search(r'[_\-/]{3,}\s+', between))
+            has_input_pattern = bool(re.search(r'[_\-]{3,}.*[_\-/()]{3,}', between))
+            
+            if not (has_wide_spacing or has_underscore_separator or has_input_pattern):
                 continue
             
             # This is a valid split point
