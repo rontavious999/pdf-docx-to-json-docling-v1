@@ -25,6 +25,9 @@ from typing import Dict, List, Optional, Set, Tuple
 # Import constants
 from .constants import PRIMARY_SUFFIX, SECONDARY_SUFFIX, PARENT_RE, HEAR_ABOUT_RE
 
+# Import utility functions from question_parser
+from .question_parser import normalize_opt_name
+
 # Note: DebugLogger will be imported from modules.debug_logger when needed
 
 # Helper function for text sanitization
