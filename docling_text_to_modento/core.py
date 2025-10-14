@@ -1497,6 +1497,48 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     return None
 
 
+def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
+    """
+    Category 1 Fix 1.2: Detect standalone fill-in-blank fields.
+    
+    Pattern: Lines with mostly underscores (5+ consecutive underscores).
+    Uses text on same line or previous line as label.
+    
+    Returns: (key, title) or None
+    """
+    # Check if line has 5+ consecutive underscores
+    if not re.search(r'_{5,}', line):
+        return None
+    
+    # Count underscore vs non-underscore content
+    underscore_count = line.count('_')
+    non_underscore_chars = len([c for c in line if c not in ('_', ' ', '\t')])
+    
+    # If line is mostly underscores (2:1 ratio), it's a fill-in-blank
+    if underscore_count < 5 or underscore_count < non_underscore_chars * 2:
+        return None
+    
+    # Try to extract label from same line (before underscores)
+    label_match = re.match(r'^([^_]+?)[:.]?\s*_{5,}', line)
+    if label_match:
+        label = label_match.group(1).strip()
+        if label and len(label) >= 2:
+            return (slugify(label), label)
+    
+    # Try to use previous line as label if available
+    if prev_line:
+        prev_clean = prev_line.strip().rstrip(':.')
+        if prev_clean and len(prev_clean) < 100 and not re.search(CHECKBOX_ANY, prev_clean):
+            # Make sure it's not a heading
+            if not is_heading(prev_clean):
+                return (slugify(prev_clean), prev_clean)
+    
+    # Fallback: create generic label
+    # Count how many underscores to make unique key
+    underscore_length = len(re.search(r'_{5,}', line).group(0))
+    return (f"text_input_{underscore_length}", "Text input field")
+
+
 def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
     """
     Detect inline checkboxes with continuation text.
@@ -2398,6 +2440,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     input_type = "email"
                 questions.append(Question(field_key, field_title, cur_section, "input",
                                           control={"input_type": input_type}))
+            i += 1
+            continue
+        
+        # Category 1 Fix 1.2: Check for fill-in-blank fields
+        prev_line_text = lines[i-1] if i > 0 else None
+        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text)
+        if fill_in_blank:
+            field_key, field_title = fill_in_blank
+            if debug:
+                print(f"  [debug] fill-in-blank detected: {line[:60]}... -> {field_key}")
+            questions.append(Question(field_key, field_title, cur_section, "input",
+                                      control={"input_type": "text"}))
             i += 1
             continue
         

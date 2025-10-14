@@ -69,7 +69,12 @@ INSURANCE_BLOCK_RE     = re.compile(r"(dental\s+benefit\s+plan|insurance\s+infor
 SINGLE_SELECT_TITLES_RE = re.compile(r"\b(marital\s+status|relationship|gender|sex)\b", re.I)
 
 HEAR_ABOUT_RE   = re.compile(r"how\s+did\s+you\s+hear\s+about\s+us", re.I)
-REFERRED_BY_RE  = re.compile(r"\b(referred\s+by|who\s+can\s+we\s+thank)\b", re.I)
+REFERRED_BY_RE  = re.compile(r"\b(referred\s+by|who\s+can\s+we\s+thank|referral\s+source)\b", re.I)
+
+# Category 1 Fix 1.5: Relationship field patterns
+RELATIONSHIP_RE = re.compile(r"\brelationship\s+to\s+(?:patient|insured|subscriber)\b", re.I)
+EMERGENCY_CONTACT_RE = re.compile(r"\bemergency\s+contact\b", re.I)
+GUARDIAN_RE = re.compile(r"\b(?:parent|guardian|responsible\s+party)\b", re.I)
 
 RESP_PARTY_RE   = re.compile(r"responsible\s+party.*other\s+than\s+patient", re.I)
 SINGLE_BOX_RE   = re.compile(r"^\s*\[\s*\]\s*(.+)$")
@@ -173,4 +178,22 @@ KNOWN_FIELD_LABELS = {
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
     'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
+    # Category 1 Fix 1.5: Relationship fields
+    'relationship': r'\brelationship(?=[^a-zA-Z]|$)',
+    'emergency_contact_name': r'\bemergency\s+contact\s+name(?=[^a-zA-Z]|$)',
+    'emergency_phone': r'\bemergency\s+(?:contact\s+)?phone(?=[^a-zA-Z]|$)',
+    'responsible_party_name': r'\b(?:name\s+of\s+)?responsible\s+party(?=[^a-zA-Z]|$)',
+    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
+    'parent_relationship': r'\bparent\s+relationship(?=[^a-zA-Z]|$)',
+    # Category 1 Fix 1.6: Referral source fields  
+    'referral_source': r'\b(?:referral\s+source|how\s+did\s+you\s+hear)(?=[^a-zA-Z]|$)',
+    'referred_by': r'\breferred\s+by(?=[^a-zA-Z]|$)',
+    'who_referred': r'\bwho\s+can\s+we\s+thank(?=[^a-zA-Z]|$)',
+    # Category 1 Fix 1.7: Enhanced date field patterns
+    'date_of_service': r'\bdate\s+of\s+service(?=[^a-zA-Z]|$)',
+    'appointment_date': r'\bappointment\s+date(?=[^a-zA-Z]|$)',
+    'today_date': r"\btoday'?s?\s+date(?=[^a-zA-Z]|$)",
+    'last_cleaning': r'\blast\s+cleaning(?=[^a-zA-Z]|$)',
+    'last_xrays': r'\blast\s+(?:complete\s+)?x-?rays(?=[^a-zA-Z]|$)',
+    'last_visit': r'\blast\s+(?:dental\s+)?visit(?=[^a-zA-Z]|$)',
 }
