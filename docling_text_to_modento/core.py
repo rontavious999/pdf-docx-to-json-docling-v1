@@ -1510,6 +1510,19 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
     if not re.search(r'_{5,}', line):
         return None
     
+    # IMPORTANT: If line has multiple underscore groups with text between them,
+    # it's likely a multi-field line that should be handled by other splitters
+    # Pattern: text___ text___ indicates multiple fields, not a single fill-in-blank
+    underscore_groups = re.findall(r'_{5,}', line)
+    if len(underscore_groups) > 1:
+        # Check if there's meaningful text between the underscore groups
+        # Split by underscores and check text chunks
+        parts = re.split(r'_{5,}', line)
+        text_chunks_between = [p.strip() for p in parts[1:-1] if p.strip()]  # Middle chunks
+        # If there are text labels between underscore groups, this is multi-field
+        if text_chunks_between and any(len(c) > 2 for c in text_chunks_between):
+            return None  # Let multi-field splitters handle this
+    
     # Count underscore vs non-underscore content
     underscore_count = line.count('_')
     non_underscore_chars = len([c for c in line if c not in ('_', ' ', '\t')])
@@ -1739,6 +1752,51 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
             ("Prefer not to self identify", "not_say")
         ]
         return (question_text, "sex_gender", options)
+    
+    # Category 1 Fix 1.3: Pattern 4 - "Circle one:" or "Check one:" followed by space-separated options
+    circle_pattern = r'^(.+?)(?:circle|check)\s+one:\s*(.+)$'
+    circle_match = re.match(circle_pattern, line_stripped, re.I)
+    if circle_match:
+        question_text = circle_match.group(1).strip()
+        options_text = circle_match.group(2).strip()
+        
+        # Split options by whitespace (2+ spaces) or common separators
+        option_list = re.split(r'\s{2,}|,\s*|\|\s*', options_text)
+        options = []
+        for opt in option_list:
+            opt = opt.strip()
+            if opt and len(opt) > 1:  # Skip single chars
+                # Create value from option text
+                opt_value = opt.lower().replace(' ', '_').replace('-', '_')
+                options.append((opt, opt_value))
+        
+        # Need at least 2 options
+        if len(options) >= 2:
+            # If question text is empty, use "Please select one"
+            if not question_text:
+                question_text = "Please select one"
+            return (question_text, "select_one", options)
+    
+    # Category 1 Fix 1.3: Pattern 5 - Options separated by slashes without checkbox markers
+    # e.g., "Marital Status: Single/Married/Divorced"
+    slash_options_pattern = r'^(.+?):\s*([A-Za-z]+(?:/[A-Za-z]+){1,})\s*$'
+    slash_match = re.match(slash_options_pattern, line_stripped)
+    if slash_match:
+        question_text = slash_match.group(1).strip()
+        options_text = slash_match.group(2)
+        
+        # Split by slashes
+        option_list = options_text.split('/')
+        options = []
+        for opt in option_list:
+            opt = opt.strip()
+            if opt:
+                opt_value = opt.lower().replace(' ', '_')
+                options.append((opt, opt_value))
+        
+        # Need at least 2 options and all options should be short (single words/phrases)
+        if len(options) >= 2 and all(len(o[0]) < 20 for o in options):
+            return (question_text, "select_one", options)
     
     return None
 
