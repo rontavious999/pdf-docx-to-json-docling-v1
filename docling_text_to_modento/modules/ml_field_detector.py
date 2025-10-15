@@ -86,8 +86,8 @@ class MLFieldDetector:
         
         # Import patterns from constants (lazy import to avoid circular deps)
         from ..modules.constants import (
-            CHECKBOX_ANY, DATE_LABEL_RE, NAME_RE, PHONE_RE, 
-            EMAIL_RE, INSURANCE_BLOCK_RE
+            CHECKBOX_ANY, DATE_LABEL_RE, PHONE_RE, 
+            EMAIL_RE, INSURANCE_BLOCK_RE, ADDRESS_LIKE_RE, SSN_RE, ZIP_RE
         )
         
         line_clean = line.strip()
@@ -135,10 +135,12 @@ class MLFieldDetector:
         
         # Known pattern features
         features['matches_date_pattern'] = int(bool(DATE_LABEL_RE.search(line_clean)))
-        features['matches_name_pattern'] = int(bool(NAME_RE.search(line_clean)))
         features['matches_phone_pattern'] = int(bool(PHONE_RE.search(line_clean)))
         features['matches_email_pattern'] = int(bool(EMAIL_RE.search(line_clean)))
         features['matches_insurance_pattern'] = int(bool(INSURANCE_BLOCK_RE.search(line_clean)))
+        features['matches_address_pattern'] = int(bool(ADDRESS_LIKE_RE.search(line_clean)))
+        features['matches_ssn_pattern'] = int(bool(SSN_RE.search(line_clean)))
+        features['matches_zip_pattern'] = int(bool(ZIP_RE.search(line_clean)))
         
         # Punctuation features
         features['ends_with_colon'] = int(line_clean.endswith(':'))
@@ -193,7 +195,7 @@ class MLFieldDetector:
         
         Returns one of: 'field_label', 'question', 'option', 'value', 'noise'
         """
-        from ..modules.constants import CHECKBOX_ANY, NAME_RE, PHONE_RE, EMAIL_RE
+        from ..modules.constants import CHECKBOX_ANY, PHONE_RE, EMAIL_RE, DATE_LABEL_RE
         
         line_clean = line.strip()
         
@@ -229,8 +231,13 @@ class MLFieldDetector:
             return 'value'
         
         # Known field patterns
-        if NAME_RE.search(line_clean) or PHONE_RE.search(line_clean) or EMAIL_RE.search(line_clean):
+        if PHONE_RE.search(line_clean) or EMAIL_RE.search(line_clean) or DATE_LABEL_RE.search(line_clean):
             return 'field_label'
+        
+        # Name-like patterns (first, last, middle, patient name, etc.)
+        if any(word in line_clean.lower() for word in ['name', 'first', 'last', 'middle', 'patient']):
+            if ':' in line_clean or '_' in line_clean:
+                return 'field_label'
         
         # Long paragraphs are likely noise (instructions, terms)
         if len(line_clean) > 100 and not line_clean.endswith(':'):
