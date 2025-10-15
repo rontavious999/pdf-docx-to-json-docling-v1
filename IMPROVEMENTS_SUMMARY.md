@@ -87,6 +87,8 @@ Added filtering to skip:
 The dictionary is missing common fields that appear frequently:
 
 **Recommended additions:**
+(These fields were selected based on frequency analysis - appearing in 2-4 forms each)
+
 ```json
 {
   "contact_information": [
@@ -114,7 +116,7 @@ Many dictionary entries could benefit from additional aliases:
 - Medical conditions should match variations (e.g., "Heart Disease" vs "Heart Conditions")
 
 ### 3. Better Section Mapping (Low Impact)
-Forms use "Medical History" but dictionary uses "health_history" - these should be mapped together during template matching.
+Forms use "Medical History" but dictionary uses "health_history" - these should be mapped together during template matching. This could be implemented in the `normalize_section_name()` function in `docling_text_to_modento/modules/text_preprocessing.py` by adding a mapping for "Medical History" → "health_history" and ensuring the template matching considers both names equivalent.
 
 ## Conclusion
 
