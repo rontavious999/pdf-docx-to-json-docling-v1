@@ -257,10 +257,11 @@ def chunk_by_columns(line: str, ncols: int) -> List[str]:
 
 def detect_column_boundaries(lines: List[str], start_idx: int, max_lines: int = 10) -> Optional[List[int]]:
     """
-    Archivev10 Fix 3 + Enhancement 3: Whitespace-Based Column Detection.
+    Archivev10 Fix 3 + Enhancement 3 + Category 1 Fix 1.4: Whitespace-Based Column Detection.
     
     Analyzes multiple lines to detect consistent column positions based on checkbox locations.
     Enhanced to be more robust with irregular spacing and partial column data.
+    NEW: Uses clustering to better detect tightly-spaced columns.
     
     Returns list of character positions where columns start, or None if no pattern found.
     
@@ -286,25 +287,71 @@ def detect_column_boundaries(lines: List[str], start_idx: int, max_lines: int = 
     if len(all_positions) < 2:
         return None
     
-    # Find consistent positions across lines (±3 chars tolerance)
-    # Start with the first line's positions as a baseline
-    baseline_positions = all_positions[0]
-    consistent_positions = []
+    # Category 1 Fix 1.4: Use clustering approach for better column detection
+    # Flatten all positions and cluster them
+    flat_positions = []
+    for positions in all_positions:
+        flat_positions.extend(positions)
     
-    for base_pos in baseline_positions:
-        # Count how many lines have a checkbox near this position
-        matches = 0
-        for positions in all_positions:
-            if any(abs(pos - base_pos) <= 3 for pos in positions):
-                matches += 1
+    if not flat_positions:
+        return None
+    
+    # Sort all positions
+    flat_positions.sort()
+    
+    # Cluster positions that are within 3 chars of each other
+    clusters = []
+    current_cluster = [flat_positions[0]]
+    
+    for pos in flat_positions[1:]:
+        if pos - current_cluster[-1] <= 3:
+            # Add to current cluster
+            current_cluster.append(pos)
+        else:
+            # Start new cluster
+            clusters.append(current_cluster)
+            current_cluster = [pos]
+    
+    # Don't forget the last cluster
+    if current_cluster:
+        clusters.append(current_cluster)
+    
+    # For each cluster, compute the median position (more robust than mean)
+    # and count how many lines contributed to this cluster
+    cluster_info = []
+    for cluster in clusters:
+        median_pos = sorted(cluster)[len(cluster) // 2]  # Median
+        # Count how many different lines contributed to this cluster
+        line_contributions = set()
+        for line_idx, positions in enumerate(all_positions):
+            if any(abs(pos - median_pos) <= 3 for pos in positions):
+                line_contributions.add(line_idx)
         
-        # If most lines (>= 60%) have a checkbox near this position, it's consistent
-        if matches >= len(all_positions) * 0.6:
-            consistent_positions.append(base_pos)
+        # Calculate support (percentage of lines with checkbox at this position)
+        support = len(line_contributions) / len(all_positions)
+        cluster_info.append((median_pos, support, len(cluster)))
+    
+    # Filter clusters by support (at least 50% of lines should have it)
+    # Lower threshold from 60% to 50% to catch more columns in sparse grids
+    consistent_positions = [
+        pos for pos, support, count in cluster_info 
+        if support >= 0.5
+    ]
     
     # Need at least 3 consistent columns
     if len(consistent_positions) >= 3:
         return sorted(consistent_positions)
+    
+    # Category 1 Fix 1.4: Fallback - if we have 2 columns with high support, accept it
+    # This helps with simple 2-column grids
+    if len(consistent_positions) == 2:
+        # Check if both have strong support (>=70%)
+        strong_columns = [
+            pos for pos, support, count in cluster_info 
+            if support >= 0.7
+        ]
+        if len(strong_columns) >= 2:
+            return sorted(strong_columns)
     
     return None
 

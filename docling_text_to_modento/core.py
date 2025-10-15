@@ -651,6 +651,48 @@ def split_compound_field_with_slashes(line: str) -> List[str]:
     return segments
 
 
+def split_short_label_underscore_pattern(line: str) -> List[str]:
+    """
+    Category 1 Fix 1.1: Enhanced multi-field line splitting.
+    
+    Detects pattern: "Label1___ Label2___ Label3___" where labels are short words.
+    Examples:
+    - "First____ MI____ Last____"
+    - "City____ State____ Zip____"
+    - "Date____ Time____ Location____"
+    
+    This catches cases where the labels aren't in KNOWN_FIELD_LABELS.
+    """
+    # Pattern: Short word (2-15 chars, no spaces) followed by 3+ underscores
+    # Must have at least 2 such patterns to be valid for splitting
+    pattern = r'\b([A-Z][A-Za-z]{1,14})\s*_{3,}'
+    matches = list(re.finditer(pattern, line))
+    
+    if len(matches) < 2:
+        return [line]
+    
+    # Extract segments
+    segments = []
+    for i, match in enumerate(matches):
+        if i + 1 < len(matches):
+            # Extract from this label to the start of next label
+            segment = line[match.start():matches[i+1].start()].strip()
+            if segment:
+                segments.append(segment)
+        else:
+            # Last segment - extract to end of line
+            segment = line[match.start():].strip()
+            if segment:
+                segments.append(segment)
+    
+    # Only return segments if we successfully split into 2+ fields
+    # and each segment has a reasonable length (not just underscores)
+    if len(segments) >= 2 and all(len(s.strip('_').strip()) >= 2 for s in segments):
+        return segments
+    
+    return [line]
+
+
 def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
     Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
@@ -662,6 +704,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     4. Existing pattern (colon + checkbox)
     5. Checkboxes without colons
     6. Known label patterns with spacing
+    7. Category 1 Fix 1.1: Short label + underscore pattern (NEW)
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
@@ -695,6 +738,11 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     
     # Try known label detection
     result = split_by_known_labels(line)
+    if len(result) > 1:
+        return result
+    
+    # Category 1 Fix 1.1: Try short label + underscore pattern (NEW)
+    result = split_short_label_underscore_pattern(line)
     if len(result) > 1:
         return result
     
