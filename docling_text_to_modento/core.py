@@ -1590,14 +1590,23 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
     if prev_line:
         prev_clean = prev_line.strip().rstrip(':.')
         if prev_clean and len(prev_clean) < 100 and not re.search(CHECKBOX_ANY, prev_clean):
-            # Make sure it's not a heading
+            # Make sure it's not a heading or instructional text
             if not is_heading(prev_clean):
-                return (slugify(prev_clean), prev_clean)
+                # Archivev22 Enhancement: Don't use long descriptive sentences as labels for underscores
+                # If the previous line is very long or looks like a sentence, skip it
+                if len(prev_clean) < 80 and not (prev_clean.endswith('.') and len(prev_clean) > 50):
+                    return (slugify(prev_clean), prev_clean)
     
-    # Fallback: create generic label
-    # Count how many underscores to make unique key
-    underscore_length = len(re.search(r'_{5,}', line).group(0))
-    return (f"text_input_{underscore_length}", "Text input field")
+    # Archivev22 Enhancement: Don't create generic placeholders for orphaned underscores
+    # These are often signature lines or date lines without clear context
+    # Only create them if the line has some identifying text
+    line_text = re.sub(r'_{5,}', '', line).strip()
+    if line_text and len(line_text) >= 2:
+        # Has some text, create generic with that text
+        return (slugify(line_text), line_text)
+    
+    # No label found and no identifying text - skip this underscore field
+    return None
 
 
 def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
@@ -2732,15 +2741,43 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Fix 2: Skip obvious business/practice address lines (Archivev20)
         # These should have been filtered by scrub_headers_footers but some slip through
         # Examples: "3138 N Lincoln Ave Chicago, IL", "60657", "Chicago, IL 60632"
+        # Archivev22 Enhancement: Also skip document titles and section headers that slipped through
         skip_patterns = [
             r'^\d{5}$',  # Just a zip code
             r'^\d+\s+[NS]?\s*\w+\s+(Ave|Avenue|Rd|Road|St|Street|Blvd|Boulevard)\b',  # Street address
             r',\s*[A-Z]{2}\s+\d{5}$',  # City, State Zip
             r'^\d+[A-Z]?\s+S\s+\w+\s+(Ave|Rd|St|Blvd)',  # Address starting with number
+            r'\w+\s*\.\s*(com|org|net|us|info|dental)\b',  # Website domain (with optional space before dot)
+            r'^\d{3}[-.]\d{3}[-.]\d{4}$',  # Phone number (standalone)
+            r'\b\d{3}[-.]\d{3}[-.]\d{4}\b',  # Phone number anywhere in text
+            r'@\s*\w+\s*\.\s*\w+',  # Email address (with optional spaces)
+            r'\(pg\.\s*\d+\)',  # Page number reference
+            r'^please\s+(ensure|note|read|remember)',  # Instructions
+            r'^[*]+',  # Lines starting with asterisks (often instructions)
         ]
         should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
+        
+        # Archivev22 Enhancement: Skip document titles that look like form headers
+        # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
+        if not should_skip and len(title.split()) >= 4:
+            title_lower = title.lower()
+            # Check for form title keywords
+            has_form_keywords = any(kw in title_lower for kw in ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure'])
+            # Must be title case or all caps (not mixed case sentences)
+            is_title_case = title.istitle() or title.isupper()
+            
+            if has_form_keywords and is_title_case:
+                should_skip = True
+                if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+        
+        # Archivev22 Enhancement: Skip lines that look like section headers describing content
+        # (e.g., "Endodontic (Root Canal) Treatment, Endodontic Surgery, Anesthetics, and Medications")
+        if not should_skip and len(title) > 60 and title.count(',') >= 2:
+            # Long lines with multiple commas are likely descriptive headers, not field labels
+            should_skip = True
+            if debug: print(f"  [debug] skipping descriptive header: '{title[:60]}'")
+        
         if should_skip:
-            if debug: print(f"  [debug] skipping business address line: '{title[:60]}'")
             i += 1
             continue
         
@@ -2766,9 +2803,26 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     def is_instructional_text(text: str) -> bool:
         """
         Archivev18 Fix 2: Detect instructional/paragraph text that shouldn't be captured as fields.
+        Archivev22 Enhancement: Better detection of informational bullet points and long descriptions.
         Returns True if the text is likely instructions/guidance rather than a field label.
         """
         text_lower = text.lower().strip()
+        original_text = text.strip()
+        
+        # Check if this is an informational bullet point (starts with bullet symbol)
+        # Common in consent forms describing risks/complications
+        if original_text.startswith(('●', '•', '·')):
+            # These are typically risk descriptions, not fillable fields
+            # Look for keywords common in risk/complication lists
+            risk_keywords = [
+                'adverse', 'reaction', 'numbness', 'tingling', 'bleeding', 'infection',
+                'swelling', 'fracture', 'damage', 'injury', 'pain', 'sensitivity',
+                'complication', 'risk', 'temporary', 'permanent', 'may result', 'may cause',
+                'can lead', 'potential', 'possible', 'delayed healing', 'post-operative',
+                'post treatment', 'involving', 'involvement'
+            ]
+            if any(keyword in text_lower for keyword in risk_keywords):
+                return True
         
         # Check for common instructional phrases
         instructional_phrases = [
@@ -2778,6 +2832,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             "interrelationship with",
             "health problems that you may have",
             "please read",
+            "please ensure",
+            "please note",
             "i understand that providing incorrect",
             "to the best of my knowledge",
             "the questions on this form have been",
@@ -2785,15 +2841,37 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             "providing incorrect information can be",
             "although dental professionals",
             "your mouth is a part of",
+            "have been explained to me",
+            "i understand that",
+            "these treatments include",
+            "alternative methods",
+            "risks and complications",
+            "may include (but",
+            "are not limited to",
+            "has performed a thorough examination",
+            "has determined that",
         ]
         
         if any(phrase in text_lower for phrase in instructional_phrases):
             return True
         
-        # If text is very long (>150 chars) and contains connecting phrases, likely instructional
-        if len(text) > 150:
-            connecting_phrases = [" that you ", " which ", " could ", " should ", " would "]
+        # If text is very long (>120 chars) and contains connecting phrases, likely instructional
+        if len(text) > 120:
+            connecting_phrases = [" that you ", " which ", " could ", " should ", " would ", " may ", " can "]
             if any(phrase in text_lower for phrase in connecting_phrases):
+                return True
+        
+        # Check for document titles (all caps or title case, contains form keywords)
+        if len(original_text.split()) >= 4:
+            is_title_case = original_text.istitle() or original_text.isupper()
+            title_keywords = ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure']
+            has_form_keywords = any(keyword in text_lower for keyword in title_keywords)
+            
+            # Also check for common section header patterns
+            section_keywords = ['risks', 'benefits', 'alternatives', 'procedures', 'treatment']
+            has_section_keywords = any(keyword in text_lower for keyword in section_keywords)
+            
+            if is_title_case and (has_form_keywords or has_section_keywords):
                 return True
         
         return False
