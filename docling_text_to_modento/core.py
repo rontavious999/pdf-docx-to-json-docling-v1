@@ -542,10 +542,30 @@ def split_conditional_field_line(line: str) -> List[str]:
     Archivev13 Fix: Handle conditional multi-field lines.
     Pattern: "Question? ... If condition: field1 ... field2"
     Example: "Are you a student? Yes or No If patient is a minor: Mother's DOB    Father's DOB"
+    
+    Note: Do NOT split yes/no questions with follow-up instructions like:
+    "Are you taking medications? [ ] Yes [ ] No If yes, please explain:______"
+    These should be handled by the compound yes/no logic instead.
     """
     # Look for "If ... :" pattern
     conditional_match = re.search(r'\b(if\s+[^:]{5,40}:)', line, re.I)
     if not conditional_match:
+        return [line]
+    
+    # Check if this is a yes/no question with follow-up instructions
+    # Pattern: checkbox or "Yes/No" before the "if" statement
+    before_conditional = line[:conditional_match.start()]
+    has_yesno_checkbox = bool(re.search(r'(?:yes|no|y|n)(?:\s*\[|\s*or\s)', before_conditional, re.I))
+    
+    # If it's "if yes" or "if no" followed by common follow-up keywords, don't split
+    conditional_text = conditional_match.group(0).lower()
+    is_followup_instruction = (
+        ('if yes' in conditional_text or 'if no' in conditional_text) and
+        any(keyword in conditional_text for keyword in ['explain', 'specify', 'list', 'describe', 'comment'])
+    )
+    
+    if has_yesno_checkbox and is_followup_instruction:
+        # This is a yes/no question with follow-up instructions, don't split
         return [line]
     
     conditional_text = conditional_match.group(0)
@@ -631,6 +651,48 @@ def split_compound_field_with_slashes(line: str) -> List[str]:
     return segments
 
 
+def split_short_label_underscore_pattern(line: str) -> List[str]:
+    """
+    Category 1 Fix 1.1: Enhanced multi-field line splitting.
+    
+    Detects pattern: "Label1___ Label2___ Label3___" where labels are short words.
+    Examples:
+    - "First____ MI____ Last____"
+    - "City____ State____ Zip____"
+    - "Date____ Time____ Location____"
+    
+    This catches cases where the labels aren't in KNOWN_FIELD_LABELS.
+    """
+    # Pattern: Short word (2-15 chars, no spaces) followed by 3+ underscores
+    # Must have at least 2 such patterns to be valid for splitting
+    pattern = r'\b([A-Z][A-Za-z]{1,14})\s*_{3,}'
+    matches = list(re.finditer(pattern, line))
+    
+    if len(matches) < 2:
+        return [line]
+    
+    # Extract segments
+    segments = []
+    for i, match in enumerate(matches):
+        if i + 1 < len(matches):
+            # Extract from this label to the start of next label
+            segment = line[match.start():matches[i+1].start()].strip()
+            if segment:
+                segments.append(segment)
+        else:
+            # Last segment - extract to end of line
+            segment = line[match.start():].strip()
+            if segment:
+                segments.append(segment)
+    
+    # Only return segments if we successfully split into 2+ fields
+    # and each segment has a reasonable length (not just underscores)
+    if len(segments) >= 2 and all(len(s.strip('_').strip()) >= 2 for s in segments):
+        return segments
+    
+    return [line]
+
+
 def enhanced_split_multi_field_line(line: str) -> List[str]:
     """
     Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
@@ -642,6 +704,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     4. Existing pattern (colon + checkbox)
     5. Checkboxes without colons
     6. Known label patterns with spacing
+    7. Category 1 Fix 1.1: Short label + underscore pattern (NEW)
     """
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
@@ -675,6 +738,11 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     
     # Try known label detection
     result = split_by_known_labels(line)
+    if len(result) > 1:
+        return result
+    
+    # Category 1 Fix 1.1: Try short label + underscore pattern (NEW)
+    result = split_short_label_underscore_pattern(line)
     if len(result) > 1:
         return result
     
@@ -1061,6 +1129,7 @@ class Question:
     type: str
     optional: bool = False
     control: Dict = field(default_factory=dict)
+    conditional_on: Optional[List[Tuple[str, str]]] = None
 
 # slugify moved to modules/question_parser.py (Patch 7 Phase 1)
 
@@ -1418,7 +1487,19 @@ def create_yn_question_with_followup(
         control={"options": [make_option("Yes", True), make_option("No", False)]}
     )
     
-    # Follow-up input field
+    # Follow-up input field (conditional on Yes)
+    followup_key = f"{key_base}_explanation"
+    followup_q = Question(
+        followup_key,
+        "Please explain",
+        section,
+        "input",
+        control={"input_type": "text", "hint": "Please provide details"}
+    )
+    followup_q.conditional_on = [(key_base, "yes")]
+    
+    return [main_q, followup_q]
+
 
 # Template matching functions now imported from modules.template_catalog
 # These functions handle field standardization against the template dictionary:
@@ -1426,19 +1507,6 @@ def create_yn_question_with_followup(
 # - FindResult dataclass for match results
 # - merge_with_template for merging parsed fields with templates
 # - Helper functions for text normalization and matching
-
-    for q in items:
-        key = q.get("key") or "q"
-        if q.get("type") == "signature":
-            q["key"] = "signature"
-            out.append(q); continue
-        base = key
-        if base not in seen:
-            seen[base] = 1; q["key"] = base
-        else:
-            seen[base] += 1; q["key"] = f"{base}_{seen[base]}"
-        out.append(q)
-    return out
 
 # ---------- Parsing
 
@@ -1475,6 +1543,61 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     if has_id and has_ss:
         return [("insurance_id_number", "input", {"input_type":"text"}), ("ssn", "input", {"input_type":"ssn"})]
     return None
+
+
+def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
+    """
+    Category 1 Fix 1.2: Detect standalone fill-in-blank fields.
+    
+    Pattern: Lines with mostly underscores (5+ consecutive underscores).
+    Uses text on same line or previous line as label.
+    
+    Returns: (key, title) or None
+    """
+    # Check if line has 5+ consecutive underscores
+    if not re.search(r'_{5,}', line):
+        return None
+    
+    # IMPORTANT: If line has multiple underscore groups with text between them,
+    # it's likely a multi-field line that should be handled by other splitters
+    # Pattern: text___ text___ indicates multiple fields, not a single fill-in-blank
+    underscore_groups = re.findall(r'_{5,}', line)
+    if len(underscore_groups) > 1:
+        # Check if there's meaningful text between the underscore groups
+        # Split by underscores and check text chunks
+        parts = re.split(r'_{5,}', line)
+        text_chunks_between = [p.strip() for p in parts[1:-1] if p.strip()]  # Middle chunks
+        # If there are text labels between underscore groups, this is multi-field
+        if text_chunks_between and any(len(c) > 2 for c in text_chunks_between):
+            return None  # Let multi-field splitters handle this
+    
+    # Count underscore vs non-underscore content
+    underscore_count = line.count('_')
+    non_underscore_chars = len([c for c in line if c not in ('_', ' ', '\t')])
+    
+    # If line is mostly underscores (2:1 ratio), it's a fill-in-blank
+    if underscore_count < 5 or underscore_count < non_underscore_chars * 2:
+        return None
+    
+    # Try to extract label from same line (before underscores)
+    label_match = re.match(r'^([^_]+?)[:.]?\s*_{5,}', line)
+    if label_match:
+        label = label_match.group(1).strip()
+        if label and len(label) >= 2:
+            return (slugify(label), label)
+    
+    # Try to use previous line as label if available
+    if prev_line:
+        prev_clean = prev_line.strip().rstrip(':.')
+        if prev_clean and len(prev_clean) < 100 and not re.search(CHECKBOX_ANY, prev_clean):
+            # Make sure it's not a heading
+            if not is_heading(prev_clean):
+                return (slugify(prev_clean), prev_clean)
+    
+    # Fallback: create generic label
+    # Count how many underscores to make unique key
+    underscore_length = len(re.search(r'_{5,}', line).group(0))
+    return (f"text_input_{underscore_length}", "Text input field")
 
 
 def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
@@ -1677,6 +1800,51 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
             ("Prefer not to self identify", "not_say")
         ]
         return (question_text, "sex_gender", options)
+    
+    # Category 1 Fix 1.3: Pattern 4 - "Circle one:" or "Check one:" followed by space-separated options
+    circle_pattern = r'^(.+?)(?:circle|check)\s+one:\s*(.+)$'
+    circle_match = re.match(circle_pattern, line_stripped, re.I)
+    if circle_match:
+        question_text = circle_match.group(1).strip()
+        options_text = circle_match.group(2).strip()
+        
+        # Split options by whitespace (2+ spaces) or common separators
+        option_list = re.split(r'\s{2,}|,\s*|\|\s*', options_text)
+        options = []
+        for opt in option_list:
+            opt = opt.strip()
+            if opt and len(opt) > 1:  # Skip single chars
+                # Create value from option text
+                opt_value = opt.lower().replace(' ', '_').replace('-', '_')
+                options.append((opt, opt_value))
+        
+        # Need at least 2 options
+        if len(options) >= 2:
+            # If question text is empty, use "Please select one"
+            if not question_text:
+                question_text = "Please select one"
+            return (question_text, "select_one", options)
+    
+    # Category 1 Fix 1.3: Pattern 5 - Options separated by slashes without checkbox markers
+    # e.g., "Marital Status: Single/Married/Divorced"
+    slash_options_pattern = r'^(.+?):\s*([A-Za-z]+(?:/[A-Za-z]+){1,})\s*$'
+    slash_match = re.match(slash_options_pattern, line_stripped)
+    if slash_match:
+        question_text = slash_match.group(1).strip()
+        options_text = slash_match.group(2)
+        
+        # Split by slashes
+        option_list = options_text.split('/')
+        options = []
+        for opt in option_list:
+            opt = opt.strip()
+            if opt:
+                opt_value = opt.lower().replace(' ', '_')
+                options.append((opt, opt_value))
+        
+        # Need at least 2 options and all options should be short (single words/phrases)
+        if len(options) >= 2 and all(len(o[0]) < 20 for o in options):
+            return (question_text, "select_one", options)
     
     return None
 
@@ -2149,7 +2317,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         emitted_compound = False
         if compound_prompts:
             for ptxt in compound_prompts:
-                key = slugify(ptxt)
+                # Fix: Strip follow-up instructions from prompt to get clean question
+                # Pattern: "Question? If yes, please explain:______" -> "Question?"
+                clean_ptxt = re.sub(r'\s+(if\s+yes|if\s+so|please\s+explain|explain\s+below).*$', '', ptxt, flags=re.I).strip()
+                if not clean_ptxt:
+                    clean_ptxt = ptxt  # Fallback if regex removes everything
+                
+                key = slugify(clean_ptxt)
                 if insurance_scope and "insurance" in cur_section.lower():
                     key = f"{key}{insurance_scope}"
                 control = {"options":[make_option("Yes",True),make_option("No",False)]}
@@ -2186,7 +2360,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                         follow_up_q.conditional_on = [(key, "yes")]
                         questions.append(follow_up_q)
                 
-                questions.append(Question(key, ptxt, cur_section, "radio", control=control))
+                questions.append(Question(key, clean_ptxt, cur_section, "radio", control=control))
                 emitted_compound = True
             if re.search(r"name\s+of\s+school", line, re.I):
                 questions.append(Question("name_of_school","Name of School",cur_section,"input",control={"input_type":"text"}))
@@ -2375,6 +2549,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             i += 1
             continue
         
+        # Category 1 Fix 1.2: Check for fill-in-blank fields
+        prev_line_text = lines[i-1] if i > 0 else None
+        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text)
+        if fill_in_blank:
+            field_key, field_title = fill_in_blank
+            if debug:
+                print(f"  [debug] fill-in-blank detected: {line[:60]}... -> {field_key}")
+            questions.append(Question(field_key, field_title, cur_section, "input",
+                                      control={"input_type": "text"}))
+            i += 1
+            continue
+        
         # Priority 2.3: Check for inline checkbox with continuation text
         inline_checkbox_field = detect_inline_checkbox_with_text(line)
         if inline_checkbox_field:
@@ -2499,6 +2685,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         para = [lines[i]]; k = i+1
         while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
             if is_heading(lines[k]): break
+            # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
+            if extract_compound_yn_prompts(lines[k]):
+                break
             para.append(lines[k]); k += 1
         joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
         if len(joined) > 250 and joined.count(".") >= 2:
@@ -3014,12 +3203,22 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
     Reassign fields from 'General' to more specific sections based on content.
     Uses keyword matching to identify medical and dental questions.
     """
+    # Strong keywords that alone indicate medical history
+    STRONG_MEDICAL_KEYWORDS = [
+        'physician', 'hospitalized', 'surgery', 'surgical', 'operation',
+        'medication', 'medicine', 'prescription', 
+        'allergy', 'allergic',
+        # Common disease/condition patterns
+        'hiv', 'aids', 'diabetes', 'cancer', 'heart', 'blood pressure',
+        'hepatitis', 'asthma', 'arthritis', 'alzheimer', 'anemia'
+    ]
+    
     MEDICAL_KEYWORDS = [
-        'physician', 'doctor', 'hospital', 'surgery', 'surgical', 'operation',
-        'medication', 'medicine', 'prescription', 'drug',
+        'doctor', 'hospital', 
+        'drug', 'pills',
         'illness', 'disease', 'condition', 'diagnosis',
-        'allergy', 'allergic', 'reaction',
-        'symptom', 'pain', 'discomfort', 'health'
+        'reaction', 'symptom', 'discomfort', 'health',
+        'care now', 'taking any', 'have you had', 'have you ever'
     ]
     
     DENTAL_KEYWORDS = [
@@ -3035,12 +3234,21 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
             key_lower = item.get('key', '').lower()
             combined = title_lower + ' ' + key_lower
             
-            # Count keyword matches
+            # Check for strong medical keywords (single match is enough)
+            has_strong_medical = any(kw in combined for kw in STRONG_MEDICAL_KEYWORDS)
+            
+            # Count regular keyword matches
             medical_score = sum(1 for kw in MEDICAL_KEYWORDS if kw in combined)
             dental_score = sum(1 for kw in DENTAL_KEYWORDS if kw in combined)
             
-            # Reassign if strong signal (2+ matching keywords)
-            if medical_score >= 2 and medical_score > dental_score:
+            # Reassign based on signals
+            # Strong keyword alone is enough for medical history
+            if has_strong_medical and dental_score == 0:
+                if dbg:
+                    dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (strong keyword match)")
+                item['section'] = 'Medical History'
+            # Or 2+ regular keywords
+            elif medical_score >= 2 and medical_score > dental_score:
                 if dbg:
                     dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (score={medical_score})")
                 item['section'] = 'Medical History'

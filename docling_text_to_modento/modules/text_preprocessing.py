@@ -22,6 +22,13 @@ from .constants import (
     PRACTICE_NAME_PATTERN, KNOWN_FIELD_LABELS
 )
 
+# Import OCR correction functions (Category 2 Fix 2.2)
+from .ocr_correction import (
+    preprocess_text_with_ocr_correction,
+    preprocess_field_label,
+    restore_ligatures
+)
+
 
 def normalize_glyphs_line(s: str) -> str:
     """
@@ -29,7 +36,12 @@ def normalize_glyphs_line(s: str) -> str:
     
     Converts various Unicode symbols for checkboxes, bullets, and checkmarks
     into standardized ASCII patterns like "[ ]", "[x]", and "•".
+    
+    Enhanced with OCR correction (Category 2 Fix 2.2).
     """
+    # Apply OCR corrections first (ligatures, whitespace, char confusions)
+    s = preprocess_text_with_ocr_correction(s, context='general')
+    
     repls = {
         "☐": "[ ] ", "☑": "[x] ", "□": "[ ] ", "■": "[ ] ", "❒": "[ ] ", "◻": "[ ] ", "◽": "[ ] ",
         "▪": "[ ] ", "•": "• ", "·": "• ", "✓": "[x] ", "✔": "[x] ", "✗": "[ ] ", "✘": "[ ] ",
