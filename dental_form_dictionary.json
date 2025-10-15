@@ -162,6 +162,16 @@
       },
       "section": "Basic Information",
       "optional": true
+    },
+    {
+      "key": "todays_date",
+      "type": "date",
+      "title": "Today's Date",
+      "control": {
+        "input_type": "any"
+      },
+      "section": "Basic Information",
+      "optional": true
     }
   ],
   "referral": [
@@ -282,6 +292,18 @@
       },
       "section": "Contact Information",
       "optional": true
+    },
+    {
+      "key": "phone",
+      "type": "input",
+      "title": "Phone Number",
+      "control": {
+        "hint": null,
+        "input_type": "phone",
+        "phone_prefix": "+1"
+      },
+      "section": "Contact Information",
+      "optional": true
     }
   ],
   "address": [
@@ -323,6 +345,17 @@
         "input_type": "zip"
       },
       "section": "Address"
+    },
+    {
+      "key": "apt",
+      "type": "input",
+      "title": "Apt #",
+      "control": {
+        "hint": null,
+        "input_type": "text"
+      },
+      "section": "Address",
+      "optional": true
     }
   ],
   "emergency_contact": [
@@ -3628,6 +3661,126 @@
       },
       "section": "Medical Conditions",
       "optional": true
+    },
+    {
+      "key": "artificial_heart_valve",
+      "type": "dropdown",
+      "title": "Artificial Heart Valve",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "diabetes",
+      "type": "dropdown",
+      "title": "Diabetes",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "anemia",
+      "type": "dropdown",
+      "title": "Anemia",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "asthma",
+      "type": "dropdown",
+      "title": "Asthma",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "emphysema",
+      "type": "dropdown",
+      "title": "Emphysema",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
+    },
+    {
+      "key": "bruise_easily",
+      "type": "dropdown",
+      "title": "Bruise Easily",
+      "control": {
+        "multi": false,
+        "options": [
+          {
+            "name": "Yes",
+            "value": true
+          },
+          {
+            "name": "No",
+            "value": false
+          }
+        ]
+      },
+      "section": "Medical Conditions",
+      "optional": true
     }
   ],
   "medications": [
@@ -4104,12 +4257,16 @@
   "aliases": {
     "dob": "date_of_birth",
     "birth date": "date_of_birth",
+    "patient date of birth": "date_of_birth",
+    "date of birth": "date_of_birth",
     "ssn #": "ssn",
     "zip code": "zipcode",
     "zip": "zipcode",
     "cell phone": "mobile_phone",
     "mobile": "mobile_phone",
     "home phone": "home_phone",
+    "phone number": "phone",
+    "phone": "phone",
     "e-mail": "email",
     "gender": "sex",
     "sex": "sex",
@@ -4168,7 +4325,13 @@
     "tmj": "jaw_pain_clicking",
     "sedation": "sedation_preference",
     "treatment goals": "treatment_goals",
-    "orthodontic": "previous_orthodontic_treatment"
+    "orthodontic": "previous_orthodontic_treatment",
+    "today's date": "todays_date",
+    "date": "todays_date",
+    "apt": "apt",
+    "apt#": "apt",
+    "apartment": "apt",
+    "apartment #": "apt"
   },
   "patient_identification": [
     {

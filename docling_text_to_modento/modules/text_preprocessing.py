@@ -270,7 +270,7 @@ def normalize_section_name(raw: str) -> str:
     table = {
         "Patient Information": ["patient information", "patient info", "patient details", "demographic", "registration"],
         "Insurance": ["insurance", "subscriber", "policy", "carrier", "dental benefit plan"],
-        "Medical History": ["medical history", "health history", "medical"],
+        "Medical History": ["medical history", "health history", "medical", "medical conditions", "health conditions"],
         "Medications": ["medication", "medications", "current medicines", "rx"],
         "Allergies": ["allergy", "allergies"],
         "Dental History": ["dental history", "dental information", "dental"],
