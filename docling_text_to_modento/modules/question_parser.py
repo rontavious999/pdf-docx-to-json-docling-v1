@@ -54,12 +54,6 @@ def clean_field_title(title: str) -> str:
     # Forms often use "!" as a checkbox indicator, similar to □
     cleaned = re.sub(r'^!\s*', '', cleaned)
     
-    # Phase 4 Fix 6: Remove SSN field formatting artifacts
-    # Forms often show "Social Security No. _______ - ____ - _________"
-    # which gets captured with the dashes. Remove trailing dashes and spaces.
-    cleaned = re.sub(r'\s*-\s*-\s*$', '', cleaned)  # Remove " - -" or "- -" at end
-    cleaned = re.sub(r'\s*-\s*$', '', cleaned)      # Remove trailing " -" or "-"
-    
     # Archivev18 Fix 1: Remove date template artifacts (e.g., ": / /" or "/ /")
     # These appear in forms as placeholder formatting (e.g., "Birth Date#: / /")
     cleaned = re.sub(r':\s*/\s*/\s*$', '', cleaned)  # Remove ": / /" at end
@@ -91,6 +85,14 @@ def clean_field_title(title: str) -> str:
     
     # Trim whitespace
     cleaned = cleaned.strip()
+    
+    # Phase 4 Fix 6: Remove SSN field formatting artifacts (AFTER space normalization)
+    # Forms often show "Social Security No. _______ - ____ - _________"
+    # which gets captured with the dashes. Remove trailing dashes and spaces.
+    # Must be AFTER space normalization since we're looking for single-space patterns
+    cleaned = re.sub(r'\.\s*-\s*-\s*$', '', cleaned)  # Remove ". - -" at end
+    cleaned = re.sub(r'\s*-\s*-\s*$', '', cleaned)    # Remove " - -" at end
+    cleaned = re.sub(r'\s*-\s*$', '', cleaned)        # Remove trailing " -"
     
     # Remove trailing colons if followed by nothing
     cleaned = re.sub(r':\s*$', '', cleaned)
