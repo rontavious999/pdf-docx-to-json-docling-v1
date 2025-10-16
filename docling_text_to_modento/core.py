@@ -718,6 +718,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
+    0b. Phase 4 Fix 8: Preferred contact fields with checkboxes (DON'T split these)
     1. Enhancement 1: Compound fields with slashes (Apt/Unit/Suite)
     2. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
     3. Conditional field patterns (Archivev13)
@@ -729,6 +730,13 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
+        return [line]
+    
+    # Phase 4 Fix 8: Check if this is a preferred contact field with checkboxes
+    # These should NOT be split by known label patterns (Home Phone, Work Phone, etc.)
+    # as those are options for a single radio field, not separate input fields
+    has_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
+    if has_preferred_contact and re.search(CHECKBOX_ANY, line):
         return [line]
     
     # Enhancement 1: Try compound field splitting with slashes
