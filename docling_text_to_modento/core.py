@@ -516,7 +516,15 @@ def split_label_with_subfields(line: str) -> List[str]:
     Example: "Phone: Mobile                                  Home                                  Work"
     Should create: ["Phone: Mobile", "Phone: Home", "Phone: Work"]
     Or better: ["Mobile Phone", "Home Phone", "Work Phone"]
+    
+    Phase 4 Fix 8: Do NOT split lines that contain checkboxes - those are radio/dropdown fields
+    with options, not separate input fields.
     """
+    # Phase 4 Fix 8: Check if line has checkboxes first
+    # Lines with checkboxes should be kept together as radio/dropdown fields
+    if re.search(CHECKBOX_ANY, line):
+        return [line]
+    
     # Pattern: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
     # Must have at least 2 sub-labels to consider splitting
     match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:\s{4,}[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
