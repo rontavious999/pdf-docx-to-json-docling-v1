@@ -159,14 +159,26 @@ YN_SIMPLE_RE = re.compile(r"(?P<prompt>.*?)(?:\bYes\b|\bY\b)\s*(?:/|,|\s+)\s*(?:
 PARENT_RE = re.compile(r"\b(parent|guardian|mother|father|legal\s+guardian)\b", re.I)
 
 # Archivev12 Fix 2: Special field patterns for common fields without perfect formatting
+# Phase 4 Fix 1: Enhanced patterns to detect checkbox-based Sex/Gender and Marital Status fields
 SEX_GENDER_PATTERNS = [
     re.compile(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female)', re.I),
     re.compile(r'\b(sex|gender)\s*\[\s*\]\s*(?:male|female|M|F)', re.I),
+    # New: Match "Sex □ Male □ Female" pattern with checkbox characters
+    re.compile(r'\bsex\s*' + CHECKBOX_ANY + r'\s*male\s*' + CHECKBOX_ANY + r'\s*female', re.I),
+    re.compile(r'\bgender\s*' + CHECKBOX_ANY + r'\s*male\s*' + CHECKBOX_ANY + r'\s*female', re.I),
 ]
 
 MARITAL_STATUS_PATTERNS = [
     re.compile(r'(?:please\s+)?circle\s+one\s*:?\s*(single|married|divorced|separated|widowed)', re.I),
     re.compile(r'\bmarital\s+status\s*:?\s*(?:\[\s*\]|single|married)', re.I),
+    # New: Match "Marital Status □ Married □ Single..." pattern with checkboxes
+    re.compile(r'\bmarital\s+status\s*' + CHECKBOX_ANY, re.I),
+]
+
+# Phase 4 Fix 3: Pattern for "Preferred method of contact" fields
+PREFERRED_CONTACT_PATTERNS = [
+    re.compile(r'(?:what\s+is\s+your\s+)?preferred\s+method\s+of\s+contact', re.I),
+    re.compile(r'preferred\s+contact\s+method', re.I),
 ]
 
 PHONE_PATTERNS = [
@@ -752,6 +764,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
 def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
     """
     Archivev12 Fix 2a: Detect sex/gender field patterns.
+    Phase 4 Fix 1: Enhanced to handle checkbox patterns like "Sex □ Male □ Female"
     Returns: (field_type, segment) or None
     
     For lines with checkboxes (e.g., "Sex [ ] Male [ ] Female"), extract the entire field.
@@ -765,17 +778,25 @@ def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
             after_label = line[match.end():]
             has_checkboxes = bool(re.search(CHECKBOX_ANY, after_label))
             
-            if has_checkboxes:
-                # Extract the entire sex/gender field including all checkboxes until next field or end
-                # Look for 4+ spaces followed by a capital letter (indicating next field)
+            if has_checkboxes or match.group(0).count('□') >= 2 or match.group(0).count('[') >= 2:
+                # This is a checkbox-based field, extract the entire field including all checkboxes
+                # Look for significant spacing (4+ spaces) followed by a capital letter (indicating next field)
+                # OR look for "Marital Status" which commonly follows on same line
                 next_field_match = re.search(r'\s{4,}[A-Z]', line[match.start():])
                 if next_field_match:
                     # Extract up to next field
                     end_pos = match.start() + next_field_match.start()
                     return ("sex_gender", line[:end_pos].strip())
                 else:
-                    # No next field, extract to end
-                    return ("sex_gender", line.strip())
+                    # No clear next field boundary, extract to end
+                    # But check if line also contains "Marital Status" - if so, split there
+                    marital_match = re.search(r'\bmarital\s+status', line[match.end():], re.I)
+                    if marital_match:
+                        # Extract up to "Marital Status"
+                        end_pos = match.end() + marital_match.start()
+                        return ("sex_gender", line[:end_pos].strip())
+                    else:
+                        return ("sex_gender", line.strip())
             else:
                 # Text-based options (M or F), extract up to match end
                 return ("sex_gender", line[:match.end()].strip())
@@ -785,6 +806,7 @@ def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
 def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
     """
     Archivev12 Fix 2b: Detect marital status field patterns.
+    Phase 4 Fix 2: Enhanced to handle checkbox patterns
     Returns: (field_type, extracted_segment) or None
     """
     for pattern in MARITAL_STATUS_PATTERNS:
@@ -796,7 +818,23 @@ def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
                 segment = line[match.start():].strip()
                 return ("marital_status", segment)
             else:
-                return ("marital_status", line[match.start():].strip())
+                # For checkbox-based patterns, extract to end of line
+                # (assume marital status is last field on line)
+                segment = line[match.start():].strip()
+                return ("marital_status", segment)
+    return None
+
+
+def detect_preferred_contact_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Phase 4 Fix 3: Detect preferred method of contact field patterns.
+    Returns: (field_type, extracted_segment) or None
+    """
+    for pattern in PREFERRED_CONTACT_PATTERNS:
+        match = pattern.search(line)
+        if match:
+            # Extract from match onwards (includes the question and all checkbox options)
+            return ("preferred_contact", line[match.start():].strip())
     return None
 
 
@@ -858,11 +896,12 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             continue
         
         # Archivev12 Fix: Try multiple splitting strategies
-        # Strategy 1: Check if line has sex/gender or marital patterns - use complex split first
+        # Strategy 1: Check if line has sex/gender, marital, or preferred contact patterns
         has_sex_gender = any(p.search(line) for p in SEX_GENDER_PATTERNS)
         has_marital = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
+        has_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
         
-        if has_sex_gender or has_marital:
+        if has_sex_gender or has_marital or has_preferred_contact:
             # Try complex multi-field detection first for these special cases
             split_lines = split_complex_multi_field_line(line)
             if len(split_lines) == 1:
@@ -2873,6 +2912,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             
             if is_title_case and (has_form_keywords or has_section_keywords):
                 return True
+        
+        # Phase 4 Fix 10: Enhanced document title detection
+        # Catch patterns like "Informed Consent for [Procedure Name]"
+        if text_lower.startswith('informed consent for'):
+            return True
         
         return False
     

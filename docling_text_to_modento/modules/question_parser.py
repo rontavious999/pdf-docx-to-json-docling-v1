@@ -50,6 +50,16 @@ def clean_field_title(title: str) -> str:
     # Remove checkbox markers
     cleaned = re.sub(CHECKBOX_ANY, '', title)
     
+    # Phase 4 Fix 9: Remove leading "!" from medical condition fields
+    # Forms often use "!" as a checkbox indicator, similar to □
+    cleaned = re.sub(r'^!\s*', '', cleaned)
+    
+    # Phase 4 Fix 6: Remove SSN field formatting artifacts
+    # Forms often show "Social Security No. _______ - ____ - _________"
+    # which gets captured with the dashes. Remove trailing dashes and spaces.
+    cleaned = re.sub(r'\s*-\s*-\s*$', '', cleaned)  # Remove " - -" or "- -" at end
+    cleaned = re.sub(r'\s*-\s*$', '', cleaned)      # Remove trailing " -" or "-"
+    
     # Archivev18 Fix 1: Remove date template artifacts (e.g., ": / /" or "/ /")
     # These appear in forms as placeholder formatting (e.g., "Birth Date#: / /")
     cleaned = re.sub(r':\s*/\s*/\s*$', '', cleaned)  # Remove ": / /" at end
