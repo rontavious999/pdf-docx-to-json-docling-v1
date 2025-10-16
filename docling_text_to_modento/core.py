@@ -1931,9 +1931,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Archivev12 Fix: Check for special field patterns BEFORE heading detection
         # to prevent them from being treated as headings
+        # Phase 4 Fix: Also check for preferred contact patterns
         is_special_sex_field = any(p.search(line) for p in SEX_GENDER_PATTERNS)
         is_special_marital_field = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
-        is_special_field = is_special_sex_field or is_special_marital_field
+        is_special_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
+        is_special_field = is_special_sex_field or is_special_marital_field or is_special_preferred_contact
         
         # Fix 2: Section heading with multi-line header detection
         if not is_special_field and is_heading(line):
@@ -2654,9 +2656,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Don't look back even if it's short - this fixes "Marital Status:" being replaced by "Ext#"
                 has_proper_label = extracted_title and ':' in line[:line.find('[') if '[' in line else len(line)]
                 
+                # Phase 4 Fix: Common short field names that should be accepted even without colon
+                common_short_fields = {'sex', 'gender', 'age', 'dob', 'ssn', 'name', 'city', 'state', 'zip'}
+                is_common_short = extracted_title and extracted_title.lower().strip() in common_short_fields
+                
                 # If we extracted a meaningful title from the current line, use it
-                if extracted_title and len(extracted_title) >= 3 and has_proper_label:
-                    # Current line has "Label: [ ] options" format - use the extracted label
+                if extracted_title and len(extracted_title) >= 3 and (has_proper_label or is_common_short):
+                    # Current line has "Label: [ ] options" format OR is a common short field - use the extracted label
                     clean_title = extracted_title
                 elif extracted_title and len(extracted_title) >= 5:
                     # Extracted title is long enough even without colon
