@@ -827,14 +827,23 @@ def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
 
 def detect_preferred_contact_field(line: str) -> Optional[Tuple[str, str]]:
     """
-    Phase 4 Fix 3: Detect preferred method of contact field patterns.
+    Phase 4 Fix 3/8: Detect preferred method of contact field patterns.
     Returns: (field_type, extracted_segment) or None
+    
+    This field is typically a standalone line with a question followed by multiple checkbox options.
+    Example: "What is your preferred method of contact? □ Mobile Phone □ Home Phone □ Work Phone □ E-mail"
     """
     for pattern in PREFERRED_CONTACT_PATTERNS:
         match = pattern.search(line)
         if match:
-            # Extract from match onwards (includes the question and all checkbox options)
-            return ("preferred_contact", line[match.start():].strip())
+            # Extract the complete segment (question + all options)
+            # Since this is typically a standalone field, extract entire line
+            segment = line[match.start():].strip()
+            
+            # Verify we have multiple checkbox options (should have at least 2)
+            checkbox_count = len(re.findall(CHECKBOX_ANY, segment))
+            if checkbox_count >= 2:
+                return ("preferred_contact", segment)
     return None
 
 
