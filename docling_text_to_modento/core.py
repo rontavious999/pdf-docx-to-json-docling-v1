@@ -159,14 +159,26 @@ YN_SIMPLE_RE = re.compile(r"(?P<prompt>.*?)(?:\bYes\b|\bY\b)\s*(?:/|,|\s+)\s*(?:
 PARENT_RE = re.compile(r"\b(parent|guardian|mother|father|legal\s+guardian)\b", re.I)
 
 # Archivev12 Fix 2: Special field patterns for common fields without perfect formatting
+# Phase 4 Fix 1: Enhanced patterns to detect checkbox-based Sex/Gender and Marital Status fields
 SEX_GENDER_PATTERNS = [
     re.compile(r'\b(sex|gender)\s*[:\-]?\s*(?:M\s*or\s*F|M/F|Male/Female)', re.I),
     re.compile(r'\b(sex|gender)\s*\[\s*\]\s*(?:male|female|M|F)', re.I),
+    # New: Match "Sex □ Male □ Female" pattern with checkbox characters
+    re.compile(r'\bsex\s*' + CHECKBOX_ANY + r'\s*male\s*' + CHECKBOX_ANY + r'\s*female', re.I),
+    re.compile(r'\bgender\s*' + CHECKBOX_ANY + r'\s*male\s*' + CHECKBOX_ANY + r'\s*female', re.I),
 ]
 
 MARITAL_STATUS_PATTERNS = [
     re.compile(r'(?:please\s+)?circle\s+one\s*:?\s*(single|married|divorced|separated|widowed)', re.I),
     re.compile(r'\bmarital\s+status\s*:?\s*(?:\[\s*\]|single|married)', re.I),
+    # New: Match "Marital Status □ Married □ Single..." pattern with checkboxes
+    re.compile(r'\bmarital\s+status\s*' + CHECKBOX_ANY, re.I),
+]
+
+# Phase 4 Fix 3: Pattern for "Preferred method of contact" fields
+PREFERRED_CONTACT_PATTERNS = [
+    re.compile(r'(?:what\s+is\s+your\s+)?preferred\s+method\s+of\s+contact', re.I),
+    re.compile(r'preferred\s+contact\s+method', re.I),
 ]
 
 PHONE_PATTERNS = [
@@ -504,7 +516,15 @@ def split_label_with_subfields(line: str) -> List[str]:
     Example: "Phone: Mobile                                  Home                                  Work"
     Should create: ["Phone: Mobile", "Phone: Home", "Phone: Work"]
     Or better: ["Mobile Phone", "Home Phone", "Work Phone"]
+    
+    Phase 4 Fix 8: Do NOT split lines that contain checkboxes - those are radio/dropdown fields
+    with options, not separate input fields.
     """
+    # Phase 4 Fix 8: Check if line has checkboxes first
+    # Lines with checkboxes should be kept together as radio/dropdown fields
+    if re.search(CHECKBOX_ANY, line):
+        return [line]
+    
     # Pattern: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
     # Must have at least 2 sub-labels to consider splitting
     match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:\s{4,}[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
@@ -698,6 +718,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     Archivev12 Fix 1 + Enhancement 1: Enhanced multi-field line splitting.
     Tries multiple strategies in order:
     0. Archivev15: Field label with inline checkbox (DON'T split these)
+    0b. Phase 4 Fix 8: Preferred contact fields with checkboxes (DON'T split these)
     1. Enhancement 1: Compound fields with slashes (Apt/Unit/Suite)
     2. Archivev17: Label with sub-fields (Phone: Mobile Home Work)
     3. Conditional field patterns (Archivev13)
@@ -709,6 +730,13 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
     # Archivev15 Fix 1: Check if this is a field with inline checkbox option
     # These should NOT be split, so return early
     if detect_field_with_inline_checkbox(line):
+        return [line]
+    
+    # Phase 4 Fix 8: Check if this is a preferred contact field with checkboxes
+    # These should NOT be split by known label patterns (Home Phone, Work Phone, etc.)
+    # as those are options for a single radio field, not separate input fields
+    has_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
+    if has_preferred_contact and re.search(CHECKBOX_ANY, line):
         return [line]
     
     # Enhancement 1: Try compound field splitting with slashes
@@ -752,6 +780,7 @@ def enhanced_split_multi_field_line(line: str) -> List[str]:
 def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
     """
     Archivev12 Fix 2a: Detect sex/gender field patterns.
+    Phase 4 Fix 1: Enhanced to handle checkbox patterns like "Sex □ Male □ Female"
     Returns: (field_type, segment) or None
     
     For lines with checkboxes (e.g., "Sex [ ] Male [ ] Female"), extract the entire field.
@@ -765,17 +794,25 @@ def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
             after_label = line[match.end():]
             has_checkboxes = bool(re.search(CHECKBOX_ANY, after_label))
             
-            if has_checkboxes:
-                # Extract the entire sex/gender field including all checkboxes until next field or end
-                # Look for 4+ spaces followed by a capital letter (indicating next field)
+            if has_checkboxes or match.group(0).count('□') >= 2 or match.group(0).count('[') >= 2:
+                # This is a checkbox-based field, extract the entire field including all checkboxes
+                # Look for significant spacing (4+ spaces) followed by a capital letter (indicating next field)
+                # OR look for "Marital Status" which commonly follows on same line
                 next_field_match = re.search(r'\s{4,}[A-Z]', line[match.start():])
                 if next_field_match:
                     # Extract up to next field
                     end_pos = match.start() + next_field_match.start()
                     return ("sex_gender", line[:end_pos].strip())
                 else:
-                    # No next field, extract to end
-                    return ("sex_gender", line.strip())
+                    # No clear next field boundary, extract to end
+                    # But check if line also contains "Marital Status" - if so, split there
+                    marital_match = re.search(r'\bmarital\s+status', line[match.end():], re.I)
+                    if marital_match:
+                        # Extract up to "Marital Status"
+                        end_pos = match.end() + marital_match.start()
+                        return ("sex_gender", line[:end_pos].strip())
+                    else:
+                        return ("sex_gender", line.strip())
             else:
                 # Text-based options (M or F), extract up to match end
                 return ("sex_gender", line[:match.end()].strip())
@@ -785,6 +822,7 @@ def detect_sex_gender_field(line: str) -> Optional[Tuple[str, str]]:
 def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
     """
     Archivev12 Fix 2b: Detect marital status field patterns.
+    Phase 4 Fix 2: Enhanced to handle checkbox patterns
     Returns: (field_type, extracted_segment) or None
     """
     for pattern in MARITAL_STATUS_PATTERNS:
@@ -796,7 +834,32 @@ def detect_marital_status_field(line: str) -> Optional[Tuple[str, str]]:
                 segment = line[match.start():].strip()
                 return ("marital_status", segment)
             else:
-                return ("marital_status", line[match.start():].strip())
+                # For checkbox-based patterns, extract to end of line
+                # (assume marital status is last field on line)
+                segment = line[match.start():].strip()
+                return ("marital_status", segment)
+    return None
+
+
+def detect_preferred_contact_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Phase 4 Fix 3/8: Detect preferred method of contact field patterns.
+    Returns: (field_type, extracted_segment) or None
+    
+    This field is typically a standalone line with a question followed by multiple checkbox options.
+    Example: "What is your preferred method of contact? □ Mobile Phone □ Home Phone □ Work Phone □ E-mail"
+    """
+    for pattern in PREFERRED_CONTACT_PATTERNS:
+        match = pattern.search(line)
+        if match:
+            # Extract the complete segment (question + all options)
+            # Since this is typically a standalone field, extract entire line
+            segment = line[match.start():].strip()
+            
+            # Verify we have multiple checkbox options (should have at least 2)
+            checkbox_count = len(re.findall(CHECKBOX_ANY, segment))
+            if checkbox_count >= 2:
+                return ("preferred_contact", segment)
     return None
 
 
@@ -807,6 +870,13 @@ def split_complex_multi_field_line(line: str) -> List[str]:
     """
     segments = []
     remaining = line
+    
+    # Phase 4 Fix: Try to detect and extract preferred contact field first (it's usually a complete standalone line)
+    pref_result = detect_preferred_contact_field(line)
+    if pref_result:
+        field_type, segment = pref_result
+        segments.append(segment)
+        return segments  # Preferred contact lines are typically standalone, return early
     
     # Try to detect and extract sex/gender field
     sex_result = detect_sex_gender_field(line)
@@ -858,11 +928,12 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             continue
         
         # Archivev12 Fix: Try multiple splitting strategies
-        # Strategy 1: Check if line has sex/gender or marital patterns - use complex split first
+        # Strategy 1: Check if line has sex/gender, marital, or preferred contact patterns
         has_sex_gender = any(p.search(line) for p in SEX_GENDER_PATTERNS)
         has_marital = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
+        has_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
         
-        if has_sex_gender or has_marital:
+        if has_sex_gender or has_marital or has_preferred_contact:
             # Try complex multi-field detection first for these special cases
             split_lines = split_complex_multi_field_line(line)
             if len(split_lines) == 1:
@@ -1590,14 +1661,23 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
     if prev_line:
         prev_clean = prev_line.strip().rstrip(':.')
         if prev_clean and len(prev_clean) < 100 and not re.search(CHECKBOX_ANY, prev_clean):
-            # Make sure it's not a heading
+            # Make sure it's not a heading or instructional text
             if not is_heading(prev_clean):
-                return (slugify(prev_clean), prev_clean)
+                # Archivev22 Enhancement: Don't use long descriptive sentences as labels for underscores
+                # If the previous line is very long or looks like a sentence, skip it
+                if len(prev_clean) < 80 and not (prev_clean.endswith('.') and len(prev_clean) > 50):
+                    return (slugify(prev_clean), prev_clean)
     
-    # Fallback: create generic label
-    # Count how many underscores to make unique key
-    underscore_length = len(re.search(r'_{5,}', line).group(0))
-    return (f"text_input_{underscore_length}", "Text input field")
+    # Archivev22 Enhancement: Don't create generic placeholders for orphaned underscores
+    # These are often signature lines or date lines without clear context
+    # Only create them if the line has some identifying text
+    line_text = re.sub(r'_{5,}', '', line).strip()
+    if line_text and len(line_text) >= 2:
+        # Has some text, create generic with that text
+        return (slugify(line_text), line_text)
+    
+    # No label found and no identifying text - skip this underscore field
+    return None
 
 
 def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]]:
@@ -1883,9 +1963,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Archivev12 Fix: Check for special field patterns BEFORE heading detection
         # to prevent them from being treated as headings
+        # Phase 4 Fix: Also check for preferred contact patterns
         is_special_sex_field = any(p.search(line) for p in SEX_GENDER_PATTERNS)
         is_special_marital_field = any(p.search(line) for p in MARITAL_STATUS_PATTERNS)
-        is_special_field = is_special_sex_field or is_special_marital_field
+        is_special_preferred_contact = any(p.search(line) for p in PREFERRED_CONTACT_PATTERNS)
+        is_special_field = is_special_sex_field or is_special_marital_field or is_special_preferred_contact
         
         # Fix 2: Section heading with multi-line header detection
         if not is_special_field and is_heading(line):
@@ -2606,9 +2688,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Don't look back even if it's short - this fixes "Marital Status:" being replaced by "Ext#"
                 has_proper_label = extracted_title and ':' in line[:line.find('[') if '[' in line else len(line)]
                 
+                # Phase 4 Fix: Common short field names that should be accepted even without colon
+                common_short_fields = {'sex', 'gender', 'age', 'dob', 'ssn', 'name', 'city', 'state', 'zip'}
+                is_common_short = extracted_title and extracted_title.lower().strip() in common_short_fields
+                
                 # If we extracted a meaningful title from the current line, use it
-                if extracted_title and len(extracted_title) >= 3 and has_proper_label:
-                    # Current line has "Label: [ ] options" format - use the extracted label
+                if extracted_title and len(extracted_title) >= 3 and (has_proper_label or is_common_short):
+                    # Current line has "Label: [ ] options" format OR is a common short field - use the extracted label
                     clean_title = extracted_title
                 elif extracted_title and len(extracted_title) >= 5:
                     # Extracted title is long enough even without colon
@@ -2732,15 +2818,43 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Fix 2: Skip obvious business/practice address lines (Archivev20)
         # These should have been filtered by scrub_headers_footers but some slip through
         # Examples: "3138 N Lincoln Ave Chicago, IL", "60657", "Chicago, IL 60632"
+        # Archivev22 Enhancement: Also skip document titles and section headers that slipped through
         skip_patterns = [
             r'^\d{5}$',  # Just a zip code
             r'^\d+\s+[NS]?\s*\w+\s+(Ave|Avenue|Rd|Road|St|Street|Blvd|Boulevard)\b',  # Street address
             r',\s*[A-Z]{2}\s+\d{5}$',  # City, State Zip
             r'^\d+[A-Z]?\s+S\s+\w+\s+(Ave|Rd|St|Blvd)',  # Address starting with number
+            r'\w+\s*\.\s*(com|org|net|us|info|dental)\b',  # Website domain (with optional space before dot)
+            r'^\d{3}[-.]\d{3}[-.]\d{4}$',  # Phone number (standalone)
+            r'\b\d{3}[-.]\d{3}[-.]\d{4}\b',  # Phone number anywhere in text
+            r'@\s*\w+\s*\.\s*\w+',  # Email address (with optional spaces)
+            r'\(pg\.\s*\d+\)',  # Page number reference
+            r'^please\s+(ensure|note|read|remember)',  # Instructions
+            r'^[*]+',  # Lines starting with asterisks (often instructions)
         ]
         should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
+        
+        # Archivev22 Enhancement: Skip document titles that look like form headers
+        # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
+        if not should_skip and len(title.split()) >= 4:
+            title_lower = title.lower()
+            # Check for form title keywords
+            has_form_keywords = any(kw in title_lower for kw in ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure'])
+            # Must be title case or all caps (not mixed case sentences)
+            is_title_case = title.istitle() or title.isupper()
+            
+            if has_form_keywords and is_title_case:
+                should_skip = True
+                if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+        
+        # Archivev22 Enhancement: Skip lines that look like section headers describing content
+        # (e.g., "Endodontic (Root Canal) Treatment, Endodontic Surgery, Anesthetics, and Medications")
+        if not should_skip and len(title) > 60 and title.count(',') >= 2:
+            # Long lines with multiple commas are likely descriptive headers, not field labels
+            should_skip = True
+            if debug: print(f"  [debug] skipping descriptive header: '{title[:60]}'")
+        
         if should_skip:
-            if debug: print(f"  [debug] skipping business address line: '{title[:60]}'")
             i += 1
             continue
         
@@ -2766,9 +2880,26 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     def is_instructional_text(text: str) -> bool:
         """
         Archivev18 Fix 2: Detect instructional/paragraph text that shouldn't be captured as fields.
+        Archivev22 Enhancement: Better detection of informational bullet points and long descriptions.
         Returns True if the text is likely instructions/guidance rather than a field label.
         """
         text_lower = text.lower().strip()
+        original_text = text.strip()
+        
+        # Check if this is an informational bullet point (starts with bullet symbol)
+        # Common in consent forms describing risks/complications
+        if original_text.startswith(('●', '•', '·')):
+            # These are typically risk descriptions, not fillable fields
+            # Look for keywords common in risk/complication lists
+            risk_keywords = [
+                'adverse', 'reaction', 'numbness', 'tingling', 'bleeding', 'infection',
+                'swelling', 'fracture', 'damage', 'injury', 'pain', 'sensitivity',
+                'complication', 'risk', 'temporary', 'permanent', 'may result', 'may cause',
+                'can lead', 'potential', 'possible', 'delayed healing', 'post-operative',
+                'post treatment', 'involving', 'involvement'
+            ]
+            if any(keyword in text_lower for keyword in risk_keywords):
+                return True
         
         # Check for common instructional phrases
         instructional_phrases = [
@@ -2778,6 +2909,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             "interrelationship with",
             "health problems that you may have",
             "please read",
+            "please ensure",
+            "please note",
             "i understand that providing incorrect",
             "to the best of my knowledge",
             "the questions on this form have been",
@@ -2785,16 +2918,43 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             "providing incorrect information can be",
             "although dental professionals",
             "your mouth is a part of",
+            "have been explained to me",
+            "i understand that",
+            "these treatments include",
+            "alternative methods",
+            "risks and complications",
+            "may include (but",
+            "are not limited to",
+            "has performed a thorough examination",
+            "has determined that",
         ]
         
         if any(phrase in text_lower for phrase in instructional_phrases):
             return True
         
-        # If text is very long (>150 chars) and contains connecting phrases, likely instructional
-        if len(text) > 150:
-            connecting_phrases = [" that you ", " which ", " could ", " should ", " would "]
+        # If text is very long (>120 chars) and contains connecting phrases, likely instructional
+        if len(text) > 120:
+            connecting_phrases = [" that you ", " which ", " could ", " should ", " would ", " may ", " can "]
             if any(phrase in text_lower for phrase in connecting_phrases):
                 return True
+        
+        # Check for document titles (all caps or title case, contains form keywords)
+        if len(original_text.split()) >= 4:
+            is_title_case = original_text.istitle() or original_text.isupper()
+            title_keywords = ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure']
+            has_form_keywords = any(keyword in text_lower for keyword in title_keywords)
+            
+            # Also check for common section header patterns
+            section_keywords = ['risks', 'benefits', 'alternatives', 'procedures', 'treatment']
+            has_section_keywords = any(keyword in text_lower for keyword in section_keywords)
+            
+            if is_title_case and (has_form_keywords or has_section_keywords):
+                return True
+        
+        # Phase 4 Fix 10: Enhanced document title detection
+        # Catch patterns like "Informed Consent for [Procedure Name]"
+        if text_lower.startswith('informed consent for'):
+            return True
         
         return False
     
