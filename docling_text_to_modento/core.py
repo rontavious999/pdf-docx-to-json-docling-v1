@@ -846,6 +846,13 @@ def split_complex_multi_field_line(line: str) -> List[str]:
     segments = []
     remaining = line
     
+    # Phase 4 Fix: Try to detect and extract preferred contact field first (it's usually a complete standalone line)
+    pref_result = detect_preferred_contact_field(line)
+    if pref_result:
+        field_type, segment = pref_result
+        segments.append(segment)
+        return segments  # Preferred contact lines are typically standalone, return early
+    
     # Try to detect and extract sex/gender field
     sex_result = detect_sex_gender_field(line)
     if sex_result:
