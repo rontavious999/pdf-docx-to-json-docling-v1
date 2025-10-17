@@ -87,6 +87,33 @@ from .modules.question_parser import (
 DEFAULT_IN_DIR = "output"
 DEFAULT_OUT_DIR = "JSONs"
 
+# ---------- Patch 4: Template Catalog Caching
+# Cache the loaded catalog per worker process to avoid repeated I/O
+_loaded_catalog = None
+
+def get_template_catalog(path: Path) -> Optional[TemplateCatalog]:
+    """
+    Get or load the template catalog with caching.
+    
+    Patch 4: Performance optimization for parallel processing
+    - Loads dictionary once per worker process, not once per file
+    - Reduces redundant disk I/O and JSON parsing
+    - Each worker process has its own cached copy (process-safe)
+    
+    Args:
+        path: Path to the dental_form_dictionary.json file
+        
+    Returns:
+        TemplateCatalog instance or None if loading fails
+    """
+    global _loaded_catalog
+    if _loaded_catalog is None:
+        try:
+            _loaded_catalog = TemplateCatalog.from_path(path)
+        except Exception:
+            return None
+    return _loaded_catalog
+
 # ---------- Regex / tokens
 
 CHECKBOX_ANY = r"(?:\[\s*\]|\[x\]|☐|☑|□|■|❒|◻|✓|✔|✗|✘)"
@@ -4026,16 +4053,15 @@ def process_one_wrapper(args_tuple):
     Priority 6.1: Parallel Processing Support
     - Enables parallel processing of multiple forms
     - Returns tuple of (success, filename, error_message)
+    
+    Patch 4: Uses cached catalog for improved performance
     """
     txt_path, out_dir, dict_path, debug = args_tuple
     try:
-        # Load catalog in each worker (can't pickle catalog across processes)
+        # Patch 4: Use cached catalog instead of loading each time
         catalog = None
         if dict_path and dict_path.exists():
-            try:
-                catalog = TemplateCatalog.from_path(dict_path)
-            except Exception:
-                pass  # Silently ignore catalog errors in workers
+            catalog = get_template_catalog(dict_path)
         
         process_one(txt_path, out_dir, catalog=catalog, debug=debug)
         return (True, txt_path.name, None)

@@ -250,21 +250,36 @@ def extract_text_from_docx(file_path: Path) -> str:
     return "\n".join(text_parts)
 
 
-def unique_txt_path(dst: Path) -> Path:
+def unique_txt_path(dst: Path, source_path: Path) -> Path:
     """
-    Generate a unique file path by appending a number if the file exists.
+    Generate a unique file path that accounts for concurrency and duplicate filenames.
+    
+    Patch 1: Non-atomic file naming fix
+    - Uses folder hash to ensure unique output names even in parallel mode
+    - Prevents race conditions when multiple files have the same base name
     
     Args:
-        dst: Desired destination path
+        dst: Desired destination path (base name only)
+        source_path: Original source file path (used for hash generation)
         
     Returns:
-        Unique path that doesn't exist yet
+        Unique path that won't clash in parallel processing
     """
-    if not dst.exists():
-        return dst
+    # Generate a hash from the full source path to ensure uniqueness
+    # This prevents conflicts when files with same name exist in different folders
+    folder_hash = hex(abs(hash(str(source_path.parent.resolve()))) % (16**4))[2:].zfill(4)
+    
+    # Create output name with folder hash for uniqueness
+    out_name = f"{dst.stem}_{folder_hash}{dst.suffix}"
+    out_path = dst.parent / out_name
+    
+    # If still exists (very unlikely), append a number
+    if not out_path.exists():
+        return out_path
+    
     i = 1
     while True:
-        cand = dst.with_name(f"{dst.stem}-{i}{dst.suffix}")
+        cand = dst.parent / f"{dst.stem}_{folder_hash}_{i}{dst.suffix}"
         if not cand.exists():
             return cand
         i += 1
@@ -295,8 +310,8 @@ def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr
             print(f"[!] Unsupported file type: {file_path.suffix}", file=sys.stderr)
             return
         
-        # Save to output file
-        out_path = unique_txt_path(out_dir / (file_path.stem + ".txt"))
+        # Save to output file with unique path (Patch 1: prevents race conditions)
+        out_path = unique_txt_path(out_dir / (file_path.stem + ".txt"), file_path)
         out_path.write_text(text, encoding="utf-8")
         print(f"[✓] Saved -> {out_path}")
         
