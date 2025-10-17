@@ -17,6 +17,33 @@ Previous versions:
   • v2.20/Archivev19 Fix 4: Never treat lines with question marks as section headings
   • v2.19/Archivev19 Fix 3: Inline checkbox field title extraction preserves labels
   • v2.18/Archivev19 Fix 1-2: Single-word field labels, multi-line questions
+
+Patch 2: Incremental Modularization (Evaluation Feedback)
+---------------------------------------------------------
+This file is being incrementally refactored to improve maintainability.
+
+Current Status:
+  ✓ Text preprocessing → modules/text_preprocessing.py
+  ✓ Grid parsing → modules/grid_parser.py
+  ✓ Template matching → modules/template_catalog.py
+  ✓ Basic utilities → modules/question_parser.py
+  ✓ Debug logging → modules/debug_logger.py
+  
+Planned Modularization (Future PRs):
+  □ Field detection functions → modules/field_detection.py (~500 lines)
+  □ Postprocessing functions → modules/postprocessing.py (~770 lines)
+  □ Validation functions → modules/validation.py (~100 lines)
+  
+Target: Reduce core.py to ~1500 lines of orchestration logic.
+
+Current Structure (4135 lines):
+  1. Imports and constants (lines 1-285)
+  2. Field splitting and detection functions (lines 286-1960)
+  3. Main parsing logic (lines 1961-3030)
+  4. Validation and deduplication (lines 3031-3100)
+  5. Postprocessing functions (lines 3101-3870)
+  6. Template application and I/O (lines 3871-4100)
+  7. Main entry point (lines 4101-4135)
 """
 
 from __future__ import annotations
@@ -80,12 +107,40 @@ from .modules.question_parser import (
     make_option,
     classify_input_type,
     classify_date_input,
+    norm_title,  # Patch 2: Moved to question_parser for better organization
 )
 
 # ---------- Paths
 
 DEFAULT_IN_DIR = "output"
 DEFAULT_OUT_DIR = "JSONs"
+
+# ---------- Patch 4: Template Catalog Caching
+# Cache the loaded catalog per worker process to avoid repeated I/O
+_loaded_catalog = None
+
+def get_template_catalog(path: Path) -> Optional[TemplateCatalog]:
+    """
+    Get or load the template catalog with caching.
+    
+    Patch 4: Performance optimization for parallel processing
+    - Loads dictionary once per worker process, not once per file
+    - Reduces redundant disk I/O and JSON parsing
+    - Each worker process has its own cached copy (process-safe)
+    
+    Args:
+        path: Path to the dental_form_dictionary.json file
+        
+    Returns:
+        TemplateCatalog instance or None if loading fails
+    """
+    global _loaded_catalog
+    if _loaded_catalog is None:
+        try:
+            _loaded_catalog = TemplateCatalog.from_path(path)
+        except Exception:
+            return None
+    return _loaded_catalog
 
 # ---------- Regex / tokens
 
@@ -255,6 +310,12 @@ SPELL_FIX = {
 # - normalize_glyphs_line, collapse_spaced_letters_any, collapse_spaced_caps
 # - read_text_file, is_heading, is_category_header, normalize_section_name
 # - detect_repeated_lines, is_address_block, scrub_headers_footers, coalesce_soft_wraps
+
+# ============================================================================
+# SECTION 2: FIELD SPLITTING AND DETECTION FUNCTIONS
+# ============================================================================
+# These functions split multi-question lines and detect specific field types.
+# Future PR: Move to modules/field_detection.py (~500 lines)
 
 # ---------- Fix 1: Split Multi-Question Lines
 
@@ -1929,6 +1990,11 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
     return None
 
 
+# ============================================================================
+# SECTION 3: MAIN PARSING LOGIC
+# ============================================================================
+# Core text-to-JSON conversion logic. Orchestrates field detection and Question creation.
+
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
     lines = coalesce_soft_wraps(lines)
@@ -2974,6 +3040,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
     return questions
 
+# ============================================================================
+# SECTION 4: VALIDATION AND DEDUPLICATION
+# ============================================================================
+# Functions for ensuring data quality and removing duplicates.
+# Future PR: Move to modules/validation.py (~100 lines)
+
 # ---------- Validation / normalization
 
 def ensure_control_present(q: Question) -> None:
@@ -3048,6 +3120,12 @@ def validate_form(questions: List[Question]) -> List[str]:
                     errs.append(f"Empty option value in {q.key}")
     return errs
 
+# ============================================================================
+# SECTION 5: POSTPROCESSING FUNCTIONS
+# ============================================================================
+# Functions for consolidating, merging, and cleaning the parsed field data.
+# Future PR: Move to modules/postprocessing.py (~770 lines)
+
 def questions_to_json(questions: List[Question]) -> List[Dict]:
     for q in questions:
         ensure_control_present(q)
@@ -3072,12 +3150,6 @@ def questions_to_json(questions: List[Question]) -> List[Dict]:
     return payload
 
 # ---------- Post-processing helpers
-
-def _norm_title(s: str) -> str:
-    s = (s or "").lower()
-    s = re.sub(r"[^\w\s]", "", s)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
 
 def postprocess_merge_hear_about_us(payload: List[dict]) -> List[dict]:
     idxs = [i for i,q in enumerate(payload) if HEAR_ABOUT_RE.search(q.get("title",""))]
@@ -3160,7 +3232,7 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
     plus individual checkbox/radio fields that look like medical conditions (Fix 1).
     """
     def looks_condition(opt_name: str) -> bool:
-        w = _norm_title(opt_name)
+        w = norm_title(opt_name)
         return any(t in w for t in _COND_TOKENS)
     
     # Medical condition keywords for identifying individual condition fields
@@ -3347,7 +3419,7 @@ def postprocess_rehome_by_key(payload: List[dict], dbg: Optional[DebugLogger]=No
     demo_keys = ("last_name","first_name","mi","date_of_birth","address","city","state","zipcode","email","phone",
                  "mobile_phone","home_phone","work_phone","drivers_license","employer","occupation","parent_")
     for q in payload:
-        t = _norm_title(q.get("title",""))
+        t = norm_title(q.get("title",""))
         k = q.get("key","")
         sec = q.get("section","General")
         if (sec not in {"Insurance"} and (t.count("insurance") or any(s in k for s in ins_keys))):
@@ -3841,6 +3913,11 @@ class Stats:
     matches: List[MatchEvent]
     near_misses: List[MatchEvent]
 
+# ============================================================================
+# SECTION 6: TEMPLATE APPLICATION AND I/O
+# ============================================================================
+# Functions for matching fields to templates and writing output files.
+
 def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCatalog], dbg: DebugLogger) -> Tuple[List[dict], int]:
     """
     Apply template matching and count matches.
@@ -4026,22 +4103,26 @@ def process_one_wrapper(args_tuple):
     Priority 6.1: Parallel Processing Support
     - Enables parallel processing of multiple forms
     - Returns tuple of (success, filename, error_message)
+    
+    Patch 4: Uses cached catalog for improved performance
     """
     txt_path, out_dir, dict_path, debug = args_tuple
     try:
-        # Load catalog in each worker (can't pickle catalog across processes)
+        # Patch 4: Use cached catalog instead of loading each time
         catalog = None
         if dict_path and dict_path.exists():
-            try:
-                catalog = TemplateCatalog.from_path(dict_path)
-            except Exception:
-                pass  # Silently ignore catalog errors in workers
+            catalog = get_template_catalog(dict_path)
         
         process_one(txt_path, out_dir, catalog=catalog, debug=debug)
         return (True, txt_path.name, None)
     except Exception as e:
         return (False, txt_path.name, str(e))
 
+
+# ============================================================================
+# SECTION 7: MAIN ENTRY POINT
+# ============================================================================
+# Command-line interface and orchestration of the conversion pipeline.
 
 def main():
     ap = argparse.ArgumentParser()

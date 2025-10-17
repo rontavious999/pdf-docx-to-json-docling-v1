@@ -53,6 +53,24 @@ Tests for template catalog and field matching:
 - Fuzzy matching
 - Field and section normalization
 
+### `test_edge_cases.py`
+Tests for edge case handling:
+- Multi-field label splitting
+- Grid column headers
+- Inline checkbox detection
+- Various challenging form layouts
+
+### `test_integration.py` ✨ **NEW - Patch 3**
+End-to-end integration tests for the full pipeline:
+- **PDF extraction**: Tests PDF → text extraction with auto-OCR
+- **DOCX extraction**: Tests DOCX → text extraction
+- **JSON conversion**: Tests text → JSON conversion with template matching
+- **Full pipeline**: Tests complete PDF/DOCX → text → JSON workflow
+- **Parallel processing**: Tests Patch 1 (unique file naming in parallel mode)
+- **Error handling**: Tests graceful handling of unsupported file types
+
+Test fixtures are located in `tests/fixtures/` directory.
+
 ## Test Data
 
 Tests use representative form snippets, not hardcoded form-specific data. This ensures tests are general-purpose and will work with various dental intake forms.
@@ -100,12 +118,20 @@ pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
 
 ## Known Limitations
 
-These tests focus on unit testing individual functions. Integration testing (full form processing) is done manually using sample forms in the `documents/` directory.
+~~These tests focus on unit testing individual functions. Integration testing (full form processing) is done manually using sample forms in the `documents/` directory.~~
 
-Consider adding integration tests in the future:
-```python
-def test_full_form_processing():
-    """Test complete pipeline on sample form."""
-    # Process a known sample form
-    # Verify expected field count and key fields
-```
+✅ **UPDATE (Patch 3)**: Integration tests have been added! See `test_integration.py` for end-to-end testing of the full pipeline with sample forms in `tests/fixtures/`.
+
+## Test Coverage
+
+The test suite now includes:
+- **75 unit tests** covering individual parsing functions
+- **7 integration tests** covering end-to-end workflows
+- **Total: 82 tests** ensuring code quality and catching regressions
+
+Integration tests verify:
+- Complete PDF → text → JSON pipeline
+- Complete DOCX → text → JSON pipeline
+- OCR fallback for scanned documents
+- Parallel file naming (Patch 1)
+- Error handling for edge cases

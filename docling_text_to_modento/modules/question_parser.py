@@ -266,3 +266,22 @@ def make_option(name: str, bool_value: Optional[bool]) -> Dict:
     # Archivev8 Fix 4: Apply text cleaning
     name = clean_option_text(name)
     return {"name": name, "value": slugify(name, 80)}
+
+
+def norm_title(s: str) -> str:
+    """
+    Normalize title for comparison and grouping.
+    
+    Patch 2: Moved from core.py for better organization.
+    Used by postprocessing functions for field consolidation.
+    
+    Args:
+        s: Title string to normalize
+        
+    Returns:
+        Normalized lowercase title with punctuation removed
+    """
+    s = (s or "").lower()
+    s = re.sub(r"[^\w\s]", "", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
