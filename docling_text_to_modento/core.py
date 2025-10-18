@@ -4001,8 +4001,13 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
             dbg.log(MatchEvent(q.get("title",""), q.get("key",""), q.get("section",""), fr.tpl.get("key"), fr.reason, fr.score, fr.coverage))
         else:
             out.append(q)
+            # Patch 4: Enhanced debug logging for unmatched fields (near-miss warnings)
             if fr.reason == "near":
                 dbg.log_near(MatchEvent(q.get("title",""), q.get("key",""), q.get("section",""), fr.best_key, "near", fr.score, fr.coverage))
+            elif dbg.enabled and q.get("title"):
+                # Warn when fields are parsed but don't match any template
+                # This helps identify missing dictionary entries
+                print(f"  [warn] No dictionary match for field: '{q.get('title')}' (key: {q.get('key')})")
     
     out = _dedupe_keys_dicts(out)
     return out, used
