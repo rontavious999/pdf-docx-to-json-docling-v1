@@ -3118,7 +3118,49 @@ def validate_form(questions: List[Question]) -> List[str]:
             for opt in q.control.get("options", []):
                 if opt.get("value") in (None,""):
                     errs.append(f"Empty option value in {q.key}")
+        # Patch 2: Validate field key format for Modento compliance
+        if not is_valid_modento_key(q.key):
+            errs.append(f"Invalid key format: '{q.key}' (must be snake_case with only lowercase letters, digits, underscores)")
     return errs
+
+
+def is_valid_modento_key(key: str) -> bool:
+    """
+    Validate that a field key conforms to Modento's expected format.
+    
+    Patch 2: Field Key Validation
+    - Keys must be snake_case (lowercase letters, digits, underscores only)
+    - Must not start with a digit (enforced by slugify, but checked here too)
+    - Must not be empty
+    - No uppercase letters, hyphens, or other special characters allowed
+    
+    Args:
+        key: The field key to validate
+        
+    Returns:
+        True if the key is valid, False otherwise
+        
+    Examples:
+        >>> is_valid_modento_key("patient_name")
+        True
+        >>> is_valid_modento_key("date_of_birth")
+        True
+        >>> is_valid_modento_key("phone_1")
+        True
+        >>> is_valid_modento_key("Patient-Name")  # uppercase/hyphen
+        False
+        >>> is_valid_modento_key("123_start")  # starts with digit
+        False
+        >>> is_valid_modento_key("")  # empty
+        False
+    """
+    if not key:
+        return False
+    
+    # Must match snake_case pattern: lowercase letters, digits, underscores
+    # Must not start with a digit
+    pattern = r'^[a-z_][a-z0-9_]*$'
+    return bool(re.match(pattern, key))
 
 # ============================================================================
 # SECTION 5: POSTPROCESSING FUNCTIONS
@@ -4033,6 +4075,11 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     raw = read_text_file(txt_path)
     if not raw.strip():
         print(f"[skip] empty file: {txt_path.name}")
+        return None
+    
+    # Patch 3: Skip files that contain extraction error markers
+    if raw.startswith("[NO TEXT LAYER]") or raw.startswith("[OCR NOT AVAILABLE]"):
+        print(f"[skip] unextractable file: {txt_path.name} (no text layer and OCR unavailable)")
         return None
     
     # Priority 8.1: Collect extraction metadata

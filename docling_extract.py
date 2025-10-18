@@ -290,6 +290,7 @@ def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr
     Process a single document file and extract text to output directory.
     
     Priority 1.1: OCR Auto-Detection Enhancement
+    Patch 3: Skip non-extractable files
     
     Args:
         file_path: Path to the input document
@@ -308,6 +309,12 @@ def process_one(file_path: Path, out_dir: Path, use_ocr: bool = False, force_ocr
             text = extract_text_from_docx(file_path)
         else:
             print(f"[!] Unsupported file type: {file_path.suffix}", file=sys.stderr)
+            return
+        
+        # Patch 3: Skip files that could not be extracted (no text layer and no OCR)
+        if text.startswith("[NO TEXT LAYER]") or text.startswith("[OCR NOT AVAILABLE]"):
+            print(f"[!] Skipping {file_path.name} – no text and OCR unavailable", file=sys.stderr)
+            print(f"    Install OCR: pip install pytesseract pillow && sudo apt-get install tesseract-ocr", file=sys.stderr)
             return
         
         # Save to output file with unique path (Patch 1: prevents race conditions)
