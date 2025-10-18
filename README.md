@@ -136,8 +136,9 @@ While the pipeline achieves 95%+ field capture accuracy on most forms, there are
 ### Edge Cases in Parsing
 Most common edge cases are now handled automatically:
 - **Multi-sub-field labels**: ✓ **Now supported** - Fields like "Phone: Mobile ___ Home ___ Work ___" are automatically split into separate phone_mobile, phone_home, and phone_work fields.
-- **Grid column headers**: ✓ **Now supported** - In multi-column checkbox grids, category headers (e.g., "Appearance / Function / Habits") are now captured and prefixed to option names (e.g., "Habits - Smoking").
+- **Grid column headers**: ✓ **Enhanced** - In multi-column checkbox grids, category headers (e.g., "Appearance / Function / Habits") are now consistently captured and prefixed to option names (e.g., "Habits - Smoking"). Now handles flexible header counts and spanning headers.
 - **Inline checkboxes**: ✓ **Now supported** - Checkboxes embedded within sentences (e.g., "[ ] Yes, send me text alerts") are now captured as separate boolean fields with meaningful labels.
+- **Debug logging**: ✓ **Enhanced** - Debug mode now warns when parsed fields don't match any dictionary template, helping identify missing entries for ongoing maintenance.
 
 These edge cases affect less than 5% of fields on typical forms and are documented in `ACTIONABLE_ITEMS.md` for future improvement.
 
@@ -174,10 +175,12 @@ pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
 
 ### Test Coverage
 
-The test suite covers:
+The test suite (99 tests) covers:
 - **Text preprocessing**: Line coalescing, normalization
 - **Question parsing**: Field extraction, option cleaning, splitting
 - **Template matching**: Catalog loading, fuzzy matching, aliases
 - **Pattern recognition**: Dates, states, checkboxes, Yes/No questions
+- **Edge cases**: Multi-field labels, grid headers, inline checkboxes, OCR detection
+- **Recent patches**: Category prefixing consistency, debug logging for unmatched fields
 
 See `tests/README.md` for detailed documentation on the test suite.

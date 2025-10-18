@@ -690,15 +690,22 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
                 continue
             
             # Priority 2.2: Prefix with category header if available
-            if category_headers and len(category_headers) == len(column_positions):
+            # Patch 1: Relax strict length check to handle headers spanning multiple columns
+            if category_headers and len(category_headers) > 0:
                 # Determine which column this checkbox is in
+                # Find the closest column position to this checkbox
                 col_idx = 0
+                min_distance = abs(cb_pos - column_positions[0])
                 for idx, col_pos in enumerate(column_positions):
-                    if cb_pos >= col_pos:
+                    distance = abs(cb_pos - col_pos)
+                    if distance < min_distance:
+                        min_distance = distance
                         col_idx = idx
                 
-                if col_idx < len(category_headers) and category_headers[col_idx]:
-                    item_text = f"{category_headers[col_idx]} - {item_text}"
+                # Use the closest available header (handle cases where headers < columns)
+                header_idx = min(col_idx, len(category_headers) - 1)
+                if header_idx >= 0 and category_headers[header_idx]:
+                    item_text = f"{category_headers[header_idx]} - {item_text}"
             
             all_options.append((item_text, None))
         
@@ -709,6 +716,17 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
             for item in text_only_items:
                 if debug:
                     print(f"    [debug] text-only item at line {line_idx}: '{item}'")
+                
+                # Patch 1: Apply category prefix to text-only items as well
+                if category_headers and len(category_headers) > 0:
+                    # Find which column this text item is in (approximate based on position)
+                    # Since we don't have exact position, use the item's index in the list
+                    # This is a best-effort approach for text-only items
+                    text_col_idx = len(all_options) % len(column_positions) if column_positions else 0
+                    header_idx = min(text_col_idx, len(category_headers) - 1)
+                    if header_idx >= 0 and category_headers[header_idx]:
+                        item = f"{category_headers[header_idx]} - {item}"
+                
                 all_options.append((item, None))
     
     # Remove duplicates while preserving order
