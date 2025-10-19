@@ -307,18 +307,41 @@ def merge_with_template(parsed_q: dict, template_q: dict, scope_suffix: str = ""
     return merged
 
 def _dedupe_keys_dicts(items: List[dict]) -> List[dict]:
+    """
+    Deduplicate keys in field dictionaries, including nested questions in multiradio controls.
+    Ensures global uniqueness as required by Modento schema.
+    """
     seen: Dict[str, int] = {}
     out: List[dict] = []
-    for q in items:
+    
+    def dedupe_dict_question(q: dict) -> None:
+        """Deduplicate a single question dict and its nested questions recursively."""
         key = q.get("key") or "q"
         if q.get("type") == "signature":
             q["key"] = "signature"
-            out.append(q); continue
-        base = key
-        if base not in seen:
-            seen[base] = 1; q["key"] = base
         else:
-            seen[base] += 1; q["key"] = f"{base}_{seen[base]}"
+            base = key
+            if base not in seen:
+                seen[base] = 1
+                q["key"] = base
+            else:
+                seen[base] += 1
+                q["key"] = f"{base}_{seen[base]}"
+        
+        # Handle nested questions in multiradio controls
+        if q.get("type") == "multiradio" and "control" in q and "questions" in q.get("control", {}):
+            nested_questions = q["control"].get("questions", [])
+            for nested_q in nested_questions:
+                if isinstance(nested_q, dict):
+                    nested_key = nested_q.get("key", "q")
+                    if nested_key in seen:
+                        seen[nested_key] += 1
+                        nested_q["key"] = f"{nested_key}_{seen[nested_key]}"
+                    else:
+                        seen[nested_key] = 1
+    
+    for q in items:
+        dedupe_dict_question(q)
         out.append(q)
     return out
 

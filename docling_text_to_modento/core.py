@@ -2585,7 +2585,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Fix 2: Enhanced follow-up field detection
                 create_follow_up = False
                 if re.search(IF_GUIDANCE_RE, line):
-                    control["extra"] = {"type":"Input","hint":"If yes, please explain"}
+                    control["extra"] = {"type":"Input","value":True,"optional":True,"hint":"If yes, please explain"}
                     create_follow_up = True
                 
                 # Check same line for "if yes, please explain"
@@ -2907,7 +2907,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if {"yes","no"} <= lowset or lowset <= YESNO_SET:
                 control = {"options":[make_option("Yes",True), make_option("No",False)]}
                 if re.search(IF_GUIDANCE_RE, cleaned_question_title):
-                    control["extra"] = {"type":"Input","hint":"If yes, please explain"}
+                    control["extra"] = {"type":"Input","value":True,"optional":True,"hint":"If yes, please explain"}
                     # --- Fix 2: Add separate input for "if yes" (enhanced) ---
                     if j < len(lines):
                         next_line = collapse_spaced_caps(lines[j].strip())
@@ -2929,7 +2929,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 if not make_radio:
                     control["multi"] = True
                 if is_hear:
-                    control["extra"] = {"type":"Input","hint":"Other (please specify)"}
+                    control["extra"] = {"type":"Input","value":True,"optional":True,"hint":"Other (please specify)"}
                     if (REFERRED_BY_RE.search(cleaned_question_title) or (j < len(lines) and REFERRED_BY_RE.search(lines[j]))):
                         questions.append(Question("referred_by","Referred by",cur_section,"input",control={"input_type":"text"}))
                 key = slugify(cleaned_question_title)
@@ -3220,13 +3220,42 @@ def _semantic_dedupe(payload: List[dict]) -> List[dict]:
     return out
 
 def dedupe_keys(questions: List[Question]) -> None:
+    """
+    Deduplicate keys across all questions, including nested questions in multiradio controls.
+    Ensures global uniqueness as required by Modento schema.
+    """
     seen: Dict[str,int] = {}
-    for q in questions:
+    
+    def dedupe_question(q: Question) -> None:
+        """Deduplicate a single question and its nested questions recursively."""
         base = "signature" if q.type=="signature" else (q.key or "q")
         if q.type=="signature":
-            q.key = "signature"; continue
-        if base not in seen: seen[base]=1; q.key=base
-        else: seen[base]+=1; q.key=f"{base}_{seen[base]}"
+            q.key = "signature"
+        elif base not in seen:
+            seen[base]=1
+            q.key=base
+        else:
+            seen[base]+=1
+            q.key=f"{base}_{seen[base]}"
+        
+        # Handle nested questions in multiradio controls
+        if q.type == "multiradio" and q.control and "questions" in q.control:
+            nested_questions = q.control.get("questions", [])
+            for nested_q in nested_questions:
+                # Process nested question if it's a Question object
+                if isinstance(nested_q, Question):
+                    dedupe_question(nested_q)
+                # Process nested question if it's a dict
+                elif isinstance(nested_q, dict):
+                    nested_key = nested_q.get("key", "q")
+                    if nested_key in seen:
+                        seen[nested_key] += 1
+                        nested_q["key"] = f"{nested_key}_{seen[nested_key]}"
+                    else:
+                        seen[nested_key] = 1
+    
+    for q in questions:
+        dedupe_question(q)
 
 def validate_form(questions: List[Question]) -> List[str]:
     errs=[]
