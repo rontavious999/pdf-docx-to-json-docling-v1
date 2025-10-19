@@ -390,8 +390,9 @@ KNOWN_FIELD_LABELS = {
     'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
     'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
     'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
-    'patient_name': r'\bpatient\s+name(?=[^a-zA-Z]|$)',
+    'patient_name': r'\b(?:patient(?:\'?s)?\s+name|name\s+of\s+patient)(?=[^a-zA-Z]|$)',
     'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
+    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
     # Date/Age fields
     'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
     'dob': r'\bdob(?=[^a-zA-Z]|$)',
@@ -439,6 +440,10 @@ KNOWN_FIELD_LABELS = {
     'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name(?=[^a-zA-Z]|$)",
     'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured(?=[^a-zA-Z]|$)',
     'id_number': r'\bid\s+number(?=[^a-zA-Z]|$)',
+    # Dental-specific fields
+    'tooth_number': r'\btooth\s+(?:number|no\.?|#)(?=[^a-zA-Z]|$)',
+    'physician_name': r'\bphysician\s+name(?=[^a-zA-Z]|$)',
+    'dentist_name': r'\b(?:dentist|previous\s+dentist)\s+name(?=[^a-zA-Z]|$)',
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
     'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
