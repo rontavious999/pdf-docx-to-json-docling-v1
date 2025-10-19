@@ -1378,12 +1378,32 @@ def _sanitize_words(s: str) -> str:
     return s
 
 def try_split_known_labels(line: str) -> List[str]:
+    """
+    Detect and split compound field labels from a single line.
+    
+    Examples of compound fields that should be split:
+    - "Name of insured / Birthdate / SSN"
+    - "First Name, Last Name, Date of Birth"
+    - "Patient Name | DOB | Phone"
+    
+    This addresses the Modento schema requirement that each question key be unique.
+    """
     s_raw = normalize_glyphs_line(line)
     s = collapse_spaced_caps(s_raw).strip()
     if not s or len(s) > 220 or s.endswith("."):
         return []
+    
     # collapse repeated phrases like "Insured's Name Insured's Name"
     s_de_rep = re.sub(r"(\binsured'?s?\s+name\b)(\s+\1)+", r"\1", s, flags=re.I)
+    
+    # Enhanced: Check for explicit compound field separators (/, |, comma followed by capital letter)
+    # These are strong indicators that the line contains multiple distinct fields
+    has_explicit_separators = bool(re.search(r'\s+[/|]\s+|\s+/\s+|\|\s+', s_de_rep))
+    
+    # Also detect comma-separated fields (e.g., "Last Name, First Name, DOB")
+    # Only if commas are followed by capital letters (field names typically start with caps)
+    has_comma_fields = bool(re.search(r',\s+[A-Z]', s_de_rep))
+    
     s_sanit = _sanitize_words(s_de_rep)
     hits: List[Tuple[int, str]] = []
     for phrase in LABEL_ALTS:
@@ -1394,8 +1414,51 @@ def try_split_known_labels(line: str) -> List[str]:
         match = re.search(pattern, s_sanit)
         if match:
             hits.append((match.start(), CANON_LABELS.get(phrase, phrase.title())))
+    
+    # Enhanced: If we have explicit separators and found at least 2 distinct fields, split them
+    # This catches compound fields like "Name / DOB / SSN" even if only 2 of 3 are in CANON_LABELS
     if len(hits) < 2:
+        # If we have explicit separators, try to extract field names even if not in CANON_LABELS
+        if has_explicit_separators or has_comma_fields:
+            # Split by separators and try to identify field names
+            parts = re.split(r'\s*[/|,]\s*', s_de_rep)
+            if len(parts) >= 2:
+                # Only return if we can identify at least 2 fields that look like field labels
+                # (start with capital letter, contain key field terms)
+                potential_fields = []
+                for part in parts:
+                    part = part.strip()
+                    # Check if this looks like a field label (not just a value)
+                    if part and (
+                        len(part) >= 3 and 
+                        part[0].isupper() and
+                        not part.replace(' ', '').isdigit()  # Not just numbers
+                    ):
+                        potential_fields.append(part)
+                
+                if len(potential_fields) >= 2:
+                    # Return the canonicalized versions from hits if available, otherwise the raw field names
+                    result = []
+                    for part in potential_fields:
+                        # Check if this field is in our hits
+                        matched = False
+                        part_sanit = _sanitize_words(part)
+                        for phrase in LABEL_ALTS:
+                            if _sanitize_words(phrase) in part_sanit:
+                                canon = CANON_LABELS.get(phrase, phrase.title())
+                                if canon not in result:
+                                    result.append(canon)
+                                    matched = True
+                                    break
+                        # If not matched to CANON_LABELS, use the raw part as field name
+                        if not matched and part not in result:
+                            result.append(part.strip())
+                    
+                    if len(result) >= 2:
+                        return result
+        
         return []
+    
     hits.sort(key=lambda t: t[0])
     labels = []
     for _pos, canon in hits:
