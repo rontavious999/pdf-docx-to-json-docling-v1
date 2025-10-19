@@ -186,7 +186,6 @@ KNOWN_FIELD_LABELS = {
     'emergency_contact_name': r'\bemergency\s+contact\s+name(?=[^a-zA-Z]|$)',
     'emergency_phone': r'\bemergency\s+(?:contact\s+)?phone(?=[^a-zA-Z]|$)',
     'responsible_party_name': r'\b(?:name\s+of\s+)?responsible\s+party(?=[^a-zA-Z]|$)',
-    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
     'parent_relationship': r'\bparent\s+relationship(?=[^a-zA-Z]|$)',
     # Category 1 Fix 1.6: Referral source fields  
     'referral_source': r'\b(?:referral\s+source|how\s+did\s+you\s+hear)(?=[^a-zA-Z]|$)',
