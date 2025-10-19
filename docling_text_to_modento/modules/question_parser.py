@@ -32,6 +32,8 @@ NAME_RE = re.compile(r"\b(first\s*name|last\s*name|full\s*name|patient\s*name|in
                      r"parent\s*name|responsible\s*party\s*name|emergency\s*contact\s*name|"
                      r"guardian\s*name|subscriber\s*name|member\s*name|policy\s*holder\s*name|"
                      r"^name$|^name\s*of\s*(patient|insured|parent|guardian|subscriber))\b", re.I)
+NUMBER_RE = re.compile(r"\b(age|years?|months?|days?|count|quantity|number|amount|total|"
+                       r"how\s+many|num\s+of|no\.\s+of|#\s+of)\b", re.I)
 
 SPELL_FIX = {
     "rregular": "Irregular",
@@ -128,20 +130,27 @@ def classify_input_type(label: str) -> Optional[str]:
     - "name" for name fields (first name, last name, patient name, etc.)
     - "email" for email fields
     - "phone" for phone/mobile/cell fields
+    - "number" for numeric fields (age, count, quantity, years, etc.)
     - "ssn" for social security number fields
     - "zip" for zip/postal code fields
     - "initials" for initial fields
     - "text" as default fallback
+    
+    Note: Order matters! More specific patterns (like SSN) should be checked before
+    generic patterns (like number) to avoid false matches.
     """
     l = label.lower()
     
     # Check for name fields first (new - per audit requirement)
     if NAME_RE.search(l):    return "name"
     
+    # Check for SSN before number (SSN contains "number" so must be checked first)
+    if SSN_RE.search(l):     return "ssn"
+    
     # Check for other specific field types
     if EMAIL_RE.search(l):   return "email"
     if PHONE_RE.search(l):   return "phone"
-    if SSN_RE.search(l):     return "ssn"
+    if NUMBER_RE.search(l):  return "number"
     if ZIP_RE.search(l):     return "zip"
     if INITIALS_RE.search(l):return "initials"
     
