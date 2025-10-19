@@ -2861,33 +2861,50 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             continue
 
         # Long paragraph → terms
-        para = [lines[i]]; k = i+1
-        while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
-            if is_heading(lines[k]): break
-            # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
-            if extract_compound_yn_prompts(lines[k]):
+        # First check if the current line is a known field label - if so, don't treat as paragraph
+        current_line_is_field_label = False
+        for field_key, pattern in KNOWN_FIELD_LABELS.items():
+            if re.search(pattern, line, re.I):
+                current_line_is_field_label = True
                 break
-            para.append(lines[k]); k += 1
-        joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
-        if len(joined) > 250 and joined.count(".") >= 2:
-            chunks: List[List[str]] = []; cur: List[str] = []
-            for s in para:
-                if is_heading(s.strip()) and cur:
-                    chunks.append(cur); cur=[s]
-                else:
-                    cur.append(s)
-            if cur: chunks.append(cur)
-            for idx2, chunk in enumerate(chunks):
-                t = " ".join(collapse_spaced_caps(x).strip() for x in chunk).strip()
-                if not t: continue
-                questions.append(Question(
-                    slugify((chunk[0].strip() if is_heading(chunk[0].strip()) else (title or "terms")) + (f"_{idx2+1}" if idx2 else "")),
-                    (collapse_spaced_caps(chunk[0].strip().rstrip(":")) if is_heading(chunk[0].strip()) else "Terms"),
-                    "Consent",
-                    "terms",
-                    control={"agree_text":"I have read and agree to the terms.","html_text":t},
-                ))
-            i = k; continue
+        
+        if not current_line_is_field_label:
+            para = [lines[i]]; k = i+1
+            while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
+                if is_heading(lines[k]): break
+                # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
+                if extract_compound_yn_prompts(lines[k]):
+                    break
+                # Don't absorb lines that look like field labels (e.g., "Patient Name:", "Date of Birth:")
+                # Check if line matches known field label patterns
+                line_matches_field_label = False
+                for field_key, pattern in KNOWN_FIELD_LABELS.items():
+                    if re.search(pattern, lines[k], re.I):
+                        line_matches_field_label = True
+                        break
+                if line_matches_field_label:
+                    break
+                para.append(lines[k]); k += 1
+            joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
+            if len(joined) > 250 and joined.count(".") >= 2:
+                chunks: List[List[str]] = []; cur: List[str] = []
+                for s in para:
+                    if is_heading(s.strip()) and cur:
+                        chunks.append(cur); cur=[s]
+                    else:
+                        cur.append(s)
+                if cur: chunks.append(cur)
+                for idx2, chunk in enumerate(chunks):
+                    t = " ".join(collapse_spaced_caps(x).strip() for x in chunk).strip()
+                    if not t: continue
+                    questions.append(Question(
+                        slugify((chunk[0].strip() if is_heading(chunk[0].strip()) else (title or "terms")) + (f"_{idx2+1}" if idx2 else "")),
+                        (collapse_spaced_caps(chunk[0].strip().rstrip(":")) if is_heading(chunk[0].strip()) else "Terms"),
+                        "Consent",
+                        "terms",
+                        control={"agree_text":"I have read and agree to the terms.","html_text":t},
+                    ))
+                i = k; continue
 
         # Default: input
         # Fix 1: Skip if next line has inline options that will use this as title
