@@ -444,9 +444,12 @@ KNOWN_FIELD_LABELS = {
     'tooth_number': r'\btooth\s+(?:number|no\.?|#)(?=[^a-zA-Z]|$)',
     'physician_name': r'\bphysician\s+name(?=[^a-zA-Z]|$)',
     'dentist_name': r'\b(?:dentist|previous\s+dentist)\s+name(?=[^a-zA-Z]|$)',
+    'dental_practice_name': r'\bname\s+of\s+(?:current|new|previous)?\s*dental\s+practice(?=[^a-zA-Z]|$)',
+    'practice_name': r'\bpractice\s+name(?=[^a-zA-Z]|$)',
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
     'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
+    'date_of_release': r'\bdate\s+of\s+release(?=[^a-zA-Z]|$)',
 }
 
 
