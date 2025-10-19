@@ -4158,6 +4158,76 @@ def postprocess_order_sections(payload: List[dict], dbg: Optional[DebugLogger] =
     
     return sorted_payload
 
+def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Final validation to ensure Modento schema compliance.
+    
+    Checks:
+    1. All option values are non-empty
+    2. Exactly one signature field with key "signature"
+    3. No footer/header/witness fields
+    4. All keys are unique
+    """
+    issues = []
+    seen_keys = set()
+    signature_count = 0
+    
+    # Patterns for footer/header/witness fields that should not be in output
+    EXCLUDED_PATTERNS = [
+        r'\bpractice\s+(name|phone|address|email)\b',
+        r'\bwitness\b',
+        r'\boffice\s+(phone|address|email)\b',
+        r'\bfooter\b',
+        r'\bheader\b',
+    ]
+    
+    for idx, field in enumerate(payload):
+        key = field.get("key", "")
+        title = field.get("title", "").lower()
+        field_type = field.get("type", "")
+        
+        # Check 1: Duplicate keys
+        if key in seen_keys:
+            issues.append(f"Duplicate key: {key}")
+        seen_keys.add(key)
+        
+        # Check 2: Signature uniqueness
+        if field_type == "signature":
+            signature_count += 1
+            if key != "signature":
+                issues.append(f"Signature field has incorrect key: {key} (should be 'signature')")
+        
+        # Check 3: Excluded fields (footer/header/witness)
+        for pattern in EXCLUDED_PATTERNS:
+            if re.search(pattern, title, re.I):
+                issues.append(f"Excluded field found: {title}")
+                break
+        
+        # Check 4: Option values are non-empty
+        if field_type in ["radio", "dropdown"]:
+            options = field.get("control", {}).get("options", [])
+            for opt_idx, opt in enumerate(options):
+                value = opt.get("value")
+                if value is None or value == "":
+                    name = opt.get("name", f"option_{opt_idx}")
+                    issues.append(f"Empty option value in {key}: option '{name}'")
+    
+    # Check signature count
+    if signature_count == 0:
+        issues.append("No signature field found")
+    elif signature_count > 1:
+        issues.append(f"Multiple signature fields found: {signature_count} (should be exactly 1)")
+    
+    # Log issues if any
+    if issues and dbg and dbg.enabled:
+        dbg.gate(f"Modento compliance validation found {len(issues)} issues:")
+        for issue in issues[:10]:  # Limit to first 10 issues
+            dbg.gate(f"  - {issue}")
+        if len(issues) > 10:
+            dbg.gate(f"  ... and {len(issues) - 10} more")
+    
+    return payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -4351,6 +4421,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Modento Schema Compliance: Order sections according to conventions
     payload = postprocess_order_sections(payload, dbg=dbg)
+    
+    # Modento Schema Compliance: Final validation
+    payload = postprocess_validate_modento_compliance(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
