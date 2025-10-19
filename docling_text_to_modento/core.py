@@ -377,6 +377,7 @@ def split_multi_question_line(line: str) -> List[str]:
 # (?=[^a-zA-Z]|$) means "followed by non-letter or end of string"
 KNOWN_FIELD_LABELS = {
     # Name fields
+    'full_name': r'\bfull\s+name(?=[^a-zA-Z]|$)',
     'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
     'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
     'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
@@ -394,6 +395,7 @@ KNOWN_FIELD_LABELS = {
     'gender': r'\bgender(?=[^a-zA-Z]|$)',
     'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)(?=[^a-zA-Z]|$)',
     # Contact fields
+    'phone_number': r'\bphone\s+number(?=[^a-zA-Z]|$)',
     'work_phone': r'\bwork\s+phone(?=[^a-zA-Z]|$)',
     'home_phone': r'\bhome\s+phone(?=[^a-zA-Z]|$)',
     'cell_phone': r'\b(?:cell|mobile)\s+phone(?=[^a-zA-Z]|$)',
@@ -541,10 +543,10 @@ def split_by_known_labels(line: str) -> List[str]:
             
             # Production Improvement: More flexible split criteria
             # Accept split if ANY of these conditions are met:
-            # 1. 4+ consecutive spaces (original criterion)
+            # 1. 4+ consecutive spaces OR 2+ tabs (original criterion enhanced)
             # 2. Underscores/dashes followed by 1+ space and the next label (e.g., "______ Date of Birth")
             # 3. Multiple underscores/dashes/slashes between labels (indicating separate input fields)
-            has_wide_spacing = bool(re.search(r'\s{4,}', between))
+            has_wide_spacing = bool(re.search(r'\s{4,}|\t{2,}', between))
             has_underscore_separator = bool(re.search(r'[_\-/]{3,}\s+', between))
             has_input_pattern = bool(re.search(r'[_\-]{3,}.*[_\-/()]{3,}', between))
             
