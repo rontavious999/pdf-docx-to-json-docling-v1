@@ -1,7 +1,7 @@
 {
     "_meta": {
         "name": "dental_form_dictionary",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "created_utc": "2025-09-28T22:36:26.858983Z",
         "source_files": [
             "new_patient (2).json",
@@ -10,7 +10,7 @@
             "health_history (2).json",
             "contact (1).json"
         ],
-        "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized. v1.1.0 adds 65 fields from dental_forms_20251003 analysis."
+        "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized. v1.1.0 adds 65 fields from dental_forms_20251003 analysis. v1.2.0 adds 45 field definitions for previously aliased-only keys."
     },
     "basic_information": [
         {
@@ -361,6 +361,28 @@
             "key": "apt",
             "type": "input",
             "title": "Apt #",
+            "control": {
+                "hint": null,
+                "input_type": "text"
+            },
+            "section": "Address",
+            "optional": true
+        },
+        {
+            "key": "suite",
+            "type": "input",
+            "title": "Suite",
+            "control": {
+                "hint": null,
+                "input_type": "text"
+            },
+            "section": "Address",
+            "optional": true
+        },
+        {
+            "key": "unit",
+            "type": "input",
+            "title": "Unit",
             "control": {
                 "hint": null,
                 "input_type": "text"
@@ -4442,7 +4464,6 @@
         "kidney disease": "kidney_disease",
         "gastrointestinal disease": "gastrointestinal_disease",
         "blood disorders": "blood_disorder",
-        "arthritis": "arthritis",
         "drug/alcohol addiction": "drug_alcohol_addiction",
         "fainting": "fainting",
         "currently pregnant": "pregnant",
@@ -4886,6 +4907,17 @@
             },
             "section": "Financial Information",
             "optional": true
+        },
+        {
+            "key": "parent_ssn",
+            "type": "input",
+            "title": "Parent/Guardian SSN",
+            "control": {
+                "hint": null,
+                "input_type": "ssn"
+            },
+            "section": "Responsible Party",
+            "optional": true
         }
     ],
     "dental_history_additional": [
@@ -5056,6 +5088,83 @@
             },
             "section": "Dental History",
             "optional": true
+        },
+        {
+            "key": "bad_breath",
+            "type": "checkbox",
+            "title": "Bad Breath",
+            "section": "Dental History"
+        },
+        {
+            "key": "bleeding_gums",
+            "type": "checkbox",
+            "title": "Bleeding Gums",
+            "section": "Dental History"
+        },
+        {
+            "key": "loose_teeth",
+            "type": "checkbox",
+            "title": "Loose Teeth",
+            "section": "Dental History"
+        },
+        {
+            "key": "overbite",
+            "type": "checkbox",
+            "title": "Overbite",
+            "section": "Dental History"
+        },
+        {
+            "key": "pressure",
+            "type": "checkbox",
+            "title": "Pressure",
+            "section": "Dental History"
+        },
+        {
+            "key": "previous_gum_disease",
+            "type": "checkbox",
+            "title": "Previous Gum Disease Treatment",
+            "section": "Dental History"
+        },
+        {
+            "key": "sensitivity",
+            "type": "checkbox",
+            "title": "Sensitivity to Hot/Cold",
+            "section": "Dental History"
+        },
+        {
+            "key": "sore_muscles",
+            "type": "checkbox",
+            "title": "Sore Jaw Muscles",
+            "section": "Dental History"
+        },
+        {
+            "key": "spaces",
+            "type": "checkbox",
+            "title": "Spaces Between Teeth",
+            "section": "Dental History"
+        },
+        {
+            "key": "speech_impediment",
+            "type": "checkbox",
+            "title": "Speech Impediment",
+            "section": "Dental History"
+        },
+        {
+            "key": "worn_teeth",
+            "type": "checkbox",
+            "title": "Worn Teeth",
+            "section": "Dental History"
+        },
+        {
+            "key": "tooth_number",
+            "type": "input",
+            "title": "Tooth Number",
+            "control": {
+                "hint": null,
+                "input_type": "number"
+            },
+            "section": "Dental History",
+            "optional": true
         }
     ],
     "social_history": [
@@ -5171,6 +5280,48 @@
             },
             "section": "General Health Information",
             "optional": true
+        },
+        {
+            "key": "bed_wetting",
+            "type": "checkbox",
+            "title": "Bed Wetting",
+            "section": "Social History"
+        },
+        {
+            "key": "cheek_lip_biting",
+            "type": "checkbox",
+            "title": "Cheek/Lip Biting",
+            "section": "Social History"
+        },
+        {
+            "key": "chewing_ice",
+            "type": "checkbox",
+            "title": "Chewing Ice",
+            "section": "Social History"
+        },
+        {
+            "key": "drug_alcohol_addiction",
+            "type": "checkbox",
+            "title": "Drug/Alcohol Addiction",
+            "section": "Social History"
+        },
+        {
+            "key": "nail_biting",
+            "type": "checkbox",
+            "title": "Nail Biting",
+            "section": "Social History"
+        },
+        {
+            "key": "snoring",
+            "type": "checkbox",
+            "title": "Snoring",
+            "section": "Social History"
+        },
+        {
+            "key": "thumb_sucking",
+            "type": "checkbox",
+            "title": "Thumb Sucking",
+            "section": "Social History"
         }
     ],
     "communication_preferences": [
@@ -5454,6 +5605,157 @@
                 ]
             },
             "section": "Medical Conditions",
+            "optional": true
+        },
+        {
+            "key": "alzheimers",
+            "type": "checkbox",
+            "title": "Alzheimer's Disease",
+            "section": "Health History"
+        },
+        {
+            "key": "anaphylaxis",
+            "type": "checkbox",
+            "title": "Anaphylaxis",
+            "section": "Health History"
+        },
+        {
+            "key": "arthritis",
+            "type": "checkbox",
+            "title": "Arthritis/Gout",
+            "section": "Health History"
+        },
+        {
+            "key": "artificial_joint",
+            "type": "checkbox",
+            "title": "Artificial Joint",
+            "section": "Health History"
+        },
+        {
+            "key": "blood_disorder",
+            "type": "checkbox",
+            "title": "Blood/Bleeding Disorder",
+            "section": "Health History"
+        },
+        {
+            "key": "breathing_problem",
+            "type": "checkbox",
+            "title": "Breathing Problem",
+            "section": "Health History"
+        },
+        {
+            "key": "cancer",
+            "type": "checkbox",
+            "title": "Cancer",
+            "section": "Health History"
+        },
+        {
+            "key": "fainting",
+            "type": "checkbox",
+            "title": "Fainting/Dizziness",
+            "section": "Health History"
+        },
+        {
+            "key": "gastrointestinal_disease",
+            "type": "checkbox",
+            "title": "Gastrointestinal Disease",
+            "section": "Health History"
+        },
+        {
+            "key": "heart_disease",
+            "type": "checkbox",
+            "title": "Heart Disease",
+            "section": "Health History"
+        },
+        {
+            "key": "heart_murmur",
+            "type": "checkbox",
+            "title": "Heart Murmur",
+            "section": "Health History"
+        },
+        {
+            "key": "hepatitis",
+            "type": "checkbox",
+            "title": "Hepatitis",
+            "section": "Health History"
+        },
+        {
+            "key": "hiv",
+            "type": "checkbox",
+            "title": "AIDS/HIV",
+            "section": "Health History"
+        },
+        {
+            "key": "jaundice",
+            "type": "checkbox",
+            "title": "Jaundice",
+            "section": "Health History"
+        },
+        {
+            "key": "kidney_disease",
+            "type": "checkbox",
+            "title": "Kidney Disease",
+            "section": "Health History"
+        },
+        {
+            "key": "rheumatic_fever",
+            "type": "checkbox",
+            "title": "Rheumatic Fever",
+            "section": "Health History"
+        },
+        {
+            "key": "scarlet_fever",
+            "type": "checkbox",
+            "title": "Scarlet Fever",
+            "section": "Health History"
+        },
+        {
+            "key": "tuberculosis",
+            "type": "checkbox",
+            "title": "Tuberculosis",
+            "section": "Health History"
+        },
+        {
+            "key": "antibiotics",
+            "type": "checkbox",
+            "title": "Antibiotics Allergy",
+            "section": "Health History"
+        },
+        {
+            "key": "local_anesthetic_allergy",
+            "type": "checkbox",
+            "title": "Local Anesthetic Allergy",
+            "section": "Health History"
+        },
+        {
+            "key": "nitrous_oxide",
+            "type": "checkbox",
+            "title": "Nitrous Oxide Allergy",
+            "section": "Health History"
+        },
+        {
+            "key": "opioids",
+            "type": "checkbox",
+            "title": "Opioids Allergy",
+            "section": "Health History"
+        },
+        {
+            "key": "pregnant",
+            "type": "radio",
+            "title": "Are you pregnant?",
+            "control": {
+                "options": [
+                    {
+                        "name": "Yes",
+                        "value": "yes"
+                    },
+                    {
+                        "name": "No",
+                        "value": "no"
+                    }
+                ]
+            },
+            "section": "Health History",
             "optional": true
         }
     ]
