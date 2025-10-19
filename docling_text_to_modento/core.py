@@ -4110,6 +4110,54 @@ def postprocess_make_explain_fields_unique(payload: List[dict], dbg: Optional[De
     
     return payload
 
+def postprocess_order_sections(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Order sections according to Modento conventions.
+    
+    Order: Patient Info → Insurance → Referral → Medical History → Consents → Signature
+    
+    This addresses the audit requirement that fields be organized in a logical,
+    consistent order that matches user expectations and Modento best practices.
+    """
+    # Define the canonical section order
+    SECTION_ORDER = {
+        "Patient Information": 1,
+        "Insurance": 2,
+        "Referral": 3,
+        "Medical History": 4,
+        "Dental History": 5,
+        "Consents": 6,
+        "Signature": 7,
+        # Default/catchall sections go at the end
+        "General": 8,
+    }
+    
+    def get_section_priority(field: dict) -> tuple:
+        """
+        Get sorting priority for a field.
+        Returns tuple of (section_order, original_index) for stable sorting.
+        """
+        section = field.get("section", "General")
+        # Get the priority from SECTION_ORDER, default to 99 for unknown sections
+        priority = SECTION_ORDER.get(section, 99)
+        return (priority, payload.index(field))
+    
+    # Sort the payload by section order
+    sorted_payload = sorted(payload, key=get_section_priority)
+    
+    if dbg and dbg.enabled:
+        # Log any reordering
+        original_sections = [f.get("section", "General") for f in payload]
+        sorted_sections = [f.get("section", "General") for f in sorted_payload]
+        if original_sections != sorted_sections:
+            dbg.gate(f"Section ordering: Reordered {len(payload)} fields")
+            section_counts = {}
+            for section in sorted_sections:
+                section_counts[section] = section_counts.get(section, 0) + 1
+            dbg.gate(f"  Section distribution: {section_counts}")
+    
+    return sorted_payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -4300,6 +4348,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev11 Fix 5: Make generic "Please explain" fields unique
     payload = postprocess_make_explain_fields_unique(payload, dbg=dbg)
+    
+    # Modento Schema Compliance: Order sections according to conventions
+    payload = postprocess_order_sections(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
