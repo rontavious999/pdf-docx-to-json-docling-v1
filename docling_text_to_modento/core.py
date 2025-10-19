@@ -481,6 +481,7 @@ def split_by_known_labels(line: str) -> List[str]:
     Handles: Work Phone (   )         Occupation
     Also handles: Are you a student? ... Mother's DOB ... Father's DOB
     NEW: Also handles adjacent labels with underscores (SSN_______ Date of Birth______)
+    Enhanced: Now detects 2+ tabs as field separators (not just 4+ spaces)
     """
     # Find all known label matches in the line
     label_matches = []
@@ -543,10 +544,10 @@ def split_by_known_labels(line: str) -> List[str]:
             
             # Production Improvement: More flexible split criteria
             # Accept split if ANY of these conditions are met:
-            # 1. 4+ consecutive spaces OR 2+ tabs (original criterion enhanced)
+            # 1. 4+ consecutive spaces OR 1+ tabs OR mixed tab+spaces totaling 3+ (original criterion enhanced)
             # 2. Underscores/dashes followed by 1+ space and the next label (e.g., "______ Date of Birth")
             # 3. Multiple underscores/dashes/slashes between labels (indicating separate input fields)
-            has_wide_spacing = bool(re.search(r'\s{4,}|\t{2,}', between))
+            has_wide_spacing = bool(re.search(r'\s{4,}|\t+|[\t\s]{3,}', between))
             has_underscore_separator = bool(re.search(r'[_\-/]{3,}\s+', between))
             has_input_pattern = bool(re.search(r'[_\-]{3,}.*[_\-/()]{3,}', between))
             
@@ -1998,11 +1999,19 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
 # Core text-to-JSON conversion logic. Orchestrates field detection and Question creation.
 
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
-    lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
+    # Step 1: Clean headers/footers but DON'T normalize yet (preserves tabs for field splitting)
+    lines = scrub_headers_footers(text)
     lines = coalesce_soft_wraps(lines)
     
-    # Fix 1: Preprocess to split multi-question lines
+    # Step 2: Split multi-field lines BEFORE normalizing (so tabs are preserved)
+    pre_count = len(lines)
     lines = preprocess_lines(lines)
+    post_count = len(lines)
+    if post_count != pre_count and debug:
+        print(f"  [debug] preprocess_lines: {pre_count} -> {post_count} lines")
+    
+    # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
+    lines = [normalize_glyphs_line(x) for x in lines]
 
     questions: List[Question] = []
     cur_section = "General"
