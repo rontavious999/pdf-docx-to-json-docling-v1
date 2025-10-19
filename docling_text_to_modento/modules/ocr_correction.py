@@ -75,6 +75,14 @@ COMMON_LABEL_CORRECTIONS = {
     'phys1cian': 'physician',
     'em ergency': 'emergency',
     'c0ntact': 'contact',
+    # Additional corrections for common spacing/concatenation issues
+    'nod ental': 'no dental',
+    'dent al': 'dental',
+    'howdidyouhearaboutus': 'how did you hear about us',
+    'hearaboutus': 'hear about us',
+    'dateofbirth': 'date of birth',
+    'phonenumber': 'phone number',
+    'emailaddress': 'email address',
 }
 
 

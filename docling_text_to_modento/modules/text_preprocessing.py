@@ -115,8 +115,9 @@ def is_heading(line: str) -> bool:
     Determine if a line is a section heading.
     
     Section headings are typically:
-    - All uppercase or title case
+    - All uppercase or title case or starts with capital letter
     - <= 120 characters
+    - Multi-word descriptive phrases (not single field labels)
     - End with a colon or no punctuation
     - Do NOT contain checkboxes
     - Do NOT match known field label patterns
@@ -151,11 +152,21 @@ def is_heading(line: str) -> bool:
     if t.endswith(":"):
         # Remove the colon and check the remaining text
         label = t[:-1].strip()
-        # Single word that's not all caps -> likely a field label
-        if len(label.split()) == 1 and not label.isupper():
-            common_field_labels = ['comments', 'notes', 'explanation', 'details', 'remarks']
-            if label.lower() in common_field_labels:
-                return False
+        # Single word or two words that look like field labels -> not a heading
+        words = label.split()
+        if len(words) <= 2:
+            # Single word that's not all caps -> likely a field label
+            if len(words) == 1 and not label.isupper():
+                common_field_labels = ['comments', 'notes', 'explanation', 'details', 'remarks']
+                if label.lower() in common_field_labels:
+                    return False
+            # Two-word phrases that look like field labels (e.g., "Full name:")
+            if len(words) == 2:
+                common_two_word_labels = ['full name', 'first name', 'last name', 'middle name', 
+                                         'phone number', 'email address', 'zip code', 'birth date',
+                                         'social security', 'work phone', 'home phone', 'cell phone']
+                if label.lower() in common_two_word_labels:
+                    return False
     
     # Archivev19 Fix 4: Lines with question marks are questions/fields, never headings
     # e.g., "Have you ever had surgery? If so, what type:" should be a field
@@ -167,10 +178,23 @@ def is_heading(line: str) -> bool:
     if re.search(r'_{3,}|[\-]{3,}|\(\s*\)', t):
         return False
     
+    # Fix: Accept mixed-case multi-word phrases as section headers
+    # Section headers should have multiple words and start with a capital letter
+    words = t.rstrip(':').split()
+    if len(t) <= 120 and len(words) >= 2:
+        # Multi-word phrase starting with capital letter
+        if t[0].isupper():
+            # Don't end with period (that's a sentence)
+            if not t.endswith("."):
+                return True
+    
+    # Original logic: all caps or perfect title case
     if len(t) <= 120 and (t.isupper() or (t.istitle() and not t.endswith("."))):
         if not t.endswith("?"):
             return True
-    return t.endswith(":") and len(t) <= 120
+    
+    # Don't accept single-word labels ending with colon as headings
+    return False
 
 
 def is_category_header(line: str, next_line: str = "") -> bool:

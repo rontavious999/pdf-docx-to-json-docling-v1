@@ -123,12 +123,14 @@ SPELL_FIX = {
 KNOWN_FIELD_LABELS = {
     # Name fields
     # Production Improvement: Use lookahead (?=[^a-zA-Z]|$) to handle underscores/dashes after labels
+    'full_name': r'\bfull\s+name(?=[^a-zA-Z]|$)',
     'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
     'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
     'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
     'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
-    'patient_name': r'\bpatient\s+name(?=[^a-zA-Z]|$)',
+    'patient_name': r'\b(?:patient(?:\'?s)?\s+name|name\s+of\s+patient)(?=[^a-zA-Z]|$)',
     'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
+    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
     # Date/Age fields
     'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
     'dob': r'\bdob(?=[^a-zA-Z]|$)',
@@ -140,6 +142,7 @@ KNOWN_FIELD_LABELS = {
     'gender': r'\bgender(?=[^a-zA-Z]|$)',
     'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)(?=[^a-zA-Z]|$)',
     # Contact fields
+    'phone_number': r'\bphone\s+number(?=[^a-zA-Z]|$)',
     'work_phone': r'\bwork\s+phone(?=[^a-zA-Z]|$)',
     'home_phone': r'\bhome\s+phone(?=[^a-zA-Z]|$)',
     'cell_phone': r'\b(?:cell|mobile)\s+phone(?=[^a-zA-Z]|$)',
@@ -183,7 +186,6 @@ KNOWN_FIELD_LABELS = {
     'emergency_contact_name': r'\bemergency\s+contact\s+name(?=[^a-zA-Z]|$)',
     'emergency_phone': r'\bemergency\s+(?:contact\s+)?phone(?=[^a-zA-Z]|$)',
     'responsible_party_name': r'\b(?:name\s+of\s+)?responsible\s+party(?=[^a-zA-Z]|$)',
-    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
     'parent_relationship': r'\bparent\s+relationship(?=[^a-zA-Z]|$)',
     # Category 1 Fix 1.6: Referral source fields  
     'referral_source': r'\b(?:referral\s+source|how\s+did\s+you\s+hear)(?=[^a-zA-Z]|$)',
@@ -196,4 +198,11 @@ KNOWN_FIELD_LABELS = {
     'last_cleaning': r'\blast\s+cleaning(?=[^a-zA-Z]|$)',
     'last_xrays': r'\blast\s+(?:complete\s+)?x-?rays(?=[^a-zA-Z]|$)',
     'last_visit': r'\blast\s+(?:dental\s+)?visit(?=[^a-zA-Z]|$)',
+    # Dental-specific fields
+    'tooth_number': r'\btooth\s+(?:number|no\.?|#)(?=[^a-zA-Z]|$)',
+    'physician_name': r'\bphysician\s+name(?=[^a-zA-Z]|$)',
+    'dentist_name': r'\b(?:dentist|previous\s+dentist)\s+name(?=[^a-zA-Z]|$)',
+    'dental_practice_name': r'\bname\s+of\s+(?:current|new|previous)?\s*dental\s+practice(?=[^a-zA-Z]|$)',
+    'practice_name': r'\bpractice\s+name(?=[^a-zA-Z]|$)',
+    'date_of_release': r'\bdate\s+of\s+release(?=[^a-zA-Z]|$)',
 }

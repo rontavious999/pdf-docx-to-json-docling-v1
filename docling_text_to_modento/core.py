@@ -247,6 +247,14 @@ ALLOWED_TYPES = {"input", "date", "states", "radio", "dropdown", "terms", "signa
 PRIMARY_SUFFIX = "__primary"
 SECONDARY_SUFFIX = "__secondary"
 
+# Medical condition tokens for consolidation detection
+_COND_TOKENS = {"diabetes","arthritis","rheumat","hepatitis","asthma","stroke","ulcer",
+                "thyroid","cancer","anemia","glaucoma","osteoporosis","seizure","tb","tuberculosis",
+                "hiv","aids","blood","pressure","heart","kidney","liver","bleeding","sinus",
+                "smoke","chew","alcohol","drug","allergy","pregnan","anxiety","depression","pacemaker",
+                "cholesterol","radiation","chemotherapy","convulsion","epilepsy","migraine","valve",
+                "neurological","alzheimer"}
+
 # ---------- Debug/Reporting
 
 @dataclass
@@ -377,12 +385,14 @@ def split_multi_question_line(line: str) -> List[str]:
 # (?=[^a-zA-Z]|$) means "followed by non-letter or end of string"
 KNOWN_FIELD_LABELS = {
     # Name fields
+    'full_name': r'\bfull\s+name(?=[^a-zA-Z]|$)',
     'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
     'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
     'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
     'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
-    'patient_name': r'\bpatient\s+name(?=[^a-zA-Z]|$)',
+    'patient_name': r'\b(?:patient(?:\'?s)?\s+name|name\s+of\s+patient)(?=[^a-zA-Z]|$)',
     'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
+    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
     # Date/Age fields
     'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
     'dob': r'\bdob(?=[^a-zA-Z]|$)',
@@ -394,6 +404,7 @@ KNOWN_FIELD_LABELS = {
     'gender': r'\bgender(?=[^a-zA-Z]|$)',
     'marital_status': r'\b(?:marital\s+status|please\s+circle\s+one)(?=[^a-zA-Z]|$)',
     # Contact fields
+    'phone_number': r'\bphone\s+number(?=[^a-zA-Z]|$)',
     'work_phone': r'\bwork\s+phone(?=[^a-zA-Z]|$)',
     'home_phone': r'\bhome\s+phone(?=[^a-zA-Z]|$)',
     'cell_phone': r'\b(?:cell|mobile)\s+phone(?=[^a-zA-Z]|$)',
@@ -429,9 +440,16 @@ KNOWN_FIELD_LABELS = {
     'insured_name': r"\b(?:name\s+of\s+)?insured(?:'?s)?\s+name(?=[^a-zA-Z]|$)",
     'relationship_to_insured': r'\b(?:patient\s+)?relationship\s+to\s+insured(?=[^a-zA-Z]|$)',
     'id_number': r'\bid\s+number(?=[^a-zA-Z]|$)',
+    # Dental-specific fields
+    'tooth_number': r'\btooth\s+(?:number|no\.?|#)(?=[^a-zA-Z]|$)',
+    'physician_name': r'\bphysician\s+name(?=[^a-zA-Z]|$)',
+    'dentist_name': r'\b(?:dentist|previous\s+dentist)\s+name(?=[^a-zA-Z]|$)',
+    'dental_practice_name': r'\bname\s+of\s+(?:current|new|previous)?\s*dental\s+practice(?=[^a-zA-Z]|$)',
+    'practice_name': r'\bpractice\s+name(?=[^a-zA-Z]|$)',
     # Misc
     'reason_for_visit': r'\breason\s+for\s+(?:today\'?s\s+)?visit(?=[^a-zA-Z]|$)',
     'previous_dentist': r'\bprevious\s+dentist(?=[^a-zA-Z]|$)',
+    'date_of_release': r'\bdate\s+of\s+release(?=[^a-zA-Z]|$)',
 }
 
 
@@ -479,6 +497,7 @@ def split_by_known_labels(line: str) -> List[str]:
     Handles: Work Phone (   )         Occupation
     Also handles: Are you a student? ... Mother's DOB ... Father's DOB
     NEW: Also handles adjacent labels with underscores (SSN_______ Date of Birth______)
+    Enhanced: Now detects 2+ tabs as field separators (not just 4+ spaces)
     """
     # Find all known label matches in the line
     label_matches = []
@@ -541,10 +560,10 @@ def split_by_known_labels(line: str) -> List[str]:
             
             # Production Improvement: More flexible split criteria
             # Accept split if ANY of these conditions are met:
-            # 1. 4+ consecutive spaces (original criterion)
+            # 1. 4+ consecutive spaces OR 1+ tabs OR mixed tab+spaces totaling 3+ (original criterion enhanced)
             # 2. Underscores/dashes followed by 1+ space and the next label (e.g., "______ Date of Birth")
             # 3. Multiple underscores/dashes/slashes between labels (indicating separate input fields)
-            has_wide_spacing = bool(re.search(r'\s{4,}', between))
+            has_wide_spacing = bool(re.search(r'\s{4,}|\t+|[\t\s]{3,}', between))
             has_underscore_separator = bool(re.search(r'[_\-/]{3,}\s+', between))
             has_input_pattern = bool(re.search(r'[_\-]{3,}.*[_\-/()]{3,}', between))
             
@@ -1996,11 +2015,19 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
 # Core text-to-JSON conversion logic. Orchestrates field detection and Question creation.
 
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
-    lines = [normalize_glyphs_line(x) for x in scrub_headers_footers(text)]
+    # Step 1: Clean headers/footers but DON'T normalize yet (preserves tabs for field splitting)
+    lines = scrub_headers_footers(text)
     lines = coalesce_soft_wraps(lines)
     
-    # Fix 1: Preprocess to split multi-question lines
+    # Step 2: Split multi-field lines BEFORE normalizing (so tabs are preserved)
+    pre_count = len(lines)
     lines = preprocess_lines(lines)
+    post_count = len(lines)
+    if post_count != pre_count and debug:
+        print(f"  [debug] preprocess_lines: {pre_count} -> {post_count} lines")
+    
+    # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
+    lines = [normalize_glyphs_line(x) for x in lines]
 
     questions: List[Question] = []
     cur_section = "General"
@@ -2038,6 +2065,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Fix 2: Section heading with multi-line header detection
         if not is_special_field and is_heading(line):
             # Look ahead to see if the next line is also a heading (multi-line header)
+            # But only combine if the next line appears to be a continuation, not a new section
             potential_headers = [line]
             j = i + 1
             while j < len(lines) and j < i + 3:  # Look ahead up to 2 lines
@@ -2050,7 +2078,22 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 is_next_special_marital = any(p.search(next_line) for p in MARITAL_STATUS_PATTERNS)
                 is_next_special = is_next_special_sex or is_next_special_marital
                 
-                if is_heading(next_line) and not is_next_special:
+                # Fix: Only combine if next line appears to be a continuation
+                # Don't combine if next line has "information", "practice", "consent" which are typically new sections
+                # Don't combine if next line contains field-like patterns (colons with short text)
+                # Only combine if starts with lowercase (continuation) or is very short descriptive phrase
+                has_section_keywords = re.search(r'\b(information|practice|consent|authorization|attestation|form|release)\b', next_line, re.I)
+                has_field_pattern = next_line.endswith(':') and len(next_line.split()) <= 4
+                
+                is_continuation = (
+                    is_heading(next_line) and 
+                    not is_next_special and
+                    not has_section_keywords and
+                    not has_field_pattern and
+                    next_line[0].islower()  # Only combine if starts lowercase (true continuation)
+                )
+                
+                if is_continuation:
                     potential_headers.append(next_line)
                     j += 1
                 else:
@@ -2834,33 +2877,50 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             continue
 
         # Long paragraph → terms
-        para = [lines[i]]; k = i+1
-        while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
-            if is_heading(lines[k]): break
-            # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
-            if extract_compound_yn_prompts(lines[k]):
+        # First check if the current line is a known field label - if so, don't treat as paragraph
+        current_line_is_field_label = False
+        for field_key, pattern in KNOWN_FIELD_LABELS.items():
+            if re.search(pattern, line, re.I):
+                current_line_is_field_label = True
                 break
-            para.append(lines[k]); k += 1
-        joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
-        if len(joined) > 250 and joined.count(".") >= 2:
-            chunks: List[List[str]] = []; cur: List[str] = []
-            for s in para:
-                if is_heading(s.strip()) and cur:
-                    chunks.append(cur); cur=[s]
-                else:
-                    cur.append(s)
-            if cur: chunks.append(cur)
-            for idx2, chunk in enumerate(chunks):
-                t = " ".join(collapse_spaced_caps(x).strip() for x in chunk).strip()
-                if not t: continue
-                questions.append(Question(
-                    slugify((chunk[0].strip() if is_heading(chunk[0].strip()) else (title or "terms")) + (f"_{idx2+1}" if idx2 else "")),
-                    (collapse_spaced_caps(chunk[0].strip().rstrip(":")) if is_heading(chunk[0].strip()) else "Terms"),
-                    "Consent",
-                    "terms",
-                    control={"agree_text":"I have read and agree to the terms.","html_text":t},
-                ))
-            i = k; continue
+        
+        if not current_line_is_field_label:
+            para = [lines[i]]; k = i+1
+            while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip()):
+                if is_heading(lines[k]): break
+                # Stop collecting if we hit a yes/no question pattern (don't include these in terms)
+                if extract_compound_yn_prompts(lines[k]):
+                    break
+                # Don't absorb lines that look like field labels (e.g., "Patient Name:", "Date of Birth:")
+                # Check if line matches known field label patterns
+                line_matches_field_label = False
+                for field_key, pattern in KNOWN_FIELD_LABELS.items():
+                    if re.search(pattern, lines[k], re.I):
+                        line_matches_field_label = True
+                        break
+                if line_matches_field_label:
+                    break
+                para.append(lines[k]); k += 1
+            joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
+            if len(joined) > 250 and joined.count(".") >= 2:
+                chunks: List[List[str]] = []; cur: List[str] = []
+                for s in para:
+                    if is_heading(s.strip()) and cur:
+                        chunks.append(cur); cur=[s]
+                    else:
+                        cur.append(s)
+                if cur: chunks.append(cur)
+                for idx2, chunk in enumerate(chunks):
+                    t = " ".join(collapse_spaced_caps(x).strip() for x in chunk).strip()
+                    if not t: continue
+                    questions.append(Question(
+                        slugify((chunk[0].strip() if is_heading(chunk[0].strip()) else (title or "terms")) + (f"_{idx2+1}" if idx2 else "")),
+                        (collapse_spaced_caps(chunk[0].strip().rstrip(":")) if is_heading(chunk[0].strip()) else "Terms"),
+                        "Consent",
+                        "terms",
+                        control={"agree_text":"I have read and agree to the terms.","html_text":t},
+                    ))
+                i = k; continue
 
         # Default: input
         # Fix 1: Skip if next line has inline options that will use this as title
@@ -3268,14 +3328,20 @@ def is_malformed_condition_field(field: dict) -> bool:
     return False
 
 
+def _looks_like_medical_condition(opt_name: str) -> bool:
+    """
+    Helper function to check if an option name looks like a medical condition.
+    Used by postprocess_consolidate_medical_conditions.
+    """
+    w = norm_title(opt_name)
+    return any(t in w for t in _COND_TOKENS)
+
+
 def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict]:
     """
     Enhanced version that consolidates both well-formed and malformed condition dropdowns,
     plus individual checkbox/radio fields that look like medical conditions (Fix 1).
     """
-    def looks_condition(opt_name: str) -> bool:
-        w = norm_title(opt_name)
-        return any(t in w for t in _COND_TOKENS)
     
     # Medical condition keywords for identifying individual condition fields
     CONDITION_KEYWORDS = [
@@ -3306,17 +3372,35 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
             q.get('section') in {'Medical History', 'Dental History'}):
             
             opts = q.get('control', {}).get('options') or []
-            if len(opts) >= 5 and sum(looks_condition(o.get('name', '')) for o in opts) >= 3:
+            if len(opts) >= 5 and sum(_looks_like_medical_condition(o.get('name', '')) for o in opts) >= 3:
                 wellformed_groups_by_section[section].append(i)
                 continue
         
-        # Check if individual checkbox/radio that looks like a medical condition (Fix 1)
-        if q.get('type') in ['checkbox', 'radio'] and section in {'Medical History', 'General'}:
+        # Check if single-option multi-select dropdown (likely should be consolidated)
+        if (q.get('type') == 'dropdown' and 
+            q.get('control', {}).get('multi', False) and 
+            section in {'Medical History', 'General', 'Dental History', 'Patient Information'}):
+            
+            opts = q.get('control', {}).get('options') or []
+            if len(opts) == 1:
+                # Single option dropdown - treat like individual condition
+                title = opts[0].get('name', '').lower()
+                has_condition_keyword = any(kw in title for kw in CONDITION_KEYWORDS)
+                # Also check the field title
+                field_title = q.get('title', '').lower()
+                has_condition_in_title = any(kw in field_title for kw in CONDITION_KEYWORDS)
+                
+                if has_condition_keyword or has_condition_in_title:
+                    individual_condition_indices[section].append(i)
+                    continue
+        
+        # Check if individual checkbox/radio/input that looks like a medical condition (Fix 1)
+        if q.get('type') in ['checkbox', 'radio', 'input'] and section in {'Medical History', 'General', 'Dental History'}:
             title = q.get('title', '').lower()
             # Check if title contains medical condition keywords
             has_condition_keyword = any(kw in title for kw in CONDITION_KEYWORDS)
-            # Or if it's a short title (1-4 words) in Medical History section
-            is_short_medical = section == 'Medical History' and len(title.split()) <= 4
+            # Or if it's a short title (1-4 words) in Medical History/Dental History section
+            is_short_medical = section in {'Medical History', 'Dental History'} and len(title.split()) <= 4
             
             if has_condition_keyword or is_short_medical:
                 individual_condition_indices[section].append(i)
@@ -3410,9 +3494,22 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
         consolidated_options = []
         seen_names: Set[str] = set()
         
-        for idx in indices:
+        # Filter out invalid indices before processing
+        valid_process_indices = [idx for idx in indices if idx < len(payload)]
+        
+        for idx in valid_process_indices:
             field = payload[idx]
-            title = field.get('title', '').strip()
+            
+            # For single-option dropdowns, use the option name
+            if (field.get('type') == 'dropdown' and 
+                field.get('control', {}).get('multi', False)):
+                opts = field.get('control', {}).get('options', [])
+                if len(opts) == 1:
+                    title = opts[0].get('name', '').strip()
+                else:
+                    title = field.get('title', '').strip()
+            else:
+                title = field.get('title', '').strip()
             
             # Normalize the title for duplicate detection
             norm_title = normalize_opt_name(title)
@@ -3423,9 +3520,14 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
                     'value': slugify(title, 80)
                 })
         
-        if consolidated_options:
+        if consolidated_options and indices:
+            # Verify indices are still valid after earlier consolidations
+            valid_indices = [idx for idx in indices if idx < len(payload)]
+            if not valid_indices:
+                continue
+                
             # Replace first field with consolidated dropdown
-            payload[indices[0]] = {
+            payload[valid_indices[0]] = {
                 'key': 'medical_conditions' if section == 'Medical History' else 'dental_conditions',
                 'type': 'dropdown',
                 'title': 'Do you have or have you had any of the following?',
@@ -3438,8 +3540,9 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
             }
             
             # Remove other individual condition fields
-            for idx in sorted(indices[1:], reverse=True):
-                payload.pop(idx)
+            for idx in sorted(valid_indices[1:], reverse=True):
+                if idx < len(payload):
+                    payload.pop(idx)
     
     return payload
 
