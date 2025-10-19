@@ -2038,6 +2038,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Fix 2: Section heading with multi-line header detection
         if not is_special_field and is_heading(line):
             # Look ahead to see if the next line is also a heading (multi-line header)
+            # But only combine if the next line appears to be a continuation, not a new section
             potential_headers = [line]
             j = i + 1
             while j < len(lines) and j < i + 3:  # Look ahead up to 2 lines
@@ -2050,7 +2051,22 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 is_next_special_marital = any(p.search(next_line) for p in MARITAL_STATUS_PATTERNS)
                 is_next_special = is_next_special_sex or is_next_special_marital
                 
-                if is_heading(next_line) and not is_next_special:
+                # Fix: Only combine if next line appears to be a continuation
+                # Don't combine if next line has "information", "practice", "consent" which are typically new sections
+                # Don't combine if next line contains field-like patterns (colons with short text)
+                # Only combine if starts with lowercase (continuation) or is very short descriptive phrase
+                has_section_keywords = re.search(r'\b(information|practice|consent|authorization|attestation|form|release)\b', next_line, re.I)
+                has_field_pattern = next_line.endswith(':') and len(next_line.split()) <= 4
+                
+                is_continuation = (
+                    is_heading(next_line) and 
+                    not is_next_special and
+                    not has_section_keywords and
+                    not has_field_pattern and
+                    next_line[0].islower()  # Only combine if starts lowercase (true continuation)
+                )
+                
+                if is_continuation:
                     potential_headers.append(next_line)
                     j += 1
                 else:
