@@ -1378,12 +1378,32 @@ def _sanitize_words(s: str) -> str:
     return s
 
 def try_split_known_labels(line: str) -> List[str]:
+    """
+    Detect and split compound field labels from a single line.
+    
+    Examples of compound fields that should be split:
+    - "Name of insured / Birthdate / SSN"
+    - "First Name, Last Name, Date of Birth"
+    - "Patient Name | DOB | Phone"
+    
+    This addresses the Modento schema requirement that each question key be unique.
+    """
     s_raw = normalize_glyphs_line(line)
     s = collapse_spaced_caps(s_raw).strip()
     if not s or len(s) > 220 or s.endswith("."):
         return []
+    
     # collapse repeated phrases like "Insured's Name Insured's Name"
     s_de_rep = re.sub(r"(\binsured'?s?\s+name\b)(\s+\1)+", r"\1", s, flags=re.I)
+    
+    # Enhanced: Check for explicit compound field separators (/, |, comma followed by capital letter)
+    # These are strong indicators that the line contains multiple distinct fields
+    has_explicit_separators = bool(re.search(r'\s+[/|]\s+|\s+/\s+|\|\s+', s_de_rep))
+    
+    # Also detect comma-separated fields (e.g., "Last Name, First Name, DOB")
+    # Only if commas are followed by capital letters (field names typically start with caps)
+    has_comma_fields = bool(re.search(r',\s+[A-Z]', s_de_rep))
+    
     s_sanit = _sanitize_words(s_de_rep)
     hits: List[Tuple[int, str]] = []
     for phrase in LABEL_ALTS:
@@ -1394,8 +1414,51 @@ def try_split_known_labels(line: str) -> List[str]:
         match = re.search(pattern, s_sanit)
         if match:
             hits.append((match.start(), CANON_LABELS.get(phrase, phrase.title())))
+    
+    # Enhanced: If we have explicit separators and found at least 2 distinct fields, split them
+    # This catches compound fields like "Name / DOB / SSN" even if only 2 of 3 are in CANON_LABELS
     if len(hits) < 2:
+        # If we have explicit separators, try to extract field names even if not in CANON_LABELS
+        if has_explicit_separators or has_comma_fields:
+            # Split by separators and try to identify field names
+            parts = re.split(r'\s*[/|,]\s*', s_de_rep)
+            if len(parts) >= 2:
+                # Only return if we can identify at least 2 fields that look like field labels
+                # (start with capital letter, contain key field terms)
+                potential_fields = []
+                for part in parts:
+                    part = part.strip()
+                    # Check if this looks like a field label (not just a value)
+                    if part and (
+                        len(part) >= 3 and 
+                        part[0].isupper() and
+                        not part.replace(' ', '').isdigit()  # Not just numbers
+                    ):
+                        potential_fields.append(part)
+                
+                if len(potential_fields) >= 2:
+                    # Return the canonicalized versions from hits if available, otherwise the raw field names
+                    result = []
+                    for part in potential_fields:
+                        # Check if this field is in our hits
+                        matched = False
+                        part_sanit = _sanitize_words(part)
+                        for phrase in LABEL_ALTS:
+                            if _sanitize_words(phrase) in part_sanit:
+                                canon = CANON_LABELS.get(phrase, phrase.title())
+                                if canon not in result:
+                                    result.append(canon)
+                                    matched = True
+                                    break
+                        # If not matched to CANON_LABELS, use the raw part as field name
+                        if not matched and part not in result:
+                            result.append(part.strip())
+                    
+                    if len(result) >= 2:
+                        return result
+        
         return []
+    
     hits.sort(key=lambda t: t[0])
     labels = []
     for _pos, canon in hits:
@@ -4047,6 +4110,124 @@ def postprocess_make_explain_fields_unique(payload: List[dict], dbg: Optional[De
     
     return payload
 
+def postprocess_order_sections(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Order sections according to Modento conventions.
+    
+    Order: Patient Info → Insurance → Referral → Medical History → Consents → Signature
+    
+    This addresses the audit requirement that fields be organized in a logical,
+    consistent order that matches user expectations and Modento best practices.
+    """
+    # Define the canonical section order
+    SECTION_ORDER = {
+        "Patient Information": 1,
+        "Insurance": 2,
+        "Referral": 3,
+        "Medical History": 4,
+        "Dental History": 5,
+        "Consents": 6,
+        "Signature": 7,
+        # Default/catchall sections go at the end
+        "General": 8,
+    }
+    
+    def get_section_priority(field: dict) -> tuple:
+        """
+        Get sorting priority for a field.
+        Returns tuple of (section_order, original_index) for stable sorting.
+        """
+        section = field.get("section", "General")
+        # Get the priority from SECTION_ORDER, default to 99 for unknown sections
+        priority = SECTION_ORDER.get(section, 99)
+        return (priority, payload.index(field))
+    
+    # Sort the payload by section order
+    sorted_payload = sorted(payload, key=get_section_priority)
+    
+    if dbg and dbg.enabled:
+        # Log any reordering
+        original_sections = [f.get("section", "General") for f in payload]
+        sorted_sections = [f.get("section", "General") for f in sorted_payload]
+        if original_sections != sorted_sections:
+            dbg.gate(f"Section ordering: Reordered {len(payload)} fields")
+            section_counts = {}
+            for section in sorted_sections:
+                section_counts[section] = section_counts.get(section, 0) + 1
+            dbg.gate(f"  Section distribution: {section_counts}")
+    
+    return sorted_payload
+
+def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Final validation to ensure Modento schema compliance.
+    
+    Checks:
+    1. All option values are non-empty
+    2. Exactly one signature field with key "signature"
+    3. No footer/header/witness fields
+    4. All keys are unique
+    """
+    issues = []
+    seen_keys = set()
+    signature_count = 0
+    
+    # Patterns for footer/header/witness fields that should not be in output
+    EXCLUDED_PATTERNS = [
+        r'\bpractice\s+(name|phone|address|email)\b',
+        r'\bwitness\b',
+        r'\boffice\s+(phone|address|email)\b',
+        r'\bfooter\b',
+        r'\bheader\b',
+    ]
+    
+    for idx, field in enumerate(payload):
+        key = field.get("key", "")
+        title = field.get("title", "").lower()
+        field_type = field.get("type", "")
+        
+        # Check 1: Duplicate keys
+        if key in seen_keys:
+            issues.append(f"Duplicate key: {key}")
+        seen_keys.add(key)
+        
+        # Check 2: Signature uniqueness
+        if field_type == "signature":
+            signature_count += 1
+            if key != "signature":
+                issues.append(f"Signature field has incorrect key: {key} (should be 'signature')")
+        
+        # Check 3: Excluded fields (footer/header/witness)
+        for pattern in EXCLUDED_PATTERNS:
+            if re.search(pattern, title, re.I):
+                issues.append(f"Excluded field found: {title}")
+                break
+        
+        # Check 4: Option values are non-empty
+        if field_type in ["radio", "dropdown"]:
+            options = field.get("control", {}).get("options", [])
+            for opt_idx, opt in enumerate(options):
+                value = opt.get("value")
+                if value is None or value == "":
+                    name = opt.get("name", f"option_{opt_idx}")
+                    issues.append(f"Empty option value in {key}: option '{name}'")
+    
+    # Check signature count
+    if signature_count == 0:
+        issues.append("No signature field found")
+    elif signature_count > 1:
+        issues.append(f"Multiple signature fields found: {signature_count} (should be exactly 1)")
+    
+    # Log issues if any
+    if issues and dbg and dbg.enabled:
+        dbg.gate(f"Modento compliance validation found {len(issues)} issues:")
+        for issue in issues[:10]:  # Limit to first 10 issues
+            dbg.gate(f"  - {issue}")
+        if len(issues) > 10:
+            dbg.gate(f"  ... and {len(issues) - 10} more")
+    
+    return payload
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -4237,6 +4418,12 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev11 Fix 5: Make generic "Please explain" fields unique
     payload = postprocess_make_explain_fields_unique(payload, dbg=dbg)
+    
+    # Modento Schema Compliance: Order sections according to conventions
+    payload = postprocess_order_sections(payload, dbg=dbg)
+    
+    # Modento Schema Compliance: Final validation
+    payload = postprocess_validate_modento_compliance(payload, dbg=dbg)
 
     out_path = out_dir / (txt_path.stem + ".modento.json")
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

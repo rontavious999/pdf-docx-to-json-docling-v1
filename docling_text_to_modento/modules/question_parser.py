@@ -28,6 +28,10 @@ ZIP_RE = re.compile(r"\b(zip|postal)\b", re.I)
 SSN_RE = re.compile(r"\b(ssn|social security|soc(?:ial)?\s*sec(?:urity)?|ss#)\b", re.I)
 DATE_LABEL_RE = re.compile(r"\b(date|dob|birth)\b", re.I)
 INITIALS_RE = re.compile(r"\binitials?\b", re.I)
+NAME_RE = re.compile(r"\b(first\s*name|last\s*name|full\s*name|patient\s*name|insured'?s?\s*name|"
+                     r"parent\s*name|responsible\s*party\s*name|emergency\s*contact\s*name|"
+                     r"guardian\s*name|subscriber\s*name|member\s*name|policy\s*holder\s*name|"
+                     r"^name$|^name\s*of\s*(patient|insured|parent|guardian|subscriber))\b", re.I)
 
 SPELL_FIX = {
     "rregular": "Irregular",
@@ -117,18 +121,61 @@ def normalize_opt_name(s: str) -> str:
 
 
 def classify_input_type(label: str) -> Optional[str]:
+    """
+    Classify input type based on field label according to Modento schema.
+    
+    Returns the appropriate input_type for the field, including:
+    - "name" for name fields (first name, last name, patient name, etc.)
+    - "email" for email fields
+    - "phone" for phone/mobile/cell fields
+    - "ssn" for social security number fields
+    - "zip" for zip/postal code fields
+    - "initials" for initial fields
+    - "text" as default fallback
+    """
     l = label.lower()
+    
+    # Check for name fields first (new - per audit requirement)
+    if NAME_RE.search(l):    return "name"
+    
+    # Check for other specific field types
     if EMAIL_RE.search(l):   return "email"
     if PHONE_RE.search(l):   return "phone"
     if SSN_RE.search(l):     return "ssn"
     if ZIP_RE.search(l):     return "zip"
     if INITIALS_RE.search(l):return "initials"
+    
+    # Default fallback
     return "text"
 
 
 def classify_date_input(label: str) -> str:
+    """
+    Classify date input type according to Modento schema.
+    
+    Returns:
+        "past" for historical dates (birth dates, signed dates)
+        "future" for upcoming dates (appointments, scheduled procedures)
+    
+    Note: Modento schema does not support "any" as an input_type for dates.
+    """
     l = label.lower()
-    return "past" if ("birth" in l or "dob" in l) else "any"
+    
+    # Birth dates and DOB are always in the past
+    if "birth" in l or "dob" in l:
+        return "past"
+    
+    # Signed/signature dates are historical (document was signed in the past)
+    if "sign" in l or "signature" in l or "consent" in l:
+        return "past"
+    
+    # Appointment or scheduled dates are in the future
+    if "appoint" in l or "schedul" in l or "next visit" in l:
+        return "future"
+    
+    # Default to "past" for most date fields (safer assumption)
+    # Most dental form dates are historical: treatment dates, last visit, etc.
+    return "past"
 
 
 def slugify(s: str, maxlen: int = 64) -> str:
