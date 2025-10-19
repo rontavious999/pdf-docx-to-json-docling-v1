@@ -3376,13 +3376,13 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
                 wellformed_groups_by_section[section].append(i)
                 continue
         
-        # Check if individual checkbox/radio that looks like a medical condition (Fix 1)
-        if q.get('type') in ['checkbox', 'radio'] and section in {'Medical History', 'General'}:
+        # Check if individual checkbox/radio/input that looks like a medical condition (Fix 1)
+        if q.get('type') in ['checkbox', 'radio', 'input'] and section in {'Medical History', 'General', 'Dental History'}:
             title = q.get('title', '').lower()
             # Check if title contains medical condition keywords
             has_condition_keyword = any(kw in title for kw in CONDITION_KEYWORDS)
-            # Or if it's a short title (1-4 words) in Medical History section
-            is_short_medical = section == 'Medical History' and len(title.split()) <= 4
+            # Or if it's a short title (1-4 words) in Medical History/Dental History section
+            is_short_medical = section in {'Medical History', 'Dental History'} and len(title.split()) <= 4
             
             if has_condition_keyword or is_short_medical:
                 individual_condition_indices[section].append(i)
