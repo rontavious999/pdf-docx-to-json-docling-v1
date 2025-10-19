@@ -247,6 +247,14 @@ ALLOWED_TYPES = {"input", "date", "states", "radio", "dropdown", "terms", "signa
 PRIMARY_SUFFIX = "__primary"
 SECONDARY_SUFFIX = "__secondary"
 
+# Medical condition tokens for consolidation detection
+_COND_TOKENS = {"diabetes","arthritis","rheumat","hepatitis","asthma","stroke","ulcer",
+                "thyroid","cancer","anemia","glaucoma","osteoporosis","seizure","tb","tuberculosis",
+                "hiv","aids","blood","pressure","heart","kidney","liver","bleeding","sinus",
+                "smoke","chew","alcohol","drug","allergy","pregnan","anxiety","depression","pacemaker",
+                "cholesterol","radiation","chemotherapy","convulsion","epilepsy","migraine","valve",
+                "neurological","alzheimer"}
+
 # ---------- Debug/Reporting
 
 @dataclass
@@ -3312,14 +3320,20 @@ def is_malformed_condition_field(field: dict) -> bool:
     return False
 
 
+def _looks_like_medical_condition(opt_name: str) -> bool:
+    """
+    Helper function to check if an option name looks like a medical condition.
+    Used by postprocess_consolidate_medical_conditions.
+    """
+    w = norm_title(opt_name)
+    return any(t in w for t in _COND_TOKENS)
+
+
 def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict]:
     """
     Enhanced version that consolidates both well-formed and malformed condition dropdowns,
     plus individual checkbox/radio fields that look like medical conditions (Fix 1).
     """
-    def looks_condition(opt_name: str) -> bool:
-        w = norm_title(opt_name)
-        return any(t in w for t in _COND_TOKENS)
     
     # Medical condition keywords for identifying individual condition fields
     CONDITION_KEYWORDS = [
@@ -3350,7 +3364,7 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
             q.get('section') in {'Medical History', 'Dental History'}):
             
             opts = q.get('control', {}).get('options') or []
-            if len(opts) >= 5 and sum(looks_condition(o.get('name', '')) for o in opts) >= 3:
+            if len(opts) >= 5 and sum(_looks_like_medical_condition(o.get('name', '')) for o in opts) >= 3:
                 wellformed_groups_by_section[section].append(i)
                 continue
         
