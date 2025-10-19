@@ -3376,6 +3376,24 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
                 wellformed_groups_by_section[section].append(i)
                 continue
         
+        # Check if single-option multi-select dropdown (likely should be consolidated)
+        if (q.get('type') == 'dropdown' and 
+            q.get('control', {}).get('multi', False) and 
+            section in {'Medical History', 'General', 'Dental History', 'Patient Information'}):
+            
+            opts = q.get('control', {}).get('options') or []
+            if len(opts) == 1:
+                # Single option dropdown - treat like individual condition
+                title = opts[0].get('name', '').lower()
+                has_condition_keyword = any(kw in title for kw in CONDITION_KEYWORDS)
+                # Also check the field title
+                field_title = q.get('title', '').lower()
+                has_condition_in_title = any(kw in field_title for kw in CONDITION_KEYWORDS)
+                
+                if has_condition_keyword or has_condition_in_title:
+                    individual_condition_indices[section].append(i)
+                    continue
+        
         # Check if individual checkbox/radio/input that looks like a medical condition (Fix 1)
         if q.get('type') in ['checkbox', 'radio', 'input'] and section in {'Medical History', 'General', 'Dental History'}:
             title = q.get('title', '').lower()
@@ -3476,9 +3494,22 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
         consolidated_options = []
         seen_names: Set[str] = set()
         
-        for idx in indices:
+        # Filter out invalid indices before processing
+        valid_process_indices = [idx for idx in indices if idx < len(payload)]
+        
+        for idx in valid_process_indices:
             field = payload[idx]
-            title = field.get('title', '').strip()
+            
+            # For single-option dropdowns, use the option name
+            if (field.get('type') == 'dropdown' and 
+                field.get('control', {}).get('multi', False)):
+                opts = field.get('control', {}).get('options', [])
+                if len(opts) == 1:
+                    title = opts[0].get('name', '').strip()
+                else:
+                    title = field.get('title', '').strip()
+            else:
+                title = field.get('title', '').strip()
             
             # Normalize the title for duplicate detection
             norm_title = normalize_opt_name(title)
@@ -3489,9 +3520,14 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
                     'value': slugify(title, 80)
                 })
         
-        if consolidated_options:
+        if consolidated_options and indices:
+            # Verify indices are still valid after earlier consolidations
+            valid_indices = [idx for idx in indices if idx < len(payload)]
+            if not valid_indices:
+                continue
+                
             # Replace first field with consolidated dropdown
-            payload[indices[0]] = {
+            payload[valid_indices[0]] = {
                 'key': 'medical_conditions' if section == 'Medical History' else 'dental_conditions',
                 'type': 'dropdown',
                 'title': 'Do you have or have you had any of the following?',
@@ -3504,8 +3540,9 @@ def postprocess_consolidate_medical_conditions(payload: List[dict]) -> List[dict
             }
             
             # Remove other individual condition fields
-            for idx in sorted(indices[1:], reverse=True):
-                payload.pop(idx)
+            for idx in sorted(valid_indices[1:], reverse=True):
+                if idx < len(payload):
+                    payload.pop(idx)
     
     return payload
 
