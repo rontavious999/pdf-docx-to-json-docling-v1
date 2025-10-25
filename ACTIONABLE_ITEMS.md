@@ -10,19 +10,19 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 ## Priority 1: Critical Feature Gaps
 
 ### 1.1 OCR Auto-Detection Enhancement
-**Current State**: The pipeline now includes OCR support via Tesseract (as of recent updates), but it does not yet automatically detect when a PDF has no text layer and trigger OCR. The `--ocr` flag exists but users must currently know to use it for scanned documents.
+**Current State**: The pipeline now uses the Unstructured library which automatically handles document parsing with various strategies including OCR when needed.
 
-**Current Limitation**: The pipeline can handle scanned PDFs if run with `--ocr`, but it does not yet automatically detect when a PDF has no text layer and trigger OCR. Implementing an automatic fallback (checking if PyMuPDF extraction returns essentially empty text, then invoking OCR) is a to-do item. Users must currently know to use the flag for scanned documents. Enhancing this would improve usability and ensure no forms are silently skipped due to lacking text.
-
-**Background**: Automatic detection would check if text extraction yields minimal content (e.g., <100 characters or <1% of expected page content), then automatically invoke OCR without requiring manual intervention.
+**Current Implementation**: The Unstructured library provides multiple extraction strategies:
+- `hi_res` (default): Uses ML-based layout detection for best accuracy
+- `fast`: Faster extraction with lower accuracy
+- `auto`: Automatically chooses the best strategy
+- `ocr_only`: Forces OCR for all documents
 
 **Action Items**:
-- [ ] **Step 1: Review existing OCR implementation**
-  - Examine current `has_text_layer()` function in `docling_extract.py`
-  - Review `extract_text_with_ocr()` implementation
-  - Understand current `--ocr` and `--force-ocr` flag behavior
-  - Document what works and what needs enhancement
-  
+- [x] **Migrated to Unstructured library** - Now using modern ML-based extraction
+- [x] **Hi-res strategy enabled by default** - Provides superior accuracy
+- [ ] **Test with various scanned documents** - Verify extraction quality
+- [ ] **Document best practices** - Guide users on strategy selection
 - [ ] **Step 2: Implement automatic text layer detection**
   - Enhance `has_text_layer()` to be more robust:
     - Check if extracted text length is below threshold (e.g., 100 characters)
@@ -345,12 +345,12 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
   
 - [ ] **Step 4: Evaluate if spatial layout extraction is needed**
   - Assess frequency: Is this a real problem or theoretical concern?
-  - If needed, research layout-aware parsing approaches:
-    - PyMuPDF page layout analysis
-    - PDF coordinate extraction
-    - Bounding box analysis
-    - Table structure recognition
-  - Estimate implementation complexity vs benefit
+  - If needed, leverage Unstructured's built-in layout features:
+    - Unstructured's hi-res strategy provides layout-aware extraction
+    - Table structure inference is built-in
+    - Bounding box analysis available in elements
+    - Coordinate information preserved in element metadata
+  - Test with current Unstructured implementation first
   
 - [ ] **Step 5: Consider alternative approaches if needed**
   - **Approach A**: Enhance spacing analysis in existing parser
