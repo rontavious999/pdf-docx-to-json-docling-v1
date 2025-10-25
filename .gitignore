@@ -31,3 +31,4 @@ __pycache__/
 output/*.txt
 output/*.json
 JSONs/*.json
+*.backup

@@ -1,11 +1,11 @@
-# PDF to JSON Converter with Docling for Dental Forms
+# PDF to JSON Converter with Unstructured for Dental Forms
 
-This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It uses local document extraction libraries (PyMuPDF and python-docx) for text extraction and a sophisticated Python script to parse and structure the data.
+This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It uses the Unstructured library for high-accuracy document text extraction and a sophisticated Python script to parse and structure the data.
 
 ## Features
 
 - **Automated Two-Step Pipeline**: A single command orchestrates the entire workflow from PDF to JSON.
-- **Local Text Extraction**: Uses PyMuPDF (for PDFs) and python-docx (for DOCX files) to extract text locally without requiring external APIs.
+- **High-Accuracy Text Extraction**: Uses the Unstructured library with hi-res strategy for model-based layout detection and table structure inference.
 - **Intelligent Form Parsing**: The script intelligently identifies and parses various form elements like checkboxes, grids, repeating sections, and composite fields.
 - **Data Normalization**: Cleans, normalizes, and structures the extracted data using a predefined form dictionary to ensure consistency.
 - **Modento-Compliant Output**: Generates JSON files that are structured to be compatible with the Modento system.
@@ -17,8 +17,9 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
 
 1.  **Text Extraction (`docling_extract.py`)**:
     - Scans the `documents/` directory for `.pdf` and `.docx` files.
-    - Uses **PyMuPDF** (fitz) for PDF text extraction and **python-docx** for DOCX files.
-    - Extracts text locally without requiring external APIs or internet connection.
+    - Uses **Unstructured** library for high-accuracy document text extraction.
+    - Leverages hi-res strategy with model-based layout detection for superior accuracy.
+    - Automatically infers table structures to preserve grid layouts.
     - Saves the extracted plain text into the `output/` directory.
 
 2.  **JSON Conversion (`docling_text_to_modento.py`)**:
@@ -59,13 +60,16 @@ Follow these steps to set up and run the project.
 
 2.  **Install dependencies:**
     ```bash
-    pip install pymupdf python-docx
+    pip install unstructured
     ```
 
-3.  **Install OCR support (optional, for scanned PDFs):**
+3.  **Optional: Install additional dependencies for specific file types:**
     ```bash
-    pip install pytesseract pillow
-    sudo apt-get install tesseract-ocr
+    # For better PDF support
+    pip install "unstructured[pdf]"
+    
+    # For better image/OCR support
+    pip install "unstructured[all-docs]"
     ```
 
 ### Usage
@@ -83,20 +87,20 @@ Follow these steps to set up and run the project.
 To run the extraction and conversion steps separately:
 
 ```bash
-# Step 1: Extract text from documents
+# Step 1: Extract text from documents (default: documents -> output)
+python3 docling_extract.py
+
+# Step 1 (with custom input/output):
 python3 docling_extract.py --in documents --out output
 
-# Step 1 (OCR is now automatic for scanned PDFs by default!)
-# No flags needed - OCR will be used automatically when needed
+# Step 1 (with hi_res strategy for maximum accuracy):
+python3 docling_extract.py --in documents --out output --strategy hi_res
 
-# Step 1 (disable auto-OCR if you want to skip scanned PDFs):
-python3 docling_extract.py --in documents --out output --no-auto-ocr
+# Step 1 (with retry on empty results):
+python3 docling_extract.py --in documents --out output --retry
 
-# Step 1 (force OCR for all PDFs, even with text):
-python3 docling_extract.py --in documents --out output --force-ocr
-
-# Step 1 (with parallel processing for large batches):
-python3 docling_extract.py --in documents --out output --jobs 4
+# Step 1 (with custom language support):
+python3 docling_extract.py --in documents --out output --languages eng,spa
 
 # Step 2: Convert text to JSON (with debug mode)
 python3 docling_text_to_modento.py --in output --out JSONs --debug
@@ -105,11 +109,11 @@ python3 docling_text_to_modento.py --in output --out JSONs --debug
 python3 docling_text_to_modento.py --in output --out JSONs --jobs 4
 ```
 
-**Parallel Processing (Priority 6.1):**
-- Use `--jobs N` to process N files in parallel (e.g., `--jobs 4` for 4 parallel processes)
-- Use `--jobs -1` to automatically use all available CPU cores
-- Parallel processing significantly speeds up large batches (50+ forms)
-- Default is sequential processing (`--jobs 1`) for better debugging
+**Extraction Strategies:**
+- `hi_res` (default): Best accuracy, uses model-based layout detection
+- `fast`: Faster extraction, lower accuracy
+- `auto`: Automatically choose based on document type
+- `ocr_only`: Force OCR for all documents
 
 *(Note: The `run_all.py` script runs both steps automatically and enables debug mode by default for the conversion step.)*
 
@@ -117,21 +121,19 @@ python3 docling_text_to_modento.py --in output --out JSONs --jobs 4
 
 This pipeline is designed to work with:
 
-- **Digitally-created PDFs with embedded text layers** - Most modern PDF forms created by software (Word, Adobe, etc.)
+- **PDF files** - Both digitally-created PDFs and scanned documents
 - **DOCX files** - Microsoft Word documents and compatible formats
 - **Common dental intake form layouts** - Patient information, medical history, insurance, consent forms
 
-The parser uses intelligent pattern matching to handle various form layouts without requiring form-specific customization.
+The Unstructured library uses advanced ML models for layout detection, making it robust across various form layouts without requiring form-specific customization.
 
 ## Known Limitations
 
 While the pipeline achieves 95%+ field capture accuracy on most forms, there are some current limitations:
 
 ### Text Extraction
-- **Automatic OCR for scanned PDFs**: ✓ **Now enabled by default** - The pipeline automatically detects PDFs without text layers and uses OCR when needed. No manual flag required! To disable this behavior, use `--no-auto-ocr`. Install OCR dependencies with: `pip install pytesseract pillow` and `sudo apt-get install tesseract-ocr`.
-  - Use `--ocr` to force OCR fallback even for PDFs with text (legacy option)
-  - Use `--force-ocr` to force OCR for all PDFs regardless of text layer
-  - Use `--no-auto-ocr` to disable automatic OCR detection
+- **Unstructured library dependencies**: The extraction quality depends on having the proper Unstructured dependencies installed. For best results, install `unstructured[all-docs]`.
+- **Strategy selection**: The default `hi_res` strategy provides the best accuracy but is slower. Use `fast` for quicker processing if needed.
 
 ### Edge Cases in Parsing
 Most common edge cases are now handled automatically:
@@ -146,9 +148,9 @@ These edge cases affect less than 5% of fields on typical forms and are document
 
 For optimal results:
 
-- ✅ **Use fillable PDFs when possible** - Forms created with form fields have the most consistent structure
-- ✅ **Ensure PDFs have embedded text** - Test by trying to select and copy text from the PDF
-- ✅ **Follow common form conventions** - Standard layouts with clear labels, checkboxes, and sections work best
+- ✅ **Use hi_res strategy** - The default hi_res strategy provides the best accuracy with model-based layout detection
+- ✅ **Enable table inference** - Keep `--infer-table-structure` enabled (default) to preserve grid layouts
+- ✅ **Install full dependencies** - Use `pip install "unstructured[all-docs]"` for complete support
 - ✅ **Test with debug mode** - Use `--debug` flag to see detailed parsing logs and field statistics
 - ✅ **Review the stats.json output** - Check the generated `.stats.json` files to verify field capture accuracy
 
