@@ -73,11 +73,11 @@
 ### ✅ Deployment Requirements
 ```bash
 # Install dependencies
-pip install pymupdf python-docx
+pip install unstructured
 
-# Optional (for OCR)
-pip install pytesseract pillow
-sudo apt-get install tesseract-ocr
+# Optional (for enhanced PDF/image support)
+pip install "unstructured[pdf]"
+pip install "unstructured[all-docs]"
 ```
 
 ### ✅ Basic Usage

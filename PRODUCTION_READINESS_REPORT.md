@@ -106,9 +106,9 @@ The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enha
          ▼
 ┌─────────────────────────────────┐
 │  docling_extract.py             │
-│  - PyMuPDF for PDF text         │
-│  - python-docx for DOCX         │
-│  - OCR for scanned pages        │
+│  - Unstructured library         │
+│  - Hi-res ML-based extraction   │
+│  - Table structure inference    │
 └────────┬────────────────────────┘
          │
          ▼
@@ -308,11 +308,11 @@ pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
 ### Prerequisites
 ```bash
 # Required
-pip install pymupdf python-docx
+pip install unstructured
 
-# Optional (for OCR support)
-pip install pytesseract pillow
-sudo apt-get install tesseract-ocr
+# Optional (for enhanced support)
+pip install "unstructured[pdf]"
+pip install "unstructured[all-docs]"
 ```
 
 ### Basic Usage
