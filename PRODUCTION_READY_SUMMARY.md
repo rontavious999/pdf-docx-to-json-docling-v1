@@ -173,7 +173,7 @@ OVERALL SUMMARY (3 files)
 
 ### ✅ **APPROVED FOR PRODUCTION USE**
 
-The PDF-to-JSON Docling pipeline meets all production readiness criteria:
+The PDF-to-JSON pipeline (using Unstructured library) meets all production readiness criteria:
 
 - **100% test pass rate** (75/75 tests)
 - **Zero critical errors**

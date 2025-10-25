@@ -1,7 +1,7 @@
-# Actionable Items for PDF-to-JSON Docling Pipeline
+# Actionable Items for PDF-to-JSON Pipeline (Unstructured-based)
 
 ## Overview
-This document outlines actionable next steps to further improve the PDF-to-JSON conversion pipeline based on a comprehensive implementation review. These items are prioritized and categorized for clarity.
+This document outlines actionable next steps to further improve the PDF-to-JSON conversion pipeline, which now uses the Unstructured library for document extraction. These items are prioritized and categorized for clarity.
 
 **Important**: All improvements must maintain the general-purpose, form-agnostic approach. **Do not hardcode any specific forms or form layouts.**
 
@@ -784,7 +784,7 @@ All solutions must adhere to these principles emphasized in the review:
 
 ## Conclusion
 
-These actionable items provide a clear roadmap for enhancing the PDF-to-JSON Docling pipeline. Each item is designed to be implemented independently while maintaining the system's core principle of generic, form-agnostic processing.
+These actionable items provide a clear roadmap for enhancing the PDF-to-JSON pipeline with Unstructured library. Each item is designed to be implemented independently while maintaining the system's core principle of generic, form-agnostic processing.
 
 ### Key Improvements from Review Feedback
 

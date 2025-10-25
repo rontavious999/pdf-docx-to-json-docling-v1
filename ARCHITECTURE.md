@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The PDF-to-JSON Docling pipeline is a two-stage document processing system that converts dental intake forms into structured, Modento-compliant JSON format.
+The PDF-to-JSON pipeline is a two-stage document processing system that uses the Unstructured library to convert dental intake forms into structured, Modento-compliant JSON format.
 
 ```
 ┌─────────────────┐

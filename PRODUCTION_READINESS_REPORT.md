@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enhanced for production use. The system demonstrates:
+The PDF-to-JSON pipeline (now using Unstructured library) has been thoroughly tested, validated, and enhanced for production use. The system demonstrates:
 
 - **✅ 75/75 automated tests passing** (100% pass rate)
 - **✅ Zero critical errors** across all validation checks
