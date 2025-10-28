@@ -16,8 +16,8 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_text_to_modento.core import is_valid_modento_key, validate_form, Question
-from docling_extract import process_one as extract_process_one
+from text_to_modento.core import is_valid_modento_key, validate_form, Question
+from unstructured_extract import process_one as extract_process_one
 
 
 class TestPatch2FieldKeyValidation:
@@ -162,7 +162,7 @@ class TestPatch3SkipNonExtractableFiles:
     def test_process_one_skips_unextractable_text(self):
         """Test that the conversion process skips files with extraction error markers"""
         # Import the conversion process_one
-        from docling_text_to_modento.core import process_one as convert_process_one
+        from text_to_modento.core import process_one as convert_process_one
         
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
@@ -186,7 +186,7 @@ class TestPatch3SkipNonExtractableFiles:
     
     def test_process_one_handles_normal_text(self):
         """Test that normal text files are still processed"""
-        from docling_text_to_modento.core import process_one as convert_process_one
+        from text_to_modento.core import process_one as convert_process_one
         
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)

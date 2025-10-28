@@ -24,7 +24,7 @@ The re-evaluation gave the pipeline a **Grade A**, highlighting:
 3. **Extended to text-only items**: Category prefixes now also apply to text-only items in grids
 
 **Changes**:
-- File: `docling_text_to_modento/modules/grid_parser.py`
+- File: `text_to_modento/modules/grid_parser.py`
 - Lines: 692-703, 705-725
 
 **Testing**: 2 new tests in `tests/test_reevaluation_patches.py`
@@ -71,7 +71,7 @@ elif dbg.enabled and q.get("title"):
 ```
 
 **Changes**:
-- File: `docling_text_to_modento/core.py`
+- File: `text_to_modento/core.py`
 - Lines: 4003-4010
 
 **Benefits**:

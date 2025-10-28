@@ -212,7 +212,7 @@ def preprocess_field_label(label: str) -> str:
 
 ### Files to Create/Modify
 
-**New Module** (`docling_text_to_modento/modules/ocr_correction.py`):
+**New Module** (`text_to_modento/modules/ocr_correction.py`):
 ```python
 """
 OCR Post-Processing Enhancement Module
@@ -231,8 +231,8 @@ field detection accuracy.
 ```
 
 **Modified Files**:
-- `docling_text_to_modento/modules/text_preprocessing.py`: Add calls to OCR correction in preprocessing pipeline
-- `docling_text_to_modento/core.py`: Apply field label correction when extracting labels
+- `text_to_modento/modules/text_preprocessing.py`: Add calls to OCR correction in preprocessing pipeline
+- `text_to_modento/core.py`: Apply field label correction when extracting labels
 
 ### Testing Strategy
 
@@ -466,7 +466,7 @@ def detect_field_with_ml(line: str, context: Dict) -> Optional[Question]:
 
 ### Files to Create/Modify
 
-**New Module** (`docling_text_to_modento/modules/ml_field_detector.py`)
+**New Module** (`text_to_modento/modules/ml_field_detector.py`)
 **New Directory** (`models/`) - Store trained models
 **Modified**: `core.py` - Add ML detection as fallback
 
@@ -605,7 +605,7 @@ def parse_to_questions_with_layout(text: str, pdf_path: Optional[str] = None) ->
 
 ### Files to Create/Modify
 
-**New Module** (`docling_text_to_modento/modules/layout_analyzer.py`)
+**New Module** (`text_to_modento/modules/layout_analyzer.py`)
 **Modified**: `core.py` - Add layout analysis option
 **New Dependency**: `pdfplumber`
 

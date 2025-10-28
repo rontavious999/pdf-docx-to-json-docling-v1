@@ -17,7 +17,7 @@ All four edge cases mentioned in the problem statement have been **successfully 
 
 **Problem**: Lines like "Phone: __Mobile__ __Home__ __Work__" were treated as one field instead of three separate phone fields.
 
-**Solution**: The `detect_multi_field_line()` function in `docling_text_to_modento/core.py` already implements this feature.
+**Solution**: The `detect_multi_field_line()` function in `text_to_modento/core.py` already implements this feature.
 
 **How it works**:
 - Detects patterns with a label followed by multiple keywords (Mobile, Home, Work, Cell, Personal, Business, Primary, Secondary, etc.)
@@ -42,7 +42,7 @@ Output:
 
 **Problem**: Category labels like "Appearance / Function / Habits" in multi-column medical history grids were not tied to the options below them.
 
-**Solution**: The grid parser in `docling_text_to_modento/modules/grid_parser.py` implements category header detection and association.
+**Solution**: The grid parser in `text_to_modento/modules/grid_parser.py` implements category header detection and association.
 
 **How it works**:
 - `detect_multicolumn_checkbox_grid()` captures category headers when present
@@ -74,7 +74,7 @@ Output options:
 
 **Problem**: Checkboxes embedded in sentences like "[ ] Yes, send me text alerts" may not be isolated as standalone boolean fields.
 
-**Solution**: The `detect_inline_checkbox_with_text()` function in `docling_text_to_modento/core.py` handles this pattern.
+**Solution**: The `detect_inline_checkbox_with_text()` function in `text_to_modento/core.py` handles this pattern.
 
 **How it works**:
 - Detects pattern: `[ ] Yes/No, [continuation text]`
@@ -101,7 +101,7 @@ Output:
 
 **Problem**: The system didn't auto-detect image-only PDFs and required explicit `--ocr` flag.
 
-**Solution**: Auto-OCR is now **enabled by default** in `docling_extract.py`.
+**Solution**: Auto-OCR is now **enabled by default** in `unstructured_extract.py`.
 
 **How it works**:
 - `has_text_layer()` function samples first 3 pages to check for extractable text
@@ -121,13 +121,13 @@ Output:
 **Example usage**:
 ```bash
 # Default - auto-OCR enabled
-python3 docling_extract.py --in documents --out output
+python3 unstructured_extract.py --in documents --out output
 
 # Disable auto-OCR
-python3 docling_extract.py --in documents --out output --no-auto-ocr
+python3 unstructured_extract.py --in documents --out output --no-auto-ocr
 
 # Force OCR for all PDFs
-python3 docling_extract.py --in documents --out output --force-ocr
+python3 unstructured_extract.py --in documents --out output --force-ocr
 ```
 
 ---
@@ -196,9 +196,9 @@ Total: 16/16 tests passed (100%)
 
 ### Files Already Implementing Features (No Changes Needed)
 
-1. `docling_extract.py` - Auto-OCR already implemented
-2. `docling_text_to_modento/core.py` - Multi-field detection and inline checkbox detection already implemented
-3. `docling_text_to_modento/modules/grid_parser.py` - Category header detection already implemented
+1. `unstructured_extract.py` - Auto-OCR already implemented
+2. `text_to_modento/core.py` - Multi-field detection and inline checkbox detection already implemented
+3. `text_to_modento/modules/grid_parser.py` - Category header detection already implemented
 
 ---
 

@@ -34,12 +34,12 @@ Based on the evaluation feedback, I have implemented the following fixes:
 ### ✅ Patch 1: Non-atomic file naming fix
 **Status:** Already implemented (verified, no changes needed)
 
-The `unique_txt_path()` function in `docling_extract.py` already handles concurrent file processing by:
+The `unique_txt_path()` function in `unstructured_extract.py` already handles concurrent file processing by:
 - Using folder hashes to generate unique output filenames
 - Preventing race conditions in parallel processing
 - Supporting files with duplicate names in different directories
 
-**Verification:** Reviewed code at lines 253-286 in `docling_extract.py`
+**Verification:** Reviewed code at lines 253-286 in `unstructured_extract.py`
 
 ### ✅ Patch 2: Field Key Validation  
 **Status:** Newly implemented
@@ -75,7 +75,7 @@ def is_valid_modento_key(key: str) -> bool:
 
 **Implementation:**
 
-1. **In extraction (`docling_extract.py`):**
+1. **In extraction (`unstructured_extract.py`):**
    ```python
    # Skip files that could not be extracted
    if text.startswith("[NO TEXT LAYER]") or text.startswith("[OCR NOT AVAILABLE]"):
@@ -84,7 +84,7 @@ def is_valid_modento_key(key: str) -> bool:
        return
    ```
 
-2. **In conversion (`docling_text_to_modento/core.py`):**
+2. **In conversion (`text_to_modento/core.py`):**
    ```python
    # Skip files that contain extraction error markers
    if raw.startswith("[NO TEXT LAYER]") or raw.startswith("[OCR NOT AVAILABLE]"):
@@ -113,11 +113,11 @@ All patches are backed by comprehensive automated testing:
 ### End-to-End Testing
 ```bash
 # Extraction
-python3 docling_extract.py --in tests/fixtures --out /tmp/test_output
+python3 unstructured_extract.py --in tests/fixtures --out /tmp/test_output
 # Result: ✅ 2 files extracted successfully
 
 # Conversion
-python3 docling_text_to_modento.py --in /tmp/test_output --out /tmp/test_jsons
+python3 text_to_modento.py --in /tmp/test_output --out /tmp/test_jsons
 # Result: ✅ 2 JSON files generated with valid keys
 ```
 
@@ -207,5 +207,5 @@ The pipeline is now more robust, user-friendly, and production-ready while maint
 - **Implementation Details:** `EVALUATION_PATCHES_IMPLEMENTATION.md`
 - **Test Suite:** `tests/test_patches.py`
 - **Modified Files:** 
-  - `docling_extract.py` (Patch 3)
-  - `docling_text_to_modento/core.py` (Patches 2 & 3)
+  - `unstructured_extract.py` (Patch 3)
+  - `text_to_modento/core.py` (Patches 2 & 3)

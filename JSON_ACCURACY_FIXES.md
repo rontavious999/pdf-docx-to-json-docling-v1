@@ -19,7 +19,7 @@ This document summarizes the fixes applied to address accuracy and completeness 
 
 **Solution**: Enhanced `clean_field_title()` function to remove sequences of 3+ underscores while preserving legitimate uses of underscores in field names (e.g., "first_name").
 
-**Code**: `docling_text_to_modento/modules/question_parser.py` - Line 23
+**Code**: `text_to_modento/modules/question_parser.py` - Line 23
 ```python
 # Remove sequences of 3 or more underscores (preserve single/double underscores in actual field names)
 cleaned = re.sub(r'_{3,}', '', cleaned)
@@ -45,7 +45,7 @@ cleaned = re.sub(r'_{3,}', '', cleaned)
 2. Patterns match spaced text: `"N o D ental"`, `"Prim ary"`, `"H older"`, `"P olicy"`
 3. Applied cleaning to keys by cleaning title BEFORE creating key (not after)
 
-**Code**: `docling_text_to_modento/modules/question_parser.py` - Lines 59-70, 217-226
+**Code**: `text_to_modento/modules/question_parser.py` - Lines 59-70, 217-226
 
 ---
 
@@ -64,7 +64,7 @@ cleaned = re.sub(r'_{3,}', '', cleaned)
 2. Enhanced `detect_multi_field_line()` to recognize name patterns
 3. Generated cleaner titles for name components
 
-**Code**: `docling_text_to_modento/core.py` - Lines 1467-1479
+**Code**: `text_to_modento/core.py` - Lines 1467-1479
 
 ---
 
@@ -81,7 +81,7 @@ cleaned = re.sub(r'_{3,}', '', cleaned)
 2. Added rejection check for OCR patterns (lowercase letter followed by space and capital)
 3. Pattern now: `[ ] Yes/No` with continuation, not `[ ] Y/N`
 
-**Code**: `docling_text_to_modento/core.py` - Lines 1408-1437
+**Code**: `text_to_modento/core.py` - Lines 1408-1437
 
 ---
 
@@ -98,7 +98,7 @@ cleaned = re.sub(r'_{3,}', '', cleaned)
 2. Applied to dropdown/radio fields by cleaning BEFORE key generation (lines 2286-2318)
 3. Ensured all Question creation uses cleaned titles
 
-**Code**: `docling_text_to_modento/core.py` - Multiple locations
+**Code**: `text_to_modento/core.py` - Multiple locations
 
 ---
 
@@ -144,11 +144,11 @@ All fixes follow the project's core principles:
 
 ## Files Modified
 
-1. `docling_text_to_modento/modules/question_parser.py`
+1. `text_to_modento/modules/question_parser.py`
    - Enhanced `clean_field_title()` with underscore removal
    - Added OCR corrections to `clean_option_text()`
 
-2. `docling_text_to_modento/core.py`
+2. `text_to_modento/core.py`
    - Applied `clean_field_title()` consistently to all field types
    - Enhanced multi-field detection with name keywords
    - Fixed inline checkbox detection pattern

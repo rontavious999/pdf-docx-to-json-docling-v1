@@ -14,7 +14,7 @@ from pathlib import Path
 # Add parent directory to path so we can import the main module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_text_to_modento.core import (
+from text_to_modento.core import (
     detect_multi_field_line,
     detect_inline_checkbox_with_text,
 )
@@ -205,7 +205,7 @@ class TestCategoryHeadersInGrids:
     
     def test_category_header_detection(self):
         """Category headers should be detected in multi-column grids."""
-        from docling_text_to_modento.modules.grid_parser import detect_multicolumn_checkbox_grid
+        from text_to_modento.modules.grid_parser import detect_multicolumn_checkbox_grid
         
         lines = [
             'Appearance / Function / Habits',
@@ -223,7 +223,7 @@ class TestCategoryHeadersInGrids:
     
     def test_category_header_prefixed_to_options(self):
         """Category headers should be prefixed to option names."""
-        from docling_text_to_modento.modules.grid_parser import (
+        from text_to_modento.modules.grid_parser import (
             detect_multicolumn_checkbox_grid,
             parse_multicolumn_checkbox_grid
         )
@@ -262,9 +262,9 @@ class TestOCRAutoDetection:
         from pathlib import Path
         import sys
         
-        # Import from docling_extract module
-        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
-        assert extract_path.exists(), "docling_extract.py should exist"
+        # Import from unstructured_extract module
+        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
+        assert extract_path.exists(), "unstructured_extract.py should exist"
         
         # Check that the function is defined
         content = extract_path.read_text()
@@ -275,7 +275,7 @@ class TestOCRAutoDetection:
         """auto_ocr should be enabled by default in extract_text_from_pdf."""
         from pathlib import Path
         
-        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
+        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
         content = extract_path.read_text()
         
         # Check default parameter value
@@ -286,7 +286,7 @@ class TestOCRAutoDetection:
         """--no-auto-ocr flag should exist to disable automatic OCR."""
         from pathlib import Path
         
-        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
+        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
         content = extract_path.read_text()
         
         assert '--no-auto-ocr' in content, "--no-auto-ocr flag should be defined"
@@ -297,7 +297,7 @@ class TestOCRAutoDetection:
         """extract_text_normally should accept auto_ocr parameter (Patch 1)."""
         from pathlib import Path
         
-        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
+        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
         content = extract_path.read_text()
         
         # Check function signature includes auto_ocr parameter

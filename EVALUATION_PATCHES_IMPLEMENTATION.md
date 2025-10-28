@@ -11,12 +11,12 @@ The evaluation document provided overwhelmingly positive feedback on the pipelin
 ### ✅ Patch 1: Non-atomic file naming fix
 **Status:** Already implemented (no changes needed)
 
-The `unique_txt_path()` function in `docling_extract.py` already handles this issue by:
+The `unique_txt_path()` function in `unstructured_extract.py` already handles this issue by:
 - Generating unique output filenames using folder hashes
 - Preventing race conditions when multiple files have the same base name
 - Supporting parallel processing without file naming conflicts
 
-**Location:** Lines 253-286 in `docling_extract.py`
+**Location:** Lines 253-286 in `unstructured_extract.py`
 
 ### ✅ Patch 2: Field Key Validation
 **Status:** Newly implemented
@@ -30,7 +30,7 @@ The `unique_txt_path()` function in `docling_extract.py` already handles this is
 - Keys cannot be empty
 
 **Implementation:**
-1. Added `is_valid_modento_key()` function (lines 3127-3166 in `docling_text_to_modento/core.py`)
+1. Added `is_valid_modento_key()` function (lines 3127-3166 in `text_to_modento/core.py`)
 2. Enhanced `validate_form()` to check all field keys (line 3121)
 3. Invalid keys are reported as validation warnings during conversion
 
@@ -64,19 +64,19 @@ is_valid_modento_key("123_start")           # False (starts with digit)
 **Problem:** When a PDF has no text layer and OCR is not available, the extractor writes a placeholder text file containing an error message. The pipeline then attempts to convert this file, resulting in an empty or meaningless JSON output.
 
 **Solution:** Gracefully handle files that cannot be extracted:
-1. In extraction stage (`docling_extract.py`):
+1. In extraction stage (`unstructured_extract.py`):
    - Detect when extraction returns error markers (`[NO TEXT LAYER]` or `[OCR NOT AVAILABLE]`)
    - Skip writing the .txt file entirely
    - Log clear warning message with installation instructions
 
-2. In conversion stage (`docling_text_to_modento/core.py`):
+2. In conversion stage (`text_to_modento/core.py`):
    - Check if text file contains extraction error markers
    - Skip JSON generation for these files
    - Return None to indicate the file was skipped
 
 **Implementation:**
-- Updated `process_one()` in `docling_extract.py` (lines 313-316)
-- Updated `process_one()` in `docling_text_to_modento/core.py` (lines 4080-4083)
+- Updated `process_one()` in `unstructured_extract.py` (lines 313-316)
+- Updated `process_one()` in `text_to_modento/core.py` (lines 4080-4083)
 
 **Benefits:**
 - Prevents creation of empty or meaningless JSON outputs
@@ -133,11 +133,11 @@ All patches are backed by comprehensive automated tests:
 Tested the full pipeline with sample documents:
 ```bash
 # Extraction
-python3 docling_extract.py --in tests/fixtures --out /tmp/test_output
+python3 unstructured_extract.py --in tests/fixtures --out /tmp/test_output
 # Result: Successfully extracted 2 files
 
 # Conversion  
-python3 docling_text_to_modento.py --in /tmp/test_output --out /tmp/test_jsons
+python3 text_to_modento.py --in /tmp/test_output --out /tmp/test_jsons
 # Result: Generated valid JSON with all keys in snake_case format
 
 # Validation
@@ -170,7 +170,7 @@ Tested with simulated unextractable file:
 ## Impact Assessment
 
 ### Code Changes
-- **Files modified:** 2 (`docling_extract.py`, `docling_text_to_modento/core.py`)
+- **Files modified:** 2 (`unstructured_extract.py`, `text_to_modento/core.py`)
 - **Files added:** 1 (`tests/test_patches.py`)
 - **Lines added:** ~280 (including tests and documentation)
 - **Lines modified:** ~20
@@ -200,4 +200,4 @@ These patches enhance the pipeline's production readiness without compromising i
 
 - Evaluation document: "Evaluation of PDF-DocX to JSON (Docling) Pipeline v1.pdf"
 - Test suite: `tests/test_patches.py`
-- Implementation: `docling_text_to_modento/core.py` and `docling_extract.py`
+- Implementation: `text_to_modento/core.py` and `unstructured_extract.py`

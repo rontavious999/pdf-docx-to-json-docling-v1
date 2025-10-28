@@ -51,7 +51,7 @@ Output: 3 fields → "Date____", "Time____", "Location____"
 - Each label must be 2-15 characters long
 - Generic pattern matching without hardcoding specific field names
 
-**Code Location**: `docling_text_to_modento/core.py`
+**Code Location**: `text_to_modento/core.py`
 
 **Integration**:
 - Added as step 7 in `enhanced_split_multi_field_line()` function
@@ -113,7 +113,7 @@ split_short_label_underscore_pattern("First____ MI____ Last____")
 - Statistical robustness with median positioning
 - Support for simple 2-column grids
 
-**Code Location**: `docling_text_to_modento/modules/grid_parser.py`
+**Code Location**: `text_to_modento/modules/grid_parser.py`
 
 ---
 
@@ -224,17 +224,17 @@ split_short_label_underscore_pattern("First____ MI____ Last____")
 
 ### Files Modified
 
-1. **docling_text_to_modento/modules/constants.py**
+1. **text_to_modento/modules/constants.py**
    - Added 15 new field patterns to KNOWN_FIELD_LABELS
    - Added 3 new regex patterns (RELATIONSHIP_RE, etc.)
 
-2. **docling_text_to_modento/core.py**
+2. **text_to_modento/core.py**
    - Added `detect_fill_in_blank_field()` function
    - Added `split_short_label_underscore_pattern()` function
    - Enhanced `detect_inline_text_options()` with 2 new patterns
    - Enhanced `enhanced_split_multi_field_line()` to use new splitter
 
-3. **docling_text_to_modento/modules/grid_parser.py**
+3. **text_to_modento/modules/grid_parser.py**
    - Enhanced `detect_column_boundaries()` with clustering algorithm
    - Improved statistical robustness
    - Added 2-column grid support

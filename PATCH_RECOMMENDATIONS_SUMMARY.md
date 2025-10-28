@@ -25,7 +25,7 @@ Based on analysis of "Targeted Patches for Remaining Limitations in pdf-docx-to-
 ### ✅ IMPLEMENT (3 small changes - 3-4 hours total)
 
 #### 1. Page-Level OCR Fallback Enhancement
-**File:** `docling_extract.py`  
+**File:** `unstructured_extract.py`  
 **Function:** `extract_text_normally()`  
 **Change:** Add page-level blank detection and OCR fallback  
 **Lines:** ~20 lines of code  
@@ -50,7 +50,7 @@ def extract_text_normally(pdf_doc: fitz.Document, auto_ocr: bool = True) -> str:
 ---
 
 #### 2. Time-Based Keywords for Multi-Field Detection
-**File:** `docling_text_to_modento/core.py`  
+**File:** `text_to_modento/core.py`  
 **Function:** `detect_multi_field_line()`  
 **Change:** Add 3 keywords + slash normalization  
 **Lines:** ~5 lines of code  

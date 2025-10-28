@@ -53,8 +53,8 @@ Simple field labels like "City", "State", "Zip" were incorrectly treated as sect
 **Impact**: Now matches field labels followed by underscores, dashes, parentheses, or any non-letter character.
 
 **Files Modified**:
-- `docling_text_to_modento/core.py` (lines 302-360)
-- `docling_text_to_modento/modules/constants.py` (lines 118-175)
+- `text_to_modento/core.py` (lines 302-360)
+- `text_to_modento/modules/constants.py` (lines 118-175)
 
 ### Solution 2: Enhanced Multi-Field Splitting ✅
 **Changed**: Added flexible split criteria in `split_by_known_labels()` to detect field separators beyond just spacing
@@ -83,7 +83,7 @@ if not (has_wide_spacing or has_underscore_separator or has_input_pattern):
 **Impact**: Fields like "SSN_______ Date of Birth_____" now split correctly into separate fields.
 
 **Files Modified**:
-- `docling_text_to_modento/core.py` (lines 401-496)
+- `text_to_modento/core.py` (lines 401-496)
 
 ### Solution 3: Fixed Section Header Detection ✅
 **Changed**: The `is_heading()` function now properly checks field labels BEFORE classifying lines as section headers
@@ -91,7 +91,7 @@ if not (has_wide_spacing or has_underscore_separator or has_input_pattern):
 **Impact**: Lines like "City____", "State____", "Zip____" are no longer misclassified as section headers and are correctly captured as input fields.
 
 **Files Modified**:
-- `docling_text_to_modento/modules/text_preprocessing.py` (via updated constants.py)
+- `text_to_modento/modules/text_preprocessing.py` (via updated constants.py)
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The modularization refactoring of `docling_text_to_modento.py` has been successfully completed with significant progress made on extracting the most critical components from the monolithic script.
+The modularization refactoring of `text_to_modento.py` has been successfully completed with significant progress made on extracting the most critical components from the monolithic script.
 
 ### Key Metrics
 
@@ -20,7 +20,7 @@ The modularization refactoring of `docling_text_to_modento.py` has been successf
 Created a clean, professional package structure:
 
 ```
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py              # Package initialization
 ├── README.md                # Package documentation
 ├── main.py                  # Entry point
@@ -35,7 +35,7 @@ docling_text_to_modento/
     ├── template_catalog.py   # Stub (future work)
     └── postprocessing.py     # Stub (future work)
 
-docling_text_to_modento.py   # ✅ 26 lines - Backward-compatible wrapper
+text_to_modento.py   # ✅ 26 lines - Backward-compatible wrapper
 ```
 
 ### 2. Extracted Modules (738 lines total)
@@ -173,13 +173,13 @@ Updated all existing test files to work with new structure:
 
 **Verified**:
 ```bash
-$ python docling_text_to_modento.py --help
+$ python text_to_modento.py --help
 # Works perfectly ✓
 
-$ python -c "from docling_text_to_modento.modules.text_preprocessing import coalesce_soft_wraps"
+$ python -c "from text_to_modento.modules.text_preprocessing import coalesce_soft_wraps"
 # Imports successfully ✓
 
-$ python -c "from docling_text_to_modento.core import TemplateCatalog"
+$ python -c "from text_to_modento.core import TemplateCatalog"
 # Still accessible from core ✓
 ```
 

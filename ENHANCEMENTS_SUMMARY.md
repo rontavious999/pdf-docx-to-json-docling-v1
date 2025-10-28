@@ -58,7 +58,7 @@ Added `split_compound_field_with_slashes()` function that:
 
 ### Implementation Details
 
-**Location**: `docling_text_to_modento/core.py`, lines 577-635
+**Location**: `text_to_modento/core.py`, lines 577-635
 
 **Pattern Detection**:
 ```python
@@ -159,7 +159,7 @@ Result:  [("Male", "male"), ("Female", "female"), ("Other", "other"),
 
 ### Implementation Details
 
-**Location**: `docling_text_to_modento/core.py`, lines 1618-1686
+**Location**: `text_to_modento/core.py`, lines 1618-1686
 
 **Integration**: Added check in main parsing loop before labeled underscore detection, replacing inline option text with proper radio button control.
 
@@ -247,7 +247,7 @@ Enhanced `detect_column_boundaries()` in grid_parser.py to be more lenient:
 
 ### Implementation Details
 
-**Location**: `docling_text_to_modento/modules/grid_parser.py`, lines 258-280
+**Location**: `text_to_modento/modules/grid_parser.py`, lines 258-280
 
 **Change**:
 ```python
@@ -305,7 +305,7 @@ if re.search(r'_{3,}|[\-]{3,}|\(\s*\)', t):
 
 ### Implementation Details
 
-**Location**: `docling_text_to_modento/modules/text_preprocessing.py`, lines 149-153
+**Location**: `text_to_modento/modules/text_preprocessing.py`, lines 149-153
 
 **Pattern**: Detects 3+ underscores, 3+ dashes, or empty parentheses as field input markers
 
@@ -340,14 +340,14 @@ This fix was critical for Enhancement 1 to work properly. Without it, compound f
 
 **Compound Field Splitting**:
 ```bash
-$ python3 -c "from docling_text_to_modento.core import split_compound_field_with_slashes; \
+$ python3 -c "from text_to_modento.core import split_compound_field_with_slashes; \
 print(split_compound_field_with_slashes('Apt/Unit/Suite________'))"
 ['Apt ___', 'Unit ___', 'Suite ___']  ✅
 ```
 
 **Inline Option Detection**:
 ```bash
-$ python3 -c "from docling_text_to_modento.core import detect_inline_text_options; \
+$ python3 -c "from text_to_modento.core import detect_inline_text_options; \
 result = detect_inline_text_options('Are you under care? Y or N If yes, explain'); \
 print(f'Q: {result[0]}, Options: {[o[0] for o in result[2]]}')"
 Q: Are you under care, Options: ['Yes', 'No']  ✅
@@ -355,7 +355,7 @@ Q: Are you under care, Options: ['Yes', 'No']  ✅
 
 **Field vs Heading Detection**:
 ```bash
-$ python3 -c "from docling_text_to_modento.modules.text_preprocessing import is_heading; \
+$ python3 -c "from text_to_modento.modules.text_preprocessing import is_heading; \
 print([is_heading(x) for x in ['Unit ___', 'Suite ___', 'Apt ___']])"
 [False, False, False]  ✅
 ```
@@ -476,7 +476,7 @@ All enhancements work out-of-the-box with no configuration required. However, be
 
 **Debug**:
 ```python
-from docling_text_to_modento.core import split_compound_field_with_slashes
+from text_to_modento.core import split_compound_field_with_slashes
 result = split_compound_field_with_slashes("YourField/Name____")
 print(result)  # Should show split segments
 ```
@@ -490,7 +490,7 @@ print(result)  # Should show split segments
 
 **Debug**:
 ```python
-from docling_text_to_modento.core import detect_inline_text_options
+from text_to_modento.core import detect_inline_text_options
 result = detect_inline_text_options("Your question? Y or N")
 print(result)  # Should show (question, type, options)
 ```
@@ -503,7 +503,7 @@ print(result)  # Should show (question, type, options)
 
 **Debug**:
 ```python
-from docling_text_to_modento.modules.text_preprocessing import is_heading
+from text_to_modento.modules.text_preprocessing import is_heading
 result = is_heading("YourField ___")
 print(result)  # Should be False for fields with underscores
 ```

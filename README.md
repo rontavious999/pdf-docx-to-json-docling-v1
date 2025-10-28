@@ -15,14 +15,14 @@ This project is a powerful two-step pipeline that automates the conversion of de
 
 The conversion process is handled by a sequence of scripts orchestrated by `run_all.py`:
 
-1.  **Text Extraction (`docling_extract.py`)**:
+1.  **Text Extraction (`unstructured_extract.py`)**:
     - Scans the `documents/` directory for `.pdf` and `.docx` files.
     - Uses **Unstructured** library for high-accuracy document text extraction.
     - Leverages hi-res strategy with model-based layout detection for superior accuracy.
     - Automatically infers table structures to preserve grid layouts.
     - Saves the extracted plain text into the `output/` directory.
 
-2.  **JSON Conversion (`docling_text_to_modento.py`)**:
+2.  **JSON Conversion (`text_to_modento.py`)**:
     - Reads the raw text files from the `output/` directory.
     - Applies a large set of rules and regular expressions to parse the text, identifying sections, questions, and options.
     - Matches the parsed fields against the `dental_form_dictionary.json` template to create a structured, standardized output.
@@ -36,8 +36,8 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
 ├── output/             # Intermediate: Extracted plain text files are stored here
 ├── JSONs/              # Output: Final structured JSON files are saved here
 ├── run_all.py          # Main script to run the entire pipeline
-├── docling_extract.py  # Script for local text extraction
-├── docling_text_to_modento.py # Script for parsing text and converting to JSON
+├── unstructured_extract.py  # Script for local text extraction
+├── text_to_modento.py # Script for parsing text and converting to JSON
 └── dental_form_dictionary.json # Template for standardizing form fields
 ```
 
@@ -88,25 +88,25 @@ To run the extraction and conversion steps separately:
 
 ```bash
 # Step 1: Extract text from documents (default: documents -> output)
-python3 docling_extract.py
+python3 unstructured_extract.py
 
 # Step 1 (with custom input/output):
-python3 docling_extract.py --in documents --out output
+python3 unstructured_extract.py --in documents --out output
 
 # Step 1 (with hi_res strategy for maximum accuracy):
-python3 docling_extract.py --in documents --out output --strategy hi_res
+python3 unstructured_extract.py --in documents --out output --strategy hi_res
 
 # Step 1 (with retry on empty results):
-python3 docling_extract.py --in documents --out output --retry
+python3 unstructured_extract.py --in documents --out output --retry
 
 # Step 1 (with custom language support):
-python3 docling_extract.py --in documents --out output --languages eng,spa
+python3 unstructured_extract.py --in documents --out output --languages eng,spa
 
 # Step 2: Convert text to JSON (with debug mode)
-python3 docling_text_to_modento.py --in output --out JSONs --debug
+python3 text_to_modento.py --in output --out JSONs --debug
 
 # Step 2 (with parallel processing for large batches):
-python3 docling_text_to_modento.py --in output --out JSONs --jobs 4
+python3 text_to_modento.py --in output --out JSONs --jobs 4
 ```
 
 **Extraction Strategies:**
@@ -172,7 +172,7 @@ pytest tests/test_text_preprocessing.py -v
 
 # Run with coverage report (requires pytest-cov)
 pip install pytest-cov
-pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
+pytest tests/ --cov=text_to_modento --cov-report=term-missing
 ```
 
 ### Test Coverage

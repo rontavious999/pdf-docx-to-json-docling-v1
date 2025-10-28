@@ -13,7 +13,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
          ▼
 ┌─────────────────────────────────────┐
 │  Stage 1: Text Extraction           │
-│  (docling_extract.py)               │
+│  (unstructured_extract.py)               │
 │                                     │
 │  • Unstructured library             │
 │  • Hi-res strategy (ML-based)       │
@@ -29,7 +29,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
          ▼
 ┌─────────────────────────────────────┐
 │  Stage 2: Intelligent Parsing       │
-│  (docling_text_to_modento.py)      │
+│  (text_to_modento.py)      │
 │                                     │
 │  • Regex-based pattern matching     │
 │  • Template catalog matching        │
@@ -48,7 +48,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
 
 ### Stage 1: Text Extraction
 
-**Script**: `docling_extract.py`
+**Script**: `unstructured_extract.py`
 
 **Purpose**: Extract raw text from PDF and DOCX files using the Unstructured library for high-accuracy extraction.
 
@@ -71,7 +71,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
 
 ### Stage 2: Intelligent Parsing and JSON Generation
 
-**Script**: `docling_text_to_modento.py`
+**Script**: `text_to_modento.py`
 
 **Purpose**: Parse extracted text into structured form fields and generate Modento-compliant JSON.
 
@@ -112,7 +112,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
 
 ## Module Responsibilities
 
-The `docling_text_to_modento.py` script (currently ~4500 lines) contains these logical components:
+The `text_to_modento.py` script (currently ~4500 lines) contains these logical components:
 
 ### Text Preprocessing Module (lines ~200-700)
 **Functions**: `scrub_headers_footers`, `coalesce_soft_wraps`, `normalize_glyphs_line`, `collapse_spaced_caps`
@@ -335,7 +335,7 @@ Output:
 
 **Enable debug mode**:
 ```bash
-python3 docling_text_to_modento.py --in output --out JSONs --debug
+python3 text_to_modento.py --in output --out JSONs --debug
 ```
 
 **Debug output includes**:
@@ -372,7 +372,7 @@ python3 docling_text_to_modento.py --in output --out JSONs --debug
 The monolithic script has been refactored into a modular package structure:
 
 ```
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py              (package initialization)
 ├── README.md                (package documentation)
 ├── main.py                  (entry point, delegates to core)
@@ -387,7 +387,7 @@ docling_text_to_modento/
     ├── postprocessing.py       (merging, consolidation) [planned]
     └── template_catalog.py     (template matching) [planned]
 
-docling_text_to_modento.py   (backward-compatible CLI wrapper)
+text_to_modento.py   (backward-compatible CLI wrapper)
 ```
 
 **Status**: 
@@ -428,7 +428,7 @@ tests/
 Add OCR fallback for scanned PDFs:
 
 ```python
-# In docling_extract.py
+# In unstructured_extract.py
 def extract_text(file_path,
                  strategy="hi_res",
                  languages="eng",

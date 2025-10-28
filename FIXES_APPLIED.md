@@ -20,7 +20,7 @@ The `is_heading()` function required text to be either all uppercase OR perfect 
 Enhanced `is_heading()` to recognize multi-word phrases starting with a capital letter as potential section headers, while still excluding common field label patterns.
 
 **Code Changed:**  
-`docling_text_to_modento/modules/text_preprocessing.py` - `is_heading()` function
+`text_to_modento/modules/text_preprocessing.py` - `is_heading()` function
 
 **Example Impact:**
 ```
@@ -48,7 +48,7 @@ Refined the multi-line header combination logic to:
 - Exclude lines with field-like patterns (short text ending with colon)
 
 **Code Changed:**  
-`docling_text_to_modento/core.py` - Multi-line header detection in `parse_to_questions()`
+`text_to_modento/core.py` - Multi-line header detection in `parse_to_questions()`
 
 **Example Impact:**
 ```
@@ -168,10 +168,10 @@ These patterns apply broadly across dental forms and don't target specific forms
 
 ## Files Modified
 
-1. `docling_text_to_modento/modules/text_preprocessing.py`  
+1. `text_to_modento/modules/text_preprocessing.py`  
    - Enhanced `is_heading()` function
 
-2. `docling_text_to_modento/core.py`  
+2. `text_to_modento/core.py`  
    - Refined multi-line header combination logic
 
 ---

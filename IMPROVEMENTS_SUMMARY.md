@@ -22,7 +22,7 @@ Successfully eliminated all instances of:
 ## Changes Made
 
 ### 1. Enhanced `is_instructional_text()` Function
-**File:** `docling_text_to_modento/core.py`
+**File:** `text_to_modento/core.py`
 
 Added detection for:
 - Bullet points (●, •) with risk/complication keywords
@@ -31,7 +31,7 @@ Added detection for:
 - Extended instructional phrase list (23 phrases → 30+ phrases)
 
 ### 2. Improved Skip Patterns
-**File:** `docling_text_to_modento/core.py`
+**File:** `text_to_modento/core.py`
 
 Enhanced skip_patterns to filter out:
 - Website domains (with optional spaces before dots)
@@ -42,7 +42,7 @@ Enhanced skip_patterns to filter out:
 - Lines starting with asterisks (often instructions)
 
 ### 3. Smarter Underscore Field Detection
-**File:** `docling_text_to_modento/core.py`
+**File:** `text_to_modento/core.py`
 
 Modified `detect_fill_in_blank_field()` to:
 - Not use long descriptive sentences as labels
@@ -50,7 +50,7 @@ Modified `detect_fill_in_blank_field()` to:
 - Skip orphaned underscores without clear context
 
 ### 4. Document Title Filtering
-**File:** `docling_text_to_modento/core.py`
+**File:** `text_to_modento/core.py`
 
 Added filtering to skip:
 - Document titles (title case, 4+ words, contains form keywords)
@@ -116,7 +116,7 @@ Many dictionary entries could benefit from additional aliases:
 - Medical conditions should match variations (e.g., "Heart Disease" vs "Heart Conditions")
 
 ### 3. Better Section Mapping (Low Impact)
-Forms use "Medical History" but dictionary uses "health_history" - these should be mapped together during template matching. This could be implemented in the `normalize_section_name()` function in `docling_text_to_modento/modules/text_preprocessing.py` by adding a mapping for "Medical History" → "health_history" and ensuring the template matching considers both names equivalent.
+Forms use "Medical History" but dictionary uses "health_history" - these should be mapped together during template matching. This could be implemented in the `normalize_section_name()` function in `text_to_modento/modules/text_preprocessing.py` by adding a mapping for "Medical History" → "health_history" and ensuring the template matching considers both names equivalent.
 
 ## Conclusion
 
@@ -130,7 +130,7 @@ The script improvements successfully achieved the goal of cleaning up junk field
 To reach significantly higher match rates (80-90%+), the primary path forward is **dictionary expansion**, not script changes. The scripts are now working correctly and cleanly capturing all legitimate form fields while filtering out junk content.
 
 ## Files Modified
-- `docling_text_to_modento/core.py` - Enhanced field filtering and validation
+- `text_to_modento/core.py` - Enhanced field filtering and validation
 
 ## Testing
 - Processed 38 forms successfully (100% success rate)

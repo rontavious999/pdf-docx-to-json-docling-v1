@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from core (these functions haven't been extracted yet)
-from docling_text_to_modento.core import (
+from text_to_modento.core import (
     clean_option_text,
     split_multi_question_line,
 )
@@ -114,7 +114,7 @@ class TestFieldPatternMatching:
     
     def test_recognizes_date_fields(self):
         """Date field patterns should be recognized."""
-        from docling_text_to_modento import DATE_LABEL_RE
+        from text_to_modento import DATE_LABEL_RE
         
         assert DATE_LABEL_RE.search("Date of Birth:")
         assert DATE_LABEL_RE.search("Birth Date:")
@@ -123,14 +123,14 @@ class TestFieldPatternMatching:
     
     def test_recognizes_state_fields(self):
         """State field patterns should be recognized."""
-        from docling_text_to_modento import STATE_LABEL_RE
+        from text_to_modento import STATE_LABEL_RE
         
         assert STATE_LABEL_RE.match("State:")
         assert STATE_LABEL_RE.match("State")
     
     def test_recognizes_checkbox_patterns(self):
         """Various checkbox formats should be recognized."""
-        from docling_text_to_modento import CHECKBOX_ANY
+        from text_to_modento import CHECKBOX_ANY
         import re
         
         checkbox_re = re.compile(CHECKBOX_ANY)
@@ -149,7 +149,7 @@ class TestExtractCompoundYesNoPrompts:
     
     def test_extracts_simple_yes_no_question(self):
         """Simple Yes/No question should be extracted."""
-        from docling_text_to_modento import extract_compound_yn_prompts
+        from text_to_modento import extract_compound_yn_prompts
         
         line = "Are you pregnant? [ ] Yes [ ] No"
         result = extract_compound_yn_prompts(line)
@@ -158,7 +158,7 @@ class TestExtractCompoundYesNoPrompts:
     
     def test_extracts_question_with_continuation(self):
         """Yes/No question with continuation text should include it."""
-        from docling_text_to_modento import extract_compound_yn_prompts
+        from text_to_modento import extract_compound_yn_prompts
         
         line = "Do you smoke? [ ] Yes [ ] No If yes, how many per day?"
         result = extract_compound_yn_prompts(line)
@@ -167,7 +167,7 @@ class TestExtractCompoundYesNoPrompts:
     
     def test_handles_multiple_yes_no_in_line(self):
         """Multiple Yes/No questions in one line should be extracted."""
-        from docling_text_to_modento import extract_compound_yn_prompts
+        from text_to_modento import extract_compound_yn_prompts
         
         line = "Smoke? [ ] Yes [ ] No   Drink? [ ] Yes [ ] No"
         result = extract_compound_yn_prompts(line)
@@ -180,7 +180,7 @@ class TestInlineCheckboxDetection:
     
     def test_detects_yes_with_continuation(self):
         """Checkbox with Yes and continuation text should be detected."""
-        from docling_text_to_modento import detect_inline_checkbox_with_text
+        from text_to_modento import detect_inline_checkbox_with_text
         
         line = "[ ] Yes, send me text alerts"
         result = detect_inline_checkbox_with_text(line)
@@ -192,7 +192,7 @@ class TestInlineCheckboxDetection:
     
     def test_detects_no_with_continuation(self):
         """Checkbox with No and continuation text should be detected."""
-        from docling_text_to_modento import detect_inline_checkbox_with_text
+        from text_to_modento import detect_inline_checkbox_with_text
         
         line = "[ ] No, I do not want to receive updates"
         result = detect_inline_checkbox_with_text(line)
@@ -203,7 +203,7 @@ class TestInlineCheckboxDetection:
     
     def test_ignores_short_continuation(self):
         """Checkbox with short continuation should be ignored."""
-        from docling_text_to_modento import detect_inline_checkbox_with_text
+        from text_to_modento import detect_inline_checkbox_with_text
         
         line = "[ ] Yes"
         result = detect_inline_checkbox_with_text(line)
@@ -211,7 +211,7 @@ class TestInlineCheckboxDetection:
     
     def test_ignores_regular_text(self):
         """Regular text without checkbox should not be detected."""
-        from docling_text_to_modento import detect_inline_checkbox_with_text
+        from text_to_modento import detect_inline_checkbox_with_text
         
         line = "This is regular text"
         result = detect_inline_checkbox_with_text(line)
@@ -219,7 +219,7 @@ class TestInlineCheckboxDetection:
     
     def test_generates_valid_key(self):
         """Generated key should be valid identifier."""
-        from docling_text_to_modento import detect_inline_checkbox_with_text
+        from text_to_modento import detect_inline_checkbox_with_text
         
         line = "[ ] Yes, please contact me about special offers"
         result = detect_inline_checkbox_with_text(line)
@@ -235,7 +235,7 @@ class TestMultiFieldDetection:
     
     def test_detects_phone_multi_fields(self):
         """Phone fields with multiple sub-types should be detected."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Phone: Mobile _____ Home _____ Work _____"
         result = detect_multi_field_line(line)
@@ -247,7 +247,7 @@ class TestMultiFieldDetection:
     
     def test_detects_email_multi_fields(self):
         """Email fields with multiple sub-types should be detected."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Email: Personal _____ Work _____"
         result = detect_multi_field_line(line)
@@ -258,7 +258,7 @@ class TestMultiFieldDetection:
     
     def test_detects_fields_with_spacing(self):
         """Fields separated by spaces should be detected."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Phone:    Mobile    Home    Work"
         result = detect_multi_field_line(line)
@@ -267,7 +267,7 @@ class TestMultiFieldDetection:
     
     def test_ignores_single_field(self):
         """Single fields should not be detected as multi-field."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Name: First Last"
         result = detect_multi_field_line(line)
@@ -275,7 +275,7 @@ class TestMultiFieldDetection:
     
     def test_ignores_phone_with_value(self):
         """Fields with actual values should not be detected."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Phone: (555) 123-4567"
         result = detect_multi_field_line(line)
@@ -283,7 +283,7 @@ class TestMultiFieldDetection:
     
     def test_generates_proper_keys(self):
         """Generated keys should follow proper naming convention."""
-        from docling_text_to_modento import detect_multi_field_line
+        from text_to_modento import detect_multi_field_line
         
         line = "Contact: Primary _____ Secondary _____"
         result = detect_multi_field_line(line)

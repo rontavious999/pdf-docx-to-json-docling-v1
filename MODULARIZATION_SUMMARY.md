@@ -2,14 +2,14 @@
 
 ## Overview
 
-The `docling_text_to_modento.py` script (~5000 lines) has been successfully refactored into a modular package structure while maintaining 100% backward compatibility with the existing CLI interface.
+The `text_to_modento.py` script (~5000 lines) has been successfully refactored into a modular package structure while maintaining 100% backward compatibility with the existing CLI interface.
 
 ## What Was Done
 
 ### 1. Package Structure Created ✅
 
 ```
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py              # Package initialization with documentation
 ├── README.md                # Package structure and usage guide  
 ├── main.py                  # Entry point (delegates to core)
@@ -24,7 +24,7 @@ docling_text_to_modento/
     ├── template_catalog.py   # Stub for future extraction (13 lines)
     └── postprocessing.py     # Stub for future extraction (19 lines)
 
-docling_text_to_modento.py   # ✅ Backward-compatible CLI wrapper (26 lines)
+text_to_modento.py   # ✅ Backward-compatible CLI wrapper (26 lines)
 ```
 
 ### 2. Extracted Components ✅
@@ -48,14 +48,14 @@ docling_text_to_modento.py   # ✅ Backward-compatible CLI wrapper (26 lines)
 
 The original CLI interface works exactly as before:
 ```bash
-python docling_text_to_modento.py --in output --out JSONs --debug
+python text_to_modento.py --in output --out JSONs --debug
 ```
 
-The wrapper script (`docling_text_to_modento.py`) is just **26 lines** and delegates to the package's `core.main()` function.
+The wrapper script (`text_to_modento.py`) is just **26 lines** and delegates to the package's `core.main()` function.
 
 ### 4. Documentation Updated ✅
 
-- **`docling_text_to_modento/README.md`**: Package structure and usage guide
+- **`text_to_modento/README.md`**: Package structure and usage guide
 - **`ARCHITECTURE.md`**: Updated to reflect completed modularization
 - **`ACTIONABLE_ITEMS.md`**: Updated with progress status
 - **Package `__init__.py`**: Comprehensive documentation of structure
@@ -93,18 +93,18 @@ All tests passed successfully:
 
 ```bash
 # CLI Help
-$ python docling_text_to_modento.py --help
+$ python text_to_modento.py --help
 ✓ Shows usage information correctly
 
 # Package Import
-$ python -c "from docling_text_to_modento import main, __version__"
+$ python -c "from text_to_modento import main, __version__"
 ✓ Package version: 2.20
 
 # Module Imports
-$ python -c "from docling_text_to_modento.modules.constants import DEFAULT_IN_DIR"
+$ python -c "from text_to_modento.modules.constants import DEFAULT_IN_DIR"
 ✓ Constants imported: output
 
-$ python -c "from docling_text_to_modento.modules.debug_logger import DebugLogger"
+$ python -c "from text_to_modento.modules.debug_logger import DebugLogger"
 ✓ DebugLogger imported successfully
 ```
 
@@ -112,9 +112,9 @@ $ python -c "from docling_text_to_modento.modules.debug_logger import DebugLogge
 
 | File | Lines | Description |
 |------|-------|-------------|
-| Original `docling_text_to_modento.py` | 5010 | Monolithic script |
-| New `docling_text_to_modento.py` | 26 | Backward-compatible wrapper |
-| `docling_text_to_modento/core.py` | 3683 | Core logic (1,327 lines extracted) |
+| Original `text_to_modento.py` | 5010 | Monolithic script |
+| New `text_to_modento.py` | 26 | Backward-compatible wrapper |
+| `text_to_modento/core.py` | 3683 | Core logic (1,327 lines extracted) |
 | `modules/constants.py` | 175 | Extracted constants |
 | `modules/debug_logger.py` | 52 | Extracted debug utilities |
 | `modules/text_preprocessing.py` | 511 | Extracted text preprocessing |

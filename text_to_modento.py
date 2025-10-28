@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-docling_text_to_modento.py — v2.20
+text_to_modento.py — v2.20
 
-TXT (Docling) -> Modento-compliant JSON
+TXT (Unstructured) -> Modento-compliant JSON
 
 What's new vs v2.19 (Archivev19 continued):
   • Archivev19 Fix 4: Never treat lines with question marks as section headings (captures "Question? If so, detail:" patterns)
@@ -15,12 +15,12 @@ What's new vs v2.19 (Archivev19 continued):
   • Previous (v2.14): Enhanced category header detection, unique "Please explain" titles
 
 IMPORTANT: This script has been modularized. The main logic now resides in the
-docling_text_to_modento package. This file serves as a backward-compatible wrapper
+text_to_modento package. This file serves as a backward-compatible wrapper
 to maintain the existing CLI interface.
 """
 
 # Import the main function from the core module in the package
-from docling_text_to_modento.core import main
+from text_to_modento.core import main
 
 if __name__ == "__main__":
     main()

@@ -391,14 +391,14 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 ## Priority 3: Code Quality and Maintainability
 
 ### 3.1 Modularize Large Parsing Script ✅ **IN PROGRESS**
-**Current State**: `docling_text_to_modento.py` is ~5000 lines in a single file.
+**Current State**: `text_to_modento.py` is ~5000 lines in a single file.
 
 **Status**: Modularization has begun! The package structure is in place.
 
 **Completed Action Items**:
-- [x] Create package structure `docling_text_to_modento/` with `modules/` subdirectory
-- [x] Move original script to `docling_text_to_modento/core.py`
-- [x] Create backward-compatible wrapper `docling_text_to_modento.py`
+- [x] Create package structure `text_to_modento/` with `modules/` subdirectory
+- [x] Move original script to `text_to_modento/core.py`
+- [x] Create backward-compatible wrapper `text_to_modento.py`
 - [x] Extract constants to `modules/constants.py` (regex patterns, configuration)
 - [x] Extract debug logger to `modules/debug_logger.py`
 - [x] Create stub modules for future extraction:
@@ -418,7 +418,7 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 
 **Current Module Structure**:
   ```
-  docling_text_to_modento/
+  text_to_modento/
   ├── __init__.py
   ├── README.md
   ├── main.py (entry point)
@@ -433,7 +433,7 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
       ├── postprocessing.py (stub)
       └── template_catalog.py (stub)
   
-  docling_text_to_modento.py (backward-compatible CLI wrapper) ✅
+  text_to_modento.py (backward-compatible CLI wrapper) ✅
   ```
 
 **Acceptance Criteria**:
@@ -482,18 +482,18 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 **Current State**: Code and documentation contain outdated "LLMWhisperer" references.
 
 **Action Items**:
-- [ ] Update `docling_text_to_modento.py`:
+- [ ] Update `text_to_modento.py`:
   - Line 4677: Change help text from "Folder with LLMWhisperer .txt files" to "Folder with extracted .txt files"
 - [ ] Update `README.md`:
-  - Line 24: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
-  - Line 39: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
+  - Line 24: Change "llm_text_to_modento.py" to "text_to_modento.py"
+  - Line 39: Change "llm_text_to_modento.py" to "text_to_modento.py"
 - [ ] Update `run_all.py`:
-  - Line 6 comment: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
+  - Line 6 comment: Change "llm_text_to_modento.py" to "text_to_modento.py"
 - [ ] Update `FIXES_SUMMARY.md`:
-  - Replace references to "llm_text_to_modento.py" with "docling_text_to_modento.py"
+  - Replace references to "llm_text_to_modento.py" with "text_to_modento.py"
 - [ ] Update `QUICK_REFERENCE.md`:
-  - Line 40: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
-- [ ] Review `docling_extract.py`:
+  - Line 40: Change "llm_text_to_modento.py" to "text_to_modento.py"
+- [ ] Review `unstructured_extract.py`:
   - Line 8: Keep "This replaces the LLMWhisperer API" as historical context (acceptable)
 
 **Acceptance Criteria**:

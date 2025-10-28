@@ -74,7 +74,7 @@ The ML model predicts one of:
 ### Basic Usage
 
 ```python
-from docling_text_to_modento.modules import MLFieldDetector, initialize_ml_detector
+from text_to_modento.modules import MLFieldDetector, initialize_ml_detector
 
 # Initialize detector (loads saved model if exists)
 detector = MLFieldDetector(model_path='models/field_detector.pkl')
@@ -265,13 +265,13 @@ Top features (learned from training):
 ## Files
 
 **Created**:
-- `docling_text_to_modento/modules/ml_field_detector.py` - Complete ML detector module (400+ lines)
+- `text_to_modento/modules/ml_field_detector.py` - Complete ML detector module (400+ lines)
 - `models/` - Directory for trained models
 - `models/.gitignore` - Exclude model files from git
 - `ML_FIELD_DETECTOR_README.md` - This documentation
 
 **Modified**:
-- `docling_text_to_modento/modules/__init__.py` - Export ML detector classes
+- `text_to_modento/modules/__init__.py` - Export ML detector classes
 
 ## Compliance
 

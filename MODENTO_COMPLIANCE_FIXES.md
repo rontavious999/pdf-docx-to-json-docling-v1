@@ -18,7 +18,7 @@ The audit identified schema compliance issues across three test files:
 **Issue**: Date fields used `input_type: "any"` but Modento schema only allows "past" or "future"
 
 **Implementation**:
-- Updated `classify_date_input()` in `docling_text_to_modento/modules/question_parser.py`
+- Updated `classify_date_input()` in `text_to_modento/modules/question_parser.py`
 - Signature/consent dates → `"past"` (signed documents are historical)
 - Birth dates/DOB → `"past"` (historical)
 - Appointment dates → `"future"` (scheduled)
@@ -26,7 +26,7 @@ The audit identified schema compliance issues across three test files:
 - Completely removed `"any"` as an option
 
 **Files Modified**:
-- `docling_text_to_modento/modules/question_parser.py` (lines 129-154)
+- `text_to_modento/modules/question_parser.py` (lines 129-154)
 
 **Commit**: 5271241
 
@@ -43,7 +43,7 @@ The audit identified schema compliance issues across three test files:
 - Returns `"name"` for all person-name fields
 
 **Files Modified**:
-- `docling_text_to_modento/modules/question_parser.py` (lines 30-32, 119-144)
+- `text_to_modento/modules/question_parser.py` (lines 30-32, 119-144)
 
 **Commit**: 5271241
 
@@ -54,7 +54,7 @@ The audit identified schema compliance issues across three test files:
 **Issue**: Multiple sub-questions combined into one field (e.g., "Name of insured / Birthdate / SSN")
 
 **Implementation**:
-- Enhanced `try_split_known_labels()` in `docling_text_to_modento/core.py`
+- Enhanced `try_split_known_labels()` in `text_to_modento/core.py`
 - Detects explicit compound field separators: `/`, `|`, comma followed by capital letter
 - Handles patterns like:
   - "Name of insured / Birthdate / SSN"
@@ -64,7 +64,7 @@ The audit identified schema compliance issues across three test files:
 - Addresses production report warnings about compound fields
 
 **Files Modified**:
-- `docling_text_to_modento/core.py` (lines 1380-1456)
+- `text_to_modento/core.py` (lines 1380-1456)
 
 **Commit**: 68db99f
 
@@ -89,7 +89,7 @@ The audit identified schema compliance issues across three test files:
 - Integrated into postprocessing pipeline
 
 **Files Modified**:
-- `docling_text_to_modento/core.py` (lines 4112-4159, 4358)
+- `text_to_modento/core.py` (lines 4112-4159, 4358)
 
 **Commit**: aeb4ff1
 
@@ -110,7 +110,7 @@ The audit identified schema compliance issues across three test files:
 - Integrated into postprocessing pipeline
 
 **Files Modified**:
-- `docling_text_to_modento/core.py` (lines 4160-4224, 4361)
+- `text_to_modento/core.py` (lines 4160-4224, 4361)
 
 **Commit**: bafa72a
 
@@ -175,12 +175,12 @@ The implementation:
 ## Files Changed
 
 ### Core Changes
-1. `docling_text_to_modento/modules/question_parser.py`
+1. `text_to_modento/modules/question_parser.py`
    - Added NAME_RE pattern
    - Updated `classify_input_type()` to detect name fields
    - Enhanced `classify_date_input()` to return only "past" or "future"
 
-2. `docling_text_to_modento/core.py`
+2. `text_to_modento/core.py`
    - Enhanced `try_split_known_labels()` for compound field detection
    - Added `postprocess_order_sections()` for section ordering
    - Added `postprocess_validate_modento_compliance()` for final validation
@@ -197,8 +197,8 @@ To validate against sample forms:
 python3 run_all.py
 
 # Or run manually
-python3 docling_extract.py --in documents --out output
-python3 docling_text_to_modento.py --in output --out JSONs --debug
+python3 unstructured_extract.py --in documents --out output
+python3 text_to_modento.py --in output --out JSONs --debug
 
 # Check the generated .modento.json files in JSONs/ directory
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-docling_extract.py
+unstructured_extract.py
 
 Batch-convert .pdf and .docx files in ./documents to text using Unstructured library,
 saving .txt files to ./output.
@@ -12,10 +12,10 @@ This uses the Unstructured library for high-accuracy document text extraction wi
 - Automatic fallback and retry mechanisms
 
 USAGE:
-  python3 docling_extract.py
-  python3 docling_extract.py --in documents --out output
-  python3 docling_extract.py --in documents --out output --strategy hi_res
-  python3 docling_extract.py --in documents --out output --retry
+  python3 unstructured_extract.py
+  python3 unstructured_extract.py --in documents --out output
+  python3 unstructured_extract.py --in documents --out output --strategy hi_res
+  python3 unstructured_extract.py --in documents --out output --retry
 
 REQUIREMENTS:
   pip install unstructured

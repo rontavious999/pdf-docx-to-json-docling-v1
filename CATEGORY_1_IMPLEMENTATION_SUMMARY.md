@@ -213,11 +213,11 @@ NPF1: 138 fields (+4.5%) ✅
 
 ### Files Modified
 
-**docling_text_to_modento/modules/constants.py**:
+**text_to_modento/modules/constants.py**:
 - Added 3 new regex patterns (Fix 1.5)
 - Extended KNOWN_FIELD_LABELS with 15 new patterns (Fixes 1.5, 1.6, 1.7)
 
-**docling_text_to_modento/core.py**:
+**text_to_modento/core.py**:
 - Added `detect_fill_in_blank_field()` function (Fix 1.2)
 - Enhanced `detect_inline_text_options()` with 2 new patterns (Fix 1.3)
 - Integrated fill-in-blank check into main parsing loop

@@ -37,7 +37,7 @@
 Run the converter on your TXT files:
 
 ```bash
-python3 docling_text_to_modento.py --in <input_dir> --out <output_dir> --debug
+python3 text_to_modento.py --in <input_dir> --out <output_dir> --debug
 ```
 
 All fixes are automatically applied during processing.

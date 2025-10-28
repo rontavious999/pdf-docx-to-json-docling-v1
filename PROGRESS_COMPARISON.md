@@ -77,14 +77,14 @@
 ### Files Modified
 
 **Phase 1**:
-- `docling_text_to_modento/core.py` (~110 lines)
-- `docling_text_to_modento/modules/constants.py` (~50 lines)
+- `text_to_modento/core.py` (~110 lines)
+- `text_to_modento/modules/constants.py` (~50 lines)
 - `FIELD_CAPTURE_IMPROVEMENTS.md` (new)
 
 **Phase 2**:
-- `docling_text_to_modento/core.py` (~120 additional lines)
-- `docling_text_to_modento/modules/grid_parser.py` (~10 lines)
-- `docling_text_to_modento/modules/text_preprocessing.py` (~5 lines)
+- `text_to_modento/core.py` (~120 additional lines)
+- `text_to_modento/modules/grid_parser.py` (~10 lines)
+- `text_to_modento/modules/text_preprocessing.py` (~5 lines)
 - `ENHANCEMENTS_SUMMARY.md` (new)
 
 ### Test Status
