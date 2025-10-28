@@ -19,9 +19,9 @@ import pytest
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_extract import process_one as extract_process_one
-from docling_text_to_modento.core import process_one as convert_process_one
-from docling_text_to_modento.modules.template_catalog import TemplateCatalog
+from unstructured_extract import process_one as extract_process_one
+from text_to_modento.core import process_one as convert_process_one
+from text_to_modento.modules.template_catalog import TemplateCatalog
 
 
 class TestIntegrationPipeline:

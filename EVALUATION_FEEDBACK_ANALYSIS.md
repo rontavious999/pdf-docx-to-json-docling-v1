@@ -31,7 +31,7 @@ The evaluation identifies 4 targeted patches to address:
 ## Patch 1: Non-Atomic Output File Naming in Parallel Extraction
 
 ### Location
-`docling_extract.py` - Function `unique_txt_path()` and usage in `process_one()`
+`unstructured_extract.py` - Function `unique_txt_path()` and usage in `process_one()`
 
 ### Issue Description
 When extracting text in parallel mode, if two input files have the same base filename (e.g., `PatientForm.pdf` in different folders), both processes may attempt to write to the same output file (e.g., `PatientForm.txt`). The current `unique_txt_path()` function checks for existing files and appends a number if needed, but in a parallel scenario, both processes might simultaneously see no file exists and choose the same name, leading to a race condition.
@@ -46,7 +46,7 @@ Introduce a more robust unique naming scheme that accounts for concurrency:
 
 **Option A: Include folder hash or UUID**
 ```python
-# In docling_extract.py, inside process_one before writing:
+# In unstructured_extract.py, inside process_one before writing:
 base_name = file_path.stem
 # Use part of the parent folder name or a hash for uniqueness
 folder_hash = hex(abs(hash(file_path.parent)) % (16**4))[2:]
@@ -74,7 +74,7 @@ This is a valid concurrency issue that could lead to data loss in production sce
 ## Patch 2: Incomplete Modularization of Parsing Logic
 
 ### Location
-`docling_text_to_modento/core.py` (and related documentation in `docling_text_to_modento/README.md`)
+`text_to_modento/core.py` (and related documentation in `text_to_modento/README.md`)
 
 ### Issue Description
 The main parsing script (`core.py`) is still partially monolithic at nearly 4000 lines. While the maintainers have outlined a modularization plan and created separate modules (`text_preprocessing.py`, `question_parser.py`, etc.), many parts remain marked as "Planned" and are still in the single file. This makes the codebase harder to navigate and could slow down testing and future enhancements.
@@ -174,7 +174,7 @@ Create a `tests/fixtures/` directory with:
 ## Patch 4: Repeated Dictionary Loading in Parallel Conversion
 
 ### Location
-`docling_text_to_modento/core.py` - In `process_one_wrapper` for parallel jobs
+`text_to_modento/core.py` - In `process_one_wrapper` for parallel jobs
 
 ### Issue Description
 When converting text to JSON in parallel, each worker process loads `dental_form_dictionary.json` fresh for **each file** it processes. The code opens and parses the JSON in `TemplateCatalog.from_path()` inside `process_one_wrapper()`. In scenarios with many text files and limited worker processes, a single worker might convert multiple files sequentially, re-reading the same dictionary each time. While not catastrophic (the JSON is only a few thousand lines), this is inefficient and adds unnecessary overhead.
@@ -249,7 +249,7 @@ If you agree with these recommendations, here's the implementation order I sugge
 
 ### Phase 1: High Priority (Implement First)
 1. ✅ **Patch 1: Fix parallel file naming race condition**
-   - Modify `unique_txt_path()` in `docling_extract.py`
+   - Modify `unique_txt_path()` in `unstructured_extract.py`
    - Add folder hash to ensure unique output names
    - Test with duplicate filenames in parallel mode
 

@@ -39,7 +39,7 @@ CHECKBOX_ANY = r"(?:\[\s*\]|\[x\]|☐|☑|□|■|❒|◻|✓|✔|✗|✘|!)"
 - No impact on forms that don't use "!" (NPF forms unchanged)
 - All existing tests continue to pass
 
-**File Modified**: `docling_text_to_modento/modules/constants.py`
+**File Modified**: `text_to_modento/modules/constants.py`
 
 ---
 
@@ -71,7 +71,7 @@ while k < len(lines) and lines[k].strip() and not BULLET_RE.match(lines[k].strip
   - "Do you use controlled substances?"
 - These questions now appear as proper radio button fields instead of being embedded in terms text
 
-**File Modified**: `docling_text_to_modento/core.py`
+**File Modified**: `text_to_modento/core.py`
 
 ---
 
@@ -98,7 +98,7 @@ class Question:
 - Properly serializes to JSON "if" property (code already existed for this)
 - Sets foundation for future follow-up field implementation
 
-**File Modified**: `docling_text_to_modento/core.py`
+**File Modified**: `text_to_modento/core.py`
 
 ---
 

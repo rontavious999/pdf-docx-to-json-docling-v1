@@ -63,7 +63,7 @@ Result:
 ```
 
 ### Files Changed
-- `docling_text_to_modento/modules/grid_parser.py` (lines 692-725)
+- `text_to_modento/modules/grid_parser.py` (lines 692-725)
 
 ### Tests Added
 - `test_relaxed_header_count_check`: Validates 3 headers with 3 columns
@@ -164,7 +164,7 @@ elif dbg.enabled and q.get("title"):
 4. **Supports continuous improvement**: Creates a clear path for Patch 5
 
 ### Files Changed
-- `docling_text_to_modento/core.py` (lines 4003-4010)
+- `text_to_modento/core.py` (lines 4003-4010)
 
 ### Tests Added
 - `test_warning_for_unmatched_field`: Validates warning is logged for unmatched fields

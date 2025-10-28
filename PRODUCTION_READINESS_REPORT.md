@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enhanced for production use. The system demonstrates:
+The PDF-to-JSON pipeline (now using Unstructured library) has been thoroughly tested, validated, and enhanced for production use. The system demonstrates:
 
 - **✅ 75/75 automated tests passing** (100% pass rate)
 - **✅ Zero critical errors** across all validation checks
@@ -105,10 +105,10 @@ The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enha
          │
          ▼
 ┌─────────────────────────────────┐
-│  docling_extract.py             │
-│  - PyMuPDF for PDF text         │
-│  - python-docx for DOCX         │
-│  - OCR for scanned pages        │
+│  unstructured_extract.py             │
+│  - Unstructured library         │
+│  - Hi-res ML-based extraction   │
+│  - Table structure inference    │
 └────────┬────────────────────────┘
          │
          ▼
@@ -119,7 +119,7 @@ The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enha
          │
          ▼
 ┌─────────────────────────────────┐
-│  docling_text_to_modento.py     │
+│  text_to_modento.py     │
 │  - Text preprocessing           │
 │  - Pattern matching             │
 │  - Field extraction             │
@@ -138,7 +138,7 @@ The PDF-to-JSON Docling pipeline has been thoroughly tested, validated, and enha
 ### Module Structure
 
 ```
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py
 ├── main.py                    # Entry point
 ├── core.py                    # Main parsing logic
@@ -180,7 +180,7 @@ pytest tests/ -v
 pytest tests/test_edge_cases.py -v
 
 # Run with coverage
-pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
+pytest tests/ --cov=text_to_modento --cov-report=term-missing
 ```
 
 ---
@@ -308,11 +308,11 @@ pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
 ### Prerequisites
 ```bash
 # Required
-pip install pymupdf python-docx
+pip install unstructured
 
-# Optional (for OCR support)
-pip install pytesseract pillow
-sudo apt-get install tesseract-ocr
+# Optional (for enhanced support)
+pip install "unstructured[pdf]"
+pip install "unstructured[all-docs]"
 ```
 
 ### Basic Usage
@@ -321,21 +321,21 @@ sudo apt-get install tesseract-ocr
 python run_all.py
 
 # Or run steps separately
-python docling_extract.py --in documents --out output
-python docling_text_to_modento.py --in output --out JSONs --debug
+python unstructured_extract.py --in documents --out output
+python text_to_modento.py --in output --out JSONs --debug
 ```
 
 ### Production Configuration
 ```bash
 # Enable parallel processing for large batches
-python docling_extract.py --in documents --out output --jobs 4
-python docling_text_to_modento.py --in output --out JSONs --jobs 4
+python unstructured_extract.py --in documents --out output --jobs 4
+python text_to_modento.py --in output --out JSONs --jobs 4
 
 # Force OCR for all PDFs
-python docling_extract.py --in documents --out output --force-ocr
+python unstructured_extract.py --in documents --out output --force-ocr
 
 # Disable auto-OCR (manual control)
-python docling_extract.py --in documents --out output --no-auto-ocr
+python unstructured_extract.py --in documents --out output --no-auto-ocr
 ```
 
 ### Monitoring

@@ -28,7 +28,7 @@ pytest tests/test_question_parser.py::TestCleanOptionText::test_removes_duplicat
 ### Run with coverage report:
 ```bash
 pip install pytest-cov
-pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
+pytest tests/ --cov=text_to_modento --cov-report=term-missing
 ```
 
 ## Test Structure
@@ -102,7 +102,7 @@ def test_new_feature(self):
 These tests should be run automatically on every commit to catch regressions early. Set up CI/CD (GitHub Actions, Jenkins, etc.) to run:
 
 ```bash
-pytest tests/ --cov=docling_text_to_modento --cov-report=xml
+pytest tests/ --cov=text_to_modento --cov-report=xml
 ```
 
 ## Test Coverage Goals
@@ -113,7 +113,7 @@ pytest tests/ --cov=docling_text_to_modento --cov-report=xml
 
 Check current coverage:
 ```bash
-pytest tests/ --cov=docling_text_to_modento --cov-report=term-missing
+pytest tests/ --cov=text_to_modento --cov-report=term-missing
 ```
 
 ## Known Limitations

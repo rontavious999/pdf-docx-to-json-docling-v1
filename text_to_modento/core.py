@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-docling_text_to_modento.py — v2.21
+text_to_modento.py — v2.21
 
-TXT (Docling) -> Modento-compliant JSON
+TXT (Unstructured) -> Modento-compliant JSON
 
 What's new vs v2.20 (Priority Improvements):
   • Priority 1.1: OCR Auto-Detection - Automatically detects and processes scanned PDFs

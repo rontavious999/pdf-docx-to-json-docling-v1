@@ -8,7 +8,7 @@ This document describes the incremental modularization approach taken for Patch 
 
 ### 1. Added Comprehensive Documentation
 
-**File: `docling_text_to_modento/core.py`**
+**File: `text_to_modento/core.py`**
 - Added detailed modularization roadmap in header comments
 - Documented current status and future plans
 - Listed which functions are already modularized vs. planned for future PRs

@@ -1,5 +1,5 @@
 """
-Modularized components of the docling_text_to_modento pipeline.
+Modularized components of the text_to_modento pipeline.
 """
 
 # Export OCR correction functions (Category 2 Fix 2.2)

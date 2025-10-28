@@ -1,13 +1,13 @@
 """
-docling_text_to_modento package — v2.20
+text_to_modento package — v2.20
 
-TXT (Docling) -> Modento-compliant JSON
+TXT (Unstructured) -> Modento-compliant JSON
 
 Modularized structure for better maintainability.
 
 Package Structure:
 ------------------
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py              - Package initialization
 ├── main.py                  - Entry point (delegates to core)
 ├── core.py                  - Main parsing logic (original monolithic script)
@@ -22,7 +22,7 @@ docling_text_to_modento/
     └── postprocessing.py     - Merging and consolidation (planned)
 
 The modularization is being done incrementally while maintaining full
-backward compatibility. The original CLI interface via docling_text_to_modento.py
+backward compatibility. The original CLI interface via text_to_modento.py
 remains unchanged.
 """
 

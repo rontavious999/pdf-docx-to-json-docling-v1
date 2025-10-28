@@ -13,10 +13,10 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from docling_text_to_modento.modules.grid_parser import parse_multicolumn_checkbox_grid
-from docling_text_to_modento.modules.template_catalog import TemplateCatalog
-from docling_text_to_modento.modules.debug_logger import DebugLogger, MatchEvent
-from docling_text_to_modento.core import apply_templates_and_count
+from text_to_modento.modules.grid_parser import parse_multicolumn_checkbox_grid
+from text_to_modento.modules.template_catalog import TemplateCatalog
+from text_to_modento.modules.debug_logger import DebugLogger, MatchEvent
+from text_to_modento.core import apply_templates_and_count
 
 
 class TestPatch1CategoryPrefixing:
@@ -214,7 +214,7 @@ class TestPatch3SkipUnextractable:
     
     def test_skip_markers_exist(self):
         """Verify that the skip logic for unextractable files exists."""
-        from docling_text_to_modento.core import process_one
+        from text_to_modento.core import process_one
         from pathlib import Path
         import tempfile
         

@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from core (TemplateCatalog hasn't been extracted yet)
-from docling_text_to_modento.core import TemplateCatalog
+from text_to_modento.core import TemplateCatalog
 
 
 class TestTemplateCatalog:
@@ -111,7 +111,7 @@ class TestFieldNormalization:
     
     def test_slug_key_normalization(self):
         """Field titles should normalize to valid keys."""
-        from docling_text_to_modento import slugify
+        from text_to_modento import slugify
         
         # Test various inputs
         assert slugify("First Name") == "first_name"
@@ -126,7 +126,7 @@ class TestFieldNormalization:
     
     def test_text_normalization(self):
         """Text normalization should handle common variations."""
-        from docling_text_to_modento import _norm_text
+        from text_to_modento import _norm_text
         
         # Should normalize common synonyms
         assert "dob" in _norm_text("Date of Birth")
@@ -136,7 +136,7 @@ class TestFieldNormalization:
     
     def test_handles_empty_input(self):
         """Normalization should handle empty input gracefully."""
-        from docling_text_to_modento import slugify, _norm_text
+        from text_to_modento import slugify, _norm_text
         
         assert slugify("") in ["", "q"]  # May default to "q"
         assert _norm_text("") == ""
@@ -148,7 +148,7 @@ class TestSectionNormalization:
     
     def test_normalizes_common_sections(self):
         """Common section names should normalize correctly."""
-        from docling_text_to_modento import normalize_section_name
+        from text_to_modento import normalize_section_name
         
         # Test various forms of patient information
         assert normalize_section_name("PATIENT INFORMATION") == "Patient Information"
@@ -164,7 +164,7 @@ class TestSectionNormalization:
     
     def test_handles_signature_section(self):
         """Signature sections should be detected."""
-        from docling_text_to_modento import normalize_section_name
+        from text_to_modento import normalize_section_name
         
         assert normalize_section_name("Patient Signature") == "Signature"
         assert normalize_section_name("SIGNATURE") == "Signature"

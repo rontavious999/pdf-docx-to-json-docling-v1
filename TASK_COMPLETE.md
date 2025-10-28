@@ -18,7 +18,7 @@
 - Example: "Patient information" → created as input field instead of section header
 
 **Fix:** Enhanced `is_heading()` function to recognize multi-word phrases starting with capital letter
-- File: `docling_text_to_modento/modules/text_preprocessing.py`
+- File: `text_to_modento/modules/text_preprocessing.py`
 - No hardcoding - uses generic pattern recognition
 
 **Impact:** 
@@ -30,7 +30,7 @@
 - Example: "Current dental practice information" + "New dental practice information" → combined as one section
 
 **Fix:** Refined multi-line header logic to only combine true continuations
-- File: `docling_text_to_modento/core.py`
+- File: `text_to_modento/core.py`
 - Only combines if next line starts lowercase or is a grammatical continuation
 - Excludes section keywords: information, practice, consent, authorization, etc.
 
@@ -70,10 +70,10 @@
 
 ## Files Modified
 
-1. `docling_text_to_modento/modules/text_preprocessing.py`
+1. `text_to_modento/modules/text_preprocessing.py`
    - Enhanced `is_heading()` function (+31 lines, -7 lines)
 
-2. `docling_text_to_modento/core.py`  
+2. `text_to_modento/core.py`  
    - Refined multi-line header combination logic (+17 lines, -1 line)
 
 **Total Changes:** ~50 lines across 2 files
@@ -127,8 +127,8 @@
 python3 run_all.py
 
 # Or run steps separately with debug mode
-python3 docling_extract.py --in documents --out output
-python3 docling_text_to_modento.py --in output --out JSONs --debug
+python3 unstructured_extract.py --in documents --out output
+python3 text_to_modento.py --in output --out JSONs --debug
 
 # Check the generated JSON files
 ls JSONs/

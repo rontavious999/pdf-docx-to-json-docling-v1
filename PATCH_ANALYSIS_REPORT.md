@@ -24,7 +24,7 @@ This report analyzes the 7 patches proposed in "Targeted Patches for Remaining L
 
 **Current Implementation:**
 ✅ **Already Implemented (Document-Level):**
-- `has_text_layer()` function exists in `docling_extract.py` (lines 60-81)
+- `has_text_layer()` function exists in `unstructured_extract.py` (lines 60-81)
 - Auto-OCR enabled by default with `auto_ocr=True` parameter
 - `--no-auto-ocr` flag available to disable
 - OCR automatically triggers for completely scanned PDFs
@@ -347,7 +347,7 @@ def test_phone_multi_field():
 
 **Current Implementation:**
 ⚠️ **Modularization Partially Complete:**
-- Module structure exists: `docling_text_to_modento/modules/`
+- Module structure exists: `text_to_modento/modules/`
 - Several modules created and populated:
   - ✅ `text_preprocessing.py` - Complete with functions
   - ✅ `grid_parser.py` - Complete with functions
@@ -443,7 +443,7 @@ Planned functions:
 
 ### Change 1: Add Page-Level OCR Fallback
 
-**File:** `docling_extract.py`
+**File:** `unstructured_extract.py`
 
 **Function to Modify:** `extract_text_normally()`
 
@@ -520,7 +520,7 @@ text = extract_text_normally(doc, auto_ocr=auto_ocr)
 
 ### Change 2: Add Time-Based Keywords and Slash Normalization
 
-**File:** `docling_text_to_modento/core.py`
+**File:** `text_to_modento/core.py`
 
 **Function to Modify:** `detect_multi_field_line()`
 
@@ -607,7 +607,7 @@ class TestPageLevelOCR:
     def test_extract_text_normally_accepts_auto_ocr_param(self):
         """extract_text_normally should accept auto_ocr parameter."""
         from pathlib import Path
-        extract_path = Path(__file__).parent.parent / 'docling_extract.py'
+        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
         content = extract_path.read_text()
         
         # Check function signature includes auto_ocr

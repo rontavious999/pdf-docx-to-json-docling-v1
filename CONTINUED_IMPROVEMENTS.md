@@ -194,7 +194,7 @@ From user's request to continue working toward 100%:
 ## Technical Details
 
 ### Files Modified
-- `docling_text_to_modento/core.py`:
+- `text_to_modento/core.py`:
   - Fixed `split_conditional_field_line` (lines 540-575)
   - Completed `create_yn_question_with_followup` (lines 1414-1427)
   - Added prompt text cleanup in compound yes/no logic (lines 2150-2157)

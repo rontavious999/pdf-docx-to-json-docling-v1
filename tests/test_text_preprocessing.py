@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import from the new modular structure
-from docling_text_to_modento.modules.text_preprocessing import coalesce_soft_wraps
+from text_to_modento.modules.text_preprocessing import coalesce_soft_wraps
 
 
 class TestCoalesceSoftWraps:
@@ -129,7 +129,7 @@ class TestNormalization:
     def test_basic_normalization(self):
         """Test that basic text normalization works."""
         # Import the normalization functions
-        from docling_text_to_modento import normalize_glyphs_line
+        from text_to_modento import normalize_glyphs_line
         
         # Test basic glyph normalization
         text = 'Smart "quotes" and dashes—test'

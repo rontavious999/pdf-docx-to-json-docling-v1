@@ -1,7 +1,7 @@
-# Actionable Items for PDF-to-JSON Docling Pipeline
+# Actionable Items for PDF-to-JSON Pipeline (Unstructured-based)
 
 ## Overview
-This document outlines actionable next steps to further improve the PDF-to-JSON conversion pipeline based on a comprehensive implementation review. These items are prioritized and categorized for clarity.
+This document outlines actionable next steps to further improve the PDF-to-JSON conversion pipeline, which now uses the Unstructured library for document extraction. These items are prioritized and categorized for clarity.
 
 **Important**: All improvements must maintain the general-purpose, form-agnostic approach. **Do not hardcode any specific forms or form layouts.**
 
@@ -10,19 +10,19 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 ## Priority 1: Critical Feature Gaps
 
 ### 1.1 OCR Auto-Detection Enhancement
-**Current State**: The pipeline now includes OCR support via Tesseract (as of recent updates), but it does not yet automatically detect when a PDF has no text layer and trigger OCR. The `--ocr` flag exists but users must currently know to use it for scanned documents.
+**Current State**: The pipeline now uses the Unstructured library which automatically handles document parsing with various strategies including OCR when needed.
 
-**Current Limitation**: The pipeline can handle scanned PDFs if run with `--ocr`, but it does not yet automatically detect when a PDF has no text layer and trigger OCR. Implementing an automatic fallback (checking if PyMuPDF extraction returns essentially empty text, then invoking OCR) is a to-do item. Users must currently know to use the flag for scanned documents. Enhancing this would improve usability and ensure no forms are silently skipped due to lacking text.
-
-**Background**: Automatic detection would check if text extraction yields minimal content (e.g., <100 characters or <1% of expected page content), then automatically invoke OCR without requiring manual intervention.
+**Current Implementation**: The Unstructured library provides multiple extraction strategies:
+- `hi_res` (default): Uses ML-based layout detection for best accuracy
+- `fast`: Faster extraction with lower accuracy
+- `auto`: Automatically chooses the best strategy
+- `ocr_only`: Forces OCR for all documents
 
 **Action Items**:
-- [ ] **Step 1: Review existing OCR implementation**
-  - Examine current `has_text_layer()` function in `docling_extract.py`
-  - Review `extract_text_with_ocr()` implementation
-  - Understand current `--ocr` and `--force-ocr` flag behavior
-  - Document what works and what needs enhancement
-  
+- [x] **Migrated to Unstructured library** - Now using modern ML-based extraction
+- [x] **Hi-res strategy enabled by default** - Provides superior accuracy
+- [ ] **Test with various scanned documents** - Verify extraction quality
+- [ ] **Document best practices** - Guide users on strategy selection
 - [ ] **Step 2: Implement automatic text layer detection**
   - Enhance `has_text_layer()` to be more robust:
     - Check if extracted text length is below threshold (e.g., 100 characters)
@@ -345,12 +345,12 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
   
 - [ ] **Step 4: Evaluate if spatial layout extraction is needed**
   - Assess frequency: Is this a real problem or theoretical concern?
-  - If needed, research layout-aware parsing approaches:
-    - PyMuPDF page layout analysis
-    - PDF coordinate extraction
-    - Bounding box analysis
-    - Table structure recognition
-  - Estimate implementation complexity vs benefit
+  - If needed, leverage Unstructured's built-in layout features:
+    - Unstructured's hi-res strategy provides layout-aware extraction
+    - Table structure inference is built-in
+    - Bounding box analysis available in elements
+    - Coordinate information preserved in element metadata
+  - Test with current Unstructured implementation first
   
 - [ ] **Step 5: Consider alternative approaches if needed**
   - **Approach A**: Enhance spacing analysis in existing parser
@@ -391,14 +391,14 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 ## Priority 3: Code Quality and Maintainability
 
 ### 3.1 Modularize Large Parsing Script ✅ **IN PROGRESS**
-**Current State**: `docling_text_to_modento.py` is ~5000 lines in a single file.
+**Current State**: `text_to_modento.py` is ~5000 lines in a single file.
 
 **Status**: Modularization has begun! The package structure is in place.
 
 **Completed Action Items**:
-- [x] Create package structure `docling_text_to_modento/` with `modules/` subdirectory
-- [x] Move original script to `docling_text_to_modento/core.py`
-- [x] Create backward-compatible wrapper `docling_text_to_modento.py`
+- [x] Create package structure `text_to_modento/` with `modules/` subdirectory
+- [x] Move original script to `text_to_modento/core.py`
+- [x] Create backward-compatible wrapper `text_to_modento.py`
 - [x] Extract constants to `modules/constants.py` (regex patterns, configuration)
 - [x] Extract debug logger to `modules/debug_logger.py`
 - [x] Create stub modules for future extraction:
@@ -418,7 +418,7 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 
 **Current Module Structure**:
   ```
-  docling_text_to_modento/
+  text_to_modento/
   ├── __init__.py
   ├── README.md
   ├── main.py (entry point)
@@ -433,7 +433,7 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
       ├── postprocessing.py (stub)
       └── template_catalog.py (stub)
   
-  docling_text_to_modento.py (backward-compatible CLI wrapper) ✅
+  text_to_modento.py (backward-compatible CLI wrapper) ✅
   ```
 
 **Acceptance Criteria**:
@@ -482,18 +482,18 @@ This document outlines actionable next steps to further improve the PDF-to-JSON 
 **Current State**: Code and documentation contain outdated "LLMWhisperer" references.
 
 **Action Items**:
-- [ ] Update `docling_text_to_modento.py`:
+- [ ] Update `text_to_modento.py`:
   - Line 4677: Change help text from "Folder with LLMWhisperer .txt files" to "Folder with extracted .txt files"
 - [ ] Update `README.md`:
-  - Line 24: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
-  - Line 39: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
+  - Line 24: Change "llm_text_to_modento.py" to "text_to_modento.py"
+  - Line 39: Change "llm_text_to_modento.py" to "text_to_modento.py"
 - [ ] Update `run_all.py`:
-  - Line 6 comment: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
+  - Line 6 comment: Change "llm_text_to_modento.py" to "text_to_modento.py"
 - [ ] Update `FIXES_SUMMARY.md`:
-  - Replace references to "llm_text_to_modento.py" with "docling_text_to_modento.py"
+  - Replace references to "llm_text_to_modento.py" with "text_to_modento.py"
 - [ ] Update `QUICK_REFERENCE.md`:
-  - Line 40: Change "llm_text_to_modento.py" to "docling_text_to_modento.py"
-- [ ] Review `docling_extract.py`:
+  - Line 40: Change "llm_text_to_modento.py" to "text_to_modento.py"
+- [ ] Review `unstructured_extract.py`:
   - Line 8: Keep "This replaces the LLMWhisperer API" as historical context (acceptable)
 
 **Acceptance Criteria**:
@@ -784,7 +784,7 @@ All solutions must adhere to these principles emphasized in the review:
 
 ## Conclusion
 
-These actionable items provide a clear roadmap for enhancing the PDF-to-JSON Docling pipeline. Each item is designed to be implemented independently while maintaining the system's core principle of generic, form-agnostic processing.
+These actionable items provide a clear roadmap for enhancing the PDF-to-JSON pipeline with Unstructured library. Each item is designed to be implemented independently while maintaining the system's core principle of generic, form-agnostic processing.
 
 ### Key Improvements from Review Feedback
 

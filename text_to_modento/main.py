@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Main entry point for docling_text_to_modento — v2.20
+Main entry point for text_to_modento — v2.20
 
 This is the new modular entry point that delegates to the core module.
 """

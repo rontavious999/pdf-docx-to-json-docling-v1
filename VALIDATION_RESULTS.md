@@ -176,7 +176,7 @@ Output: ✓ Not detected as inline checkbox
 
 #### Test Case 4.1: Auto-OCR Enabled by Default
 ```python
-# From docling_extract.py
+# From unstructured_extract.py
 def extract_text_from_pdf(file_path: Path, ..., auto_ocr: bool = True):
     ...
 ```
@@ -194,7 +194,7 @@ def has_text_layer(pdf_doc: fitz.Document) -> bool:
 
 #### Test Case 4.3: --no-auto-ocr Flag Exists
 ```bash
-$ python3 docling_extract.py --help
+$ python3 unstructured_extract.py --help
 ...
 --no-auto-ocr     Disable automatic OCR for scanned PDFs
 ```
@@ -213,13 +213,13 @@ elif not has_text_layer(doc):
 **Command-Line Usage**:
 ```bash
 # Default behavior - auto-OCR enabled
-python3 docling_extract.py --in documents --out output
+python3 unstructured_extract.py --in documents --out output
 
 # Disable auto-OCR
-python3 docling_extract.py --in documents --out output --no-auto-ocr
+python3 unstructured_extract.py --in documents --out output --no-auto-ocr
 
 # Force OCR for all PDFs
-python3 docling_extract.py --in documents --out output --force-ocr
+python3 unstructured_extract.py --in documents --out output --force-ocr
 ```
 
 **Overall Status**: ✅ **FULLY RESOLVED** (3/3 tests passing)

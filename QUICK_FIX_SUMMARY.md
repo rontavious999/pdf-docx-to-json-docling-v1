@@ -45,9 +45,9 @@ This PR addresses the 4 remaining edge cases identified in the review feedback. 
 
 ### No Code Changes Required
 - All features were already implemented in:
-  - `docling_extract.py` (OCR auto-detection)
-  - `docling_text_to_modento/core.py` (multi-field and inline checkbox detection)
-  - `docling_text_to_modento/modules/grid_parser.py` (category headers)
+  - `unstructured_extract.py` (OCR auto-detection)
+  - `text_to_modento/core.py` (multi-field and inline checkbox detection)
+  - `text_to_modento/modules/grid_parser.py` (category headers)
 
 ---
 
@@ -128,10 +128,10 @@ Checkboxes with continuation text are automatically detected:
 **No action needed** - just run normally:
 ```bash
 # Auto-OCR is enabled by default
-python3 docling_extract.py --in documents --out output
+python3 unstructured_extract.py --in documents --out output
 
 # To disable auto-OCR:
-python3 docling_extract.py --in documents --out output --no-auto-ocr
+python3 unstructured_extract.py --in documents --out output --no-auto-ocr
 ```
 
 ---

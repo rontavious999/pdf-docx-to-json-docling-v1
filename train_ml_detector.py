@@ -12,13 +12,13 @@ import subprocess
 # Add the package to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from docling_text_to_modento.modules.ml_field_detector import initialize_ml_detector
+from text_to_modento.modules.ml_field_detector import initialize_ml_detector
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
-    """Extract text from PDF using docling"""
+    """Extract text from PDF using Unstructured"""
     cmd = [
-        'python3', '-m', 'docling_text_to_modento.main',
+        'python3', '-m', 'text_to_modento.main',
         '--input', pdf_path,
         '--output', '/tmp/ml_training_output.json'
     ]
@@ -32,10 +32,10 @@ def extract_text_from_pdf(pdf_path: str) -> str:
             with open(text_file, 'r', encoding='utf-8') as f:
                 return f.read()
         
-        # Try to read from docling output directory
-        docling_out = Path('docling_output') / Path(pdf_path).with_suffix('.txt').name
-        if docling_out.exists():
-            with open(docling_out, 'r', encoding='utf-8') as f:
+        # Try to read from extraction output directory
+        extracted_out = Path('output') / Path(pdf_path).with_suffix('.txt').name
+        if extracted_out.exists():
+            with open(extracted_out, 'r', encoding='utf-8') as f:
                 return f.read()
                 
         print(f"Warning: Could not find extracted text for {pdf_path}")
@@ -77,7 +77,7 @@ def main():
         
         # Run the main script to process the form
         cmd = [
-            'python3', '-m', 'docling_text_to_modento.main',
+            'python3', '-m', 'text_to_modento.main',
             str(pdf_path)
         ]
         
@@ -213,7 +213,7 @@ How did you hear about us?
         print("=" * 80)
         print("\nTo use in parsing:")
         print("  1. The model is saved at: models/field_detector.pkl")
-        print("  2. Import: from docling_text_to_modento.modules import MLFieldDetector")
+        print("  2. Import: from text_to_modento.modules import MLFieldDetector")
         print("  3. detector = MLFieldDetector(model_path='models/field_detector.pkl')")
         print("  4. Use detector.predict() as fallback when rules are uncertain")
         

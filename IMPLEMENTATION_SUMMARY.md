@@ -16,7 +16,7 @@ This document summarizes the implementation of the remaining patches from "Targe
 
 **Commit:** 224090d  
 **Files Modified:**
-- `docling_text_to_modento/core.py`
+- `text_to_modento/core.py`
 - `tests/test_edge_cases.py`
 
 **Changes Made:**
@@ -51,12 +51,12 @@ This document summarizes the implementation of the remaining patches from "Targe
 
 **Commit:** d91761d  
 **Files Modified:**
-- `docling_extract.py`
+- `unstructured_extract.py`
 - `tests/test_edge_cases.py`
 
 **Changes Made:**
 
-1. **Enhanced `extract_text_normally()` Function** (lines 177-220 in docling_extract.py):
+1. **Enhanced `extract_text_normally()` Function** (lines 177-220 in unstructured_extract.py):
    - Added `auto_ocr: bool = True` parameter
    - Added page-level blank detection
    - Performs OCR on individual blank pages in mixed PDFs
@@ -69,7 +69,7 @@ This document summarizes the implementation of the remaining patches from "Targe
        # OCR just this page...
    ```
 
-2. **Updated Function Call** (line 171 in docling_extract.py):
+2. **Updated Function Call** (line 171 in unstructured_extract.py):
    ```python
    # Pass auto_ocr parameter to enable page-level fallback
    text = extract_text_normally(doc, auto_ocr=auto_ocr)
@@ -172,10 +172,10 @@ This document summarizes the implementation of the remaining patches from "Targe
 
 ### Lines of Code:
 
-**docling_text_to_modento/core.py:**
+**text_to_modento/core.py:**
 - +4 lines (3 keywords + 1 slash normalization)
 
-**docling_extract.py:**
+**unstructured_extract.py:**
 - +44 lines (enhanced function with page-level OCR)
 - -6 lines (simplified original function)
 - Net: +38 lines

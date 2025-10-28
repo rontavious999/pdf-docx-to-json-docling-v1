@@ -73,11 +73,11 @@
 ### ✅ Deployment Requirements
 ```bash
 # Install dependencies
-pip install pymupdf python-docx
+pip install unstructured
 
-# Optional (for OCR)
-pip install pytesseract pillow
-sudo apt-get install tesseract-ocr
+# Optional (for enhanced PDF/image support)
+pip install "unstructured[pdf]"
+pip install "unstructured[all-docs]"
 ```
 
 ### ✅ Basic Usage
@@ -173,7 +173,7 @@ OVERALL SUMMARY (3 files)
 
 ### ✅ **APPROVED FOR PRODUCTION USE**
 
-The PDF-to-JSON Docling pipeline meets all production readiness criteria:
+The PDF-to-JSON pipeline (using Unstructured library) meets all production readiness criteria:
 
 - **100% test pass rate** (75/75 tests)
 - **Zero critical errors**

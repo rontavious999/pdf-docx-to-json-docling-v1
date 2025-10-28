@@ -13,7 +13,7 @@ Fixed a race condition in parallel text extraction where multiple files with the
 
 ### Changes Made
 
-**File: `docling_extract.py`**
+**File: `unstructured_extract.py`**
 
 1. **Modified `unique_txt_path()` function:**
    - Now takes both `dst` (destination path) and `source_path` (original file path) as parameters
@@ -104,7 +104,7 @@ Optimized parallel processing to cache the template dictionary once per worker p
 
 ### Changes Made
 
-**File: `docling_text_to_modento/core.py`**
+**File: `text_to_modento/core.py`**
 
 1. **Added module-level caching:**
    ```python
@@ -187,8 +187,8 @@ Optimized parallel processing to cache the template dictionary once per worker p
 - ✅ Follows existing code style and patterns
 
 ### Files Modified
-1. `docling_extract.py` - Patch 1 implementation
-2. `docling_text_to_modento/core.py` - Patch 4 implementation
+1. `unstructured_extract.py` - Patch 1 implementation
+2. `text_to_modento/core.py` - Patch 4 implementation
 3. `tests/test_integration.py` - Patch 3 implementation (new file)
 4. `tests/fixtures/test_consent_form.pdf` - Test fixture (new file)
 5. `tests/fixtures/test_patient_form.docx` - Test fixture (new file)

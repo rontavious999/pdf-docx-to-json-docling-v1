@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The PDF-to-JSON Docling pipeline is a two-stage document processing system that converts dental intake forms into structured, Modento-compliant JSON format.
+The PDF-to-JSON pipeline is a two-stage document processing system that uses the Unstructured library to convert dental intake forms into structured, Modento-compliant JSON format.
 
 ```
 ┌─────────────────┐
@@ -13,11 +13,11 @@ The PDF-to-JSON Docling pipeline is a two-stage document processing system that 
          ▼
 ┌─────────────────────────────────────┐
 │  Stage 1: Text Extraction           │
-│  (docling_extract.py)               │
+│  (unstructured_extract.py)               │
 │                                     │
-│  • PyMuPDF for PDFs                 │
-│  • python-docx for DOCX             │
-│  • Local, no external APIs          │
+│  • Unstructured library             │
+│  • Hi-res strategy (ML-based)       │
+│  • Table structure inference        │
 └────────┬────────────────────────────┘
          │
          ▼
@@ -29,7 +29,7 @@ The PDF-to-JSON Docling pipeline is a two-stage document processing system that 
          ▼
 ┌─────────────────────────────────────┐
 │  Stage 2: Intelligent Parsing       │
-│  (docling_text_to_modento.py)      │
+│  (text_to_modento.py)      │
 │                                     │
 │  • Regex-based pattern matching     │
 │  • Template catalog matching        │
@@ -48,29 +48,30 @@ The PDF-to-JSON Docling pipeline is a two-stage document processing system that 
 
 ### Stage 1: Text Extraction
 
-**Script**: `docling_extract.py`
+**Script**: `unstructured_extract.py`
 
-**Purpose**: Extract raw text from PDF and DOCX files without requiring external APIs or internet connectivity.
+**Purpose**: Extract raw text from PDF and DOCX files using the Unstructured library for high-accuracy extraction.
 
 **Process**:
 1. Scan `documents/` directory for `.pdf` and `.docx` files
-2. For each PDF: Use PyMuPDF (`fitz`) to extract text from each page
-3. For each DOCX: Use `python-docx` to extract text from paragraphs and tables
+2. For each file: Use Unstructured's partition function with hi-res strategy for model-based layout detection
+3. Infer table structures to preserve grid layouts
 4. Save extracted text to `output/` directory as `.txt` files
 5. Handle errors gracefully, continuing with remaining files if one fails
 
 **Key Features**:
-- Local processing (no cloud dependencies)
-- Batch processing of multiple files
-- Error isolation (one bad file doesn't stop the pipeline)
+- ML-based layout detection for superior accuracy
+- Automatic table structure inference
+- Support for both PDFs and DOCX files
+- Configurable extraction strategies (hi_res, fast, auto, ocr_only)
 
 **Limitations**:
-- PDF extraction only works with embedded text layers (no OCR)
-- Preserves text order but loses visual layout information
+- Requires Unstructured library dependencies
+- Hi-res strategy is slower but more accurate
 
 ### Stage 2: Intelligent Parsing and JSON Generation
 
-**Script**: `docling_text_to_modento.py`
+**Script**: `text_to_modento.py`
 
 **Purpose**: Parse extracted text into structured form fields and generate Modento-compliant JSON.
 
@@ -111,7 +112,7 @@ The PDF-to-JSON Docling pipeline is a two-stage document processing system that 
 
 ## Module Responsibilities
 
-The `docling_text_to_modento.py` script (currently ~4500 lines) contains these logical components:
+The `text_to_modento.py` script (currently ~4500 lines) contains these logical components:
 
 ### Text Preprocessing Module (lines ~200-700)
 **Functions**: `scrub_headers_footers`, `coalesce_soft_wraps`, `normalize_glyphs_line`, `collapse_spaced_caps`
@@ -229,18 +230,18 @@ Output:
 
 ## Design Decisions
 
-### Why Local Extraction vs. API?
+### Why Unstructured Library?
 
-**Decision**: Use PyMuPDF and python-docx for local text extraction.
+**Decision**: Use Unstructured library for document text extraction.
 
 **Rationale**:
-- **Privacy**: No patient data sent to external services
-- **Cost**: No API fees or rate limits
-- **Speed**: No network latency
-- **Control**: Can iterate on parsing logic quickly
-- **Reliability**: No dependency on external service availability
+- **Accuracy**: ML-based layout detection provides superior extraction quality
+- **Table Support**: Built-in table structure inference preserves grid layouts
+- **Versatility**: Handles both PDFs and DOCX files with a unified API
+- **Modern Approach**: Leverages state-of-the-art document understanding models
+- **Active Development**: Well-maintained library with regular updates
 
-**Trade-off**: No OCR capability for scanned documents (can be added later).
+**Trade-off**: Requires additional dependencies but provides significantly better extraction quality.
 
 ### Why Regex-Based Parsing vs. ML Models?
 
@@ -334,7 +335,7 @@ Output:
 
 **Enable debug mode**:
 ```bash
-python3 docling_text_to_modento.py --in output --out JSONs --debug
+python3 text_to_modento.py --in output --out JSONs --debug
 ```
 
 **Debug output includes**:
@@ -371,7 +372,7 @@ python3 docling_text_to_modento.py --in output --out JSONs --debug
 The monolithic script has been refactored into a modular package structure:
 
 ```
-docling_text_to_modento/
+text_to_modento/
 ├── __init__.py              (package initialization)
 ├── README.md                (package documentation)
 ├── main.py                  (entry point, delegates to core)
@@ -386,7 +387,7 @@ docling_text_to_modento/
     ├── postprocessing.py       (merging, consolidation) [planned]
     └── template_catalog.py     (template matching) [planned]
 
-docling_text_to_modento.py   (backward-compatible CLI wrapper)
+text_to_modento.py   (backward-compatible CLI wrapper)
 ```
 
 **Status**: 
@@ -427,26 +428,30 @@ tests/
 Add OCR fallback for scanned PDFs:
 
 ```python
-# In docling_extract.py
-def extract_text_from_pdf(file_path: Path, use_ocr: bool = False) -> str:
-    doc = fitz.open(file_path)
-    
-    # Check if PDF has text layer
-    has_text = any(page.get_text("text").strip() for page in doc)
-    
-    if not has_text or use_ocr:
-        # Fall back to OCR (Tesseract, PyMuPDF OCR, etc.)
-        return extract_with_ocr(doc)
-    
-    return extract_text_normally(doc)
+# In unstructured_extract.py
+def extract_text(file_path,
+                 strategy="hi_res",
+                 languages="eng",
+                 infer_table_structure=True,
+                 include_page_breaks=False,
+                 hi_res_model_name=None):
+    """High-accuracy extractor using Unstructured library"""
+    elements = partition(
+        filename=str(file_path),
+        strategy=strategy,
+        languages=languages,
+        infer_table_structure=infer_table_structure,
+        include_page_breaks=include_page_breaks
+    )
+    return "\n\n".join(element.text for element in elements if element.text)
 ```
 
 ## Conclusion
 
-The Docling pipeline architecture is designed for:
-- **Reliability**: Deterministic, rule-based processing
-- **Transparency**: Explicit logic, debuggable output
-- **Maintainability**: Clear structure, comprehensive documentation
+The Unstructured-based pipeline architecture is designed for:
+- **Accuracy**: ML-based layout detection for superior extraction quality
+- **Transparency**: Clear extraction strategies and configurable options
+- **Maintainability**: Modern library with active development and support
 - **Extensibility**: Easy to add patterns, sections, and fields
 - **Privacy**: Local processing, no external dependencies
 
