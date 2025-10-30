@@ -48,6 +48,165 @@ SPELL_FIX = {
 # ---------- Utility Functions
 
 
+def is_consent_or_terms_text(text: str) -> bool:
+    """
+    Improvement 2: Detect if text is likely a consent/terms statement.
+    
+    Returns True if the text appears to be legal/consent language rather than
+    a form field to be filled out.
+    """
+    text_lower = text.lower()
+    
+    # Consent/terms indicators
+    consent_phrases = [
+        r'\bi\s+(?:hereby\s+)?(?:certify|acknowledge|consent|agree|understand|authorize)',
+        r'\bpatient\s+(?:acknowledges?|consents?|agrees?)',
+        r'\bby\s+signing',
+        r'\bi\s+have\s+(?:read|been\s+informed)',
+        r'\bto\s+the\s+best\s+of\s+my\s+knowledge',
+        r'\bi\s+give\s+(?:my\s+)?consent',
+        r'\bpossible\s+(?:risks?|complications?)',
+        r'\bnecessitating\s+(?:additional|several)',
+        r'\bmay\s+(?:include|result\s+in)',
+    ]
+    
+    # Check for multiple consent indicators (stronger signal)
+    match_count = sum(1 for pattern in consent_phrases if re.search(pattern, text_lower))
+    if match_count >= 2:
+        return True
+    
+    # Single strong indicator - check strongest patterns first
+    # First 3 patterns are very strong indicators even in short text
+    for pattern in consent_phrases[:3]:
+        if re.search(pattern, text_lower):
+            # If text is long OR starts with these strong patterns, it's consent
+            if len(text) > 30 or re.match(pattern, text_lower):
+                return True
+    
+    # Other patterns need longer text to be confident
+    if len(text) > 80:
+        for pattern in consent_phrases[3:]:
+            if re.search(pattern, text_lower):
+                return True
+    
+    return False
+
+
+def should_be_terms_field(title: str, text_length: int = 0) -> bool:
+    """
+    Improvement 2: Determine if a field should be classified as 'terms' type.
+    
+    Args:
+        title: The field title/label
+        text_length: Length of the associated text content
+    
+    Returns:
+        True if this should be a terms field
+    """
+    if is_consent_or_terms_text(title):
+        return True
+    
+    # Very long text is likely terms/consent
+    if text_length > 200:
+        return True
+    
+    # Explicit terms indicators in title
+    terms_keywords = ['terms', 'consent', 'agreement', 'acknowledgment', 'disclosure']
+    title_lower = title.lower()
+    if any(keyword in title_lower for keyword in terms_keywords):
+        return True
+    
+    return False
+
+
+def is_signature_field(text: str) -> bool:
+    """
+    Improvement 5: Enhanced signature field detection.
+    
+    Detects various signature field patterns including:
+    - "Signature of Patient/Guardian/Parent"
+    - "Patient Signature"
+    - "Signature: ___________"
+    - "Signed by"
+    
+    Returns:
+        True if this appears to be a signature field
+    """
+    text_lower = text.lower()
+    
+    # Primary signature patterns
+    signature_patterns = [
+        r'\bsignature\b',
+        r'\bsigned\s+by\b',
+        r'\bsign\s+here\b',
+        r'\bpatient.{0,20}signature\b',
+        r'\bguardian.{0,20}signature\b',
+        r'\bparent.{0,20}signature\b',
+    ]
+    
+    for pattern in signature_patterns:
+        if re.search(pattern, text_lower):
+            return True
+    
+    return False
+
+
+def infer_field_type_from_context(title: str, has_options: bool = False, 
+                                   option_count: int = 0) -> Optional[str]:
+    """
+    Improvement 9: Infer field type from context when not explicitly specified.
+    
+    Args:
+        title: The field title/label
+        has_options: Whether the field has checkbox/radio options
+        option_count: Number of options if any
+    
+    Returns:
+        Inferred field type ('radio', 'dropdown', 'date', 'input', 'terms') or None
+    """
+    title_lower = title.lower()
+    
+    # Signature fields
+    if is_signature_field(title):
+        return 'signature'
+    
+    # Terms/consent fields
+    if should_be_terms_field(title):
+        return 'terms'
+    
+    # Date fields (unless they have options)
+    if not has_options and DATE_LABEL_RE.search(title):
+        return 'date'
+    
+    # Radio fields (small number of options)
+    if has_options and option_count <= 6:
+        return 'radio'
+    
+    # Dropdown fields (many options or specific keywords)
+    if has_options and option_count > 6:
+        return 'dropdown'
+    
+    # Yes/No questions are radio (check before multi-selection keywords)
+    # Also check for common question patterns that imply Yes/No
+    yes_no_patterns = [
+        r'\b(yes\s*(?:or|/)\s*no|y\s*(?:or|/)\s*n)\b',
+        r'\b(are\s+you|do\s+you|have\s+you|did\s+you|is\s+the|will\s+you)',  # Question patterns
+    ]
+    for pattern in yes_no_patterns:
+        if re.search(pattern, title_lower):
+            # If it's a question without explicit options, likely radio
+            if not has_options or option_count <= 2:
+                return 'radio'
+    
+    # Multi-selection indicators suggest dropdown
+    dropdown_keywords = ['select all', 'check all', 'choose all', 'multiple', 'which of the following']
+    if any(keyword in title_lower for keyword in dropdown_keywords):
+        return 'dropdown'
+    
+    # Default to input if nothing else matches
+    return 'input'
+
+
 def clean_field_title(title: str) -> str:
     """
     Clean field title by removing checkbox markers and artifacts (Fix 5).
@@ -188,6 +347,14 @@ def classify_date_input(label: str) -> str:
 
 
 def slugify(s: str, maxlen: int = 64) -> str:
+    """
+    Convert a string to a valid key identifier with semantic truncation.
+    
+    Improvements:
+    - Truncates at semantic boundaries (word boundaries) instead of mid-word
+    - Prioritizes keeping the most meaningful parts of the text
+    - Handles consent/terms text more gracefully
+    """
     s = collapse_spaced_caps(s.strip()).lower()
     
     # Fix Unicode ligatures and special characters (Production readiness)
@@ -204,6 +371,24 @@ def slugify(s: str, maxlen: int = 64) -> str:
     for old, new in unicode_fixes.items():
         s = s.replace(old, new)
     
+    # Improvement 1: Detect consent/terms blocks - extract key phrase
+    # For long consent text, try to extract a meaningful identifier
+    if len(s) > 100:
+        # Look for key identifying phrases at the start
+        consent_patterns = [
+            r'^(i\s+(?:hereby\s+)?(?:certify|acknowledge|consent|agree|understand|authorize))',
+            r'^(patient\s+(?:acknowledges?|consents?|agrees?))',
+            r'^(by\s+signing)',
+            r'^(i\s+have\s+(?:read|been\s+informed))',
+        ]
+        for pattern in consent_patterns:
+            match = re.match(pattern, s)
+            if match:
+                # Use the first 4-6 words as the key
+                words = s.split()[:6]
+                s = '_'.join(words)
+                break
+    
     # Remove all non-alphanumeric except spaces (no hyphens in keys)
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", "_", s)
@@ -212,7 +397,19 @@ def slugify(s: str, maxlen: int = 64) -> str:
         s = "q"
     if re.match(r"^\d", s):
         s = "q_" + s
-    return (s[:maxlen] or "q")
+    
+    # Improvement 1: Smart truncation at word boundaries
+    if len(s) > maxlen:
+        # Truncate at last complete word within maxlen
+        truncated = s[:maxlen]
+        # Find the last underscore (word boundary)
+        last_underscore = truncated.rfind('_')
+        if last_underscore > maxlen // 2:  # Only if we're keeping at least half
+            s = truncated[:last_underscore]
+        else:
+            s = truncated
+    
+    return (s or "q")
 
 
 def clean_option_text(text: str) -> str:
@@ -341,3 +538,154 @@ def norm_title(s: str) -> str:
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
+
+
+def generate_contextual_date_key(title: str, prev_lines: list, section: str) -> str:
+    """
+    Improvement 6: Generate contextual key for date fields based on surrounding context.
+    
+    Eliminates generic date_2, date_3 suffixes by using context clues:
+    - In Signature section → "signature_date" or "date_signed"
+    - After "Treatment" → "treatment_date"
+    - After "Appointment" → "appointment_date"
+    - In Patient Info section → "date_of_birth" or "todays_date"
+    - After "Last visit" → "last_visit_date"
+    
+    Args:
+        title: The field title/label (e.g., "Date", "Date of Birth")
+        prev_lines: List of previous lines for context extraction
+        section: Current section (e.g., "Signature", "Patient Information")
+    
+    Returns:
+        Contextual date key (e.g., "signature_date", "treatment_date")
+    """
+    if not prev_lines:
+        prev_lines = []
+    
+    title_lower = title.lower()
+    
+    # Check explicit date types in title
+    if 'birth' in title_lower or 'dob' in title_lower:
+        return 'date_of_birth'
+    if 'signature' in title_lower or 'signed' in title_lower:
+        return 'signature_date'
+    if 'today' in title_lower or 'current' in title_lower:
+        return 'todays_date'
+    if 'treatment' in title_lower:
+        return 'treatment_date'
+    if 'appointment' in title_lower:
+        return 'appointment_date'
+    if 'visit' in title_lower:
+        return 'visit_date'
+    if 'procedure' in title_lower:
+        return 'procedure_date'
+    if 'consent' in title_lower:
+        return 'consent_date'
+    
+    # Check previous line context (look back 2-3 lines)
+    if prev_lines:
+        prev_text = ' '.join(prev_lines[-3:]).lower()
+        
+        # Context mapping: keyword → date key
+        context_map = {
+            'treatment': 'treatment_date',
+            'appointment': 'appointment_date',
+            'last visit': 'last_visit_date',
+            'next visit': 'next_visit_date',
+            'visit': 'visit_date',
+            'procedure': 'procedure_date',
+            'next appointment': 'next_appointment_date',
+            'emergency': 'emergency_date',
+            'referred': 'referral_date',
+            'signature': 'signature_date',
+            'signed': 'signature_date',
+            'consent': 'consent_date',
+        }
+        
+        for keyword, date_key in context_map.items():
+            if keyword in prev_text:
+                return date_key
+    
+    # Section-based defaults
+    if section:
+        section_lower = section.lower()
+        section_defaults = {
+            'signature': 'signature_date',
+            'patient information': 'todays_date',
+            'treatment': 'treatment_date',
+            'consent': 'consent_date',
+            'insurance': 'insurance_date',
+            'emergency': 'emergency_date',
+        }
+        
+        for section_keyword, date_key in section_defaults.items():
+            if section_keyword in section_lower:
+                return date_key
+    
+    # Default fallback
+    return 'date'
+
+
+def infer_multi_select_from_context(title: str, options: list, section: str = "") -> bool:
+    """
+    NEW Improvement 8: Determine if a field should be multi-select based on context.
+    
+    Helps distinguish when a field with options should allow multiple selections (dropdown)
+    vs single selection (radio).
+    
+    Multi-select indicators:
+    - Medical history: "Do you have any of the following" → Always multi
+    - Allergy lists: "Are you allergic to" → Always multi
+    - "Check all that apply", "Select all" → Always multi
+    - 5+ options → Usually multi-select
+    
+    Single-select indicators:
+    - Yes/No questions → Always single
+    - Gender → Always single
+    - Marital status → Always single
+    - 2-3 options → Usually single unless context indicates otherwise
+    
+    Args:
+        title: Field title/label
+        options: List of option names
+        section: Current section name
+        
+    Returns:
+        True if field should be multi-select, False for single-select
+    """
+    if not title:
+        # Default based on option count
+        return len(options) >= 5
+    
+    title_lower = title.lower()
+    
+    # Definite multi-select patterns
+    multi_patterns = [
+        r'do you have.*any of the following',
+        r'have you had.*any of the following',
+        r'have you ever had.*any of the following',
+        r'are you allergic to.*following',
+        r'allergic to.*any of the following',
+        r'check all that apply',
+        r'select all',
+        r'select\s+any',
+    ]
+    
+    if any(re.search(p, title_lower) for p in multi_patterns):
+        return True
+    
+    # Definite single-select patterns
+    single_patterns = [
+        r'\bgendern\b',
+        r'\bsex\b',
+        r'marital status',
+        r'\byes\s*/\s*no\b',
+        r'\byes\s+or\s+no\b',
+    ]
+    
+    if any(re.search(p, title_lower) for p in single_patterns):
+        return False
+    
+    # Default: multi if 5+ options, single otherwise
+    # This is a reasonable heuristic: fields with many options typically allow multiple selections
+    return len(options) >= 5
