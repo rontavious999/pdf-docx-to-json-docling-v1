@@ -882,46 +882,16 @@ def detect_medical_conditions_grid(lines: List[str], start_idx: int, debug: bool
     if debug:
         print(f"  [debug] detect_medical_conditions_grid: Found {len(checkbox_lines)} checkbox lines")
     
-    # Extract all options
+    # Extract all options using Improvement 7's enhanced extraction
     options = []
     seen_options = set()  # Deduplicate
     
     for line_idx, line in checkbox_lines:
-        # Handle multiple checkboxes per line
-        # Split by checkbox markers
-        parts = re.split(CHECKBOX_ANY, line)
+        # Use Improvement 7: extract_clean_checkbox_options for better option parsing
+        clean_options = extract_clean_checkbox_options(line)
         
-        for part_idx, item in enumerate(parts[1:], 1):  # Skip text before first checkbox
-            item_text = item.strip()
-            
-            # Take first few words as the option (conditions are typically 1-3 words)
-            words = item_text.split()
-            if not words:
-                continue
-            
-            # Determine how many words to take
-            # Medical conditions are usually 1-4 words
-            max_words = 4
-            clean_words = []
-            
-            for word in words[:max_words]:
-                # Stop if we hit punctuation or another checkbox indicator
-                if word in ['!', '□', '☐', '☑', '■']:
-                    break
-                # Stop if we hit lowercase 'or', 'and' (likely separator)
-                if word.lower() in ['or', 'and', 'the']:
-                    break
-                clean_words.append(word)
-            
-            if not clean_words:
-                continue
-            
-            option_text = ' '.join(clean_words)
-            
-            # Clean the option text
-            option_text = clean_option_text(option_text)
-            
-            # Skip if empty after cleaning
+        for option_text in clean_options:
+            # Skip if empty
             if not option_text or len(option_text) < 2:
                 continue
             
@@ -963,4 +933,97 @@ def detect_medical_conditions_grid(lines: List[str], start_idx: int, debug: bool
         'type': 'dropdown',
         'multi': True
     }
+
+
+def extract_clean_checkbox_options(line: str) -> List[str]:
+    """
+    Improvement 7: Extract clean option text from line with multiple checkboxes.
+    
+    Handles:
+    - Adjacent checkboxes: "[ ] Option1 [ ] Option2"
+    - Slash-separated: "[ ] Opt1/Opt2" → separate options
+    - Repeated words (OCR errors): "Blood Blood Transfusion" → "Blood Transfusion"
+    - Truncates long options to first 3-5 words
+    
+    Args:
+        line: Line containing checkboxes and option text
+    
+    Returns:
+        List of clean option strings
+    """
+    # Split by checkbox markers
+    parts = re.split(CHECKBOX_ANY, line)
+    
+    options = []
+    for i, part in enumerate(parts[1:], 1):  # Skip text before first checkbox
+        text = part.strip()
+        
+        if not text:
+            continue
+        
+        # Text between this checkbox and next (if exists)
+        if i < len(parts) - 1:
+            # Look ahead to find where next checkbox would be
+            # Search for checkbox marker patterns in the text
+            next_checkbox_pos = len(text)
+            
+            # Check for explicit checkbox characters
+            for marker in ['□', '☐', '☑', '■', '❒', '◻', '✓', '✔']:
+                pos = text.find(marker)
+                if pos > 0:
+                    next_checkbox_pos = min(next_checkbox_pos, pos)
+            
+            # Check for bracket patterns like [ ] or [x]
+            bracket_match = re.search(r'\[[\sx]\]', text)
+            if bracket_match and bracket_match.start() > 0:
+                next_checkbox_pos = min(next_checkbox_pos, bracket_match.start())
+            
+            # Also check for "!" which is sometimes used as checkbox
+            excl_pos = text.find('!')
+            if excl_pos > 5:  # Only if not at the start (might be part of text)
+                next_checkbox_pos = min(next_checkbox_pos, excl_pos)
+            
+            text = text[:next_checkbox_pos].strip()
+        
+        # Clean the extracted text
+        if text:
+            # Remove duplicate words (common OCR error)
+            # Example: "Blood Blood Transfusion" → "Blood Transfusion"
+            words = text.split()
+            clean_words = []
+            for word in words:
+                if not clean_words or word.lower() != clean_words[-1].lower():
+                    clean_words.append(word)
+            text = ' '.join(clean_words)
+            
+            # Handle slash-separated options (but not URLs or file paths)
+            # Example: "Arthritis/Gout" should become two options
+            # But "AIDS/HIV Positive" or "Heart Attack/Failure" should stay as one
+            if '/' in text and len(text.split('/')) == 2 and not text.startswith('http'):
+                # Only split if BOTH parts are exactly single words (no spaces)
+                sub_parts = text.split('/')
+                if all(len(p.strip().split()) == 1 for p in sub_parts):
+                    # Also check that both parts are capitalized (medical condition names)
+                    if all(p.strip() and p.strip()[0].isupper() for p in sub_parts):
+                        # Split into multiple options
+                        sub_opts = [s.strip() for s in sub_parts if s.strip()]
+                        options.extend(sub_opts)
+                        continue
+            
+            # Take first 3-5 words as option name (medical conditions are typically short)
+            # But keep full text if it's already short
+            words = text.split()
+            if len(words) <= 5:
+                option_text = text
+            else:
+                # For longer text, take first 5 words
+                option_text = ' '.join(words[:5])
+            
+            # Apply clean_option_text for final cleanup
+            option_text = clean_option_text(option_text)
+            
+            if option_text and len(option_text) >= 2:
+                options.append(option_text)
+    
+    return options
 
