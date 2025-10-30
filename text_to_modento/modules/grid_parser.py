@@ -895,12 +895,18 @@ def detect_medical_conditions_grid(lines: List[str], start_idx: int, debug: bool
             if not option_text or len(option_text) < 2:
                 continue
             
-            # Deduplicate
-            option_lower = option_text.lower()
-            if option_lower in seen_options:
+            # NEW Improvement 5: Enhanced deduplication with normalization
+            # Normalize: lowercase, replace slashes with space, remove punctuation, normalize whitespace
+            normalized = option_text.lower().replace('/', ' ')  # Treat slashes as space
+            normalized = re.sub(r'[^\w\s]', '', normalized).strip()
+            normalized = ' '.join(normalized.split())  # Normalize whitespace
+            
+            if normalized in seen_options:
+                if debug:
+                    print(f"  [debug] Skipping duplicate condition: '{option_text}'")
                 continue
             
-            seen_options.add(option_lower)
+            seen_options.add(normalized)
             options.append({
                 'name': option_text,
                 'value': slugify(option_text)
