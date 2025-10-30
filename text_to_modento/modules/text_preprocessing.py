@@ -642,3 +642,59 @@ def is_numbered_list_item(line: str) -> bool:
             return True
     
     return False
+
+
+def is_form_metadata(line: str) -> bool:
+    """
+    NEW Improvement 6: Detect if line is form metadata that should be filtered out.
+    
+    Form identifiers, revision codes, and copyright text should not become fields.
+    
+    Patterns detected:
+    - Revision codes: "REV A", "F16015_REV_E", "v1.0", "Version 2.1"
+    - Copyright: "All rights reserved", "© 2024", "Copyright"
+    - Contact info: Phone numbers, websites at line boundaries
+    - Form codes: Alphanumeric codes like "F16015"
+    - Company boilerplate: Company names with "Inc", "LLC", etc.
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line appears to be form metadata
+    """
+    if not line or len(line) < 3:
+        return False
+    
+    # Patterns that indicate metadata
+    metadata_patterns = [
+        r'\brev\s*[a-z0-9]\b',                    # REV A, REV E, REV 1
+        r'[a-z]\d{4,6}_rev_[a-z0-9]',            # F16015_REV_E
+        r'\bv\d+\.\d+\b',                        # v1.0, v2.1
+        r'\bversion\s+\d+',                      # Version 1, Version 2.1
+        r'all\s+rights\s+reserved',              # Copyright text
+        r'©|copyright\s+\d{4}',                  # Copyright symbols/year
+        r'^\s*\(\d{3}\)\s*\d{3}-\d{4}\s*$',     # Standalone phone numbers
+        r'www\.\w+\.com',                        # Websites
+        r'^\s*[a-z]\d{4,6}\s*$',                # Form codes alone on line
+        r'\b(inc|llc|ltd|corp|corporation)\b.*\(\d{3}\)',  # Company with phone
+        r'align\s+technology.*inc',              # Specific company names
+        r'^\s*[a-z0-9]{6,}_[a-z]+_[a-z]\s*$',   # Codes like "F16015_REV_E"
+    ]
+    
+    line_lower = line.lower().strip()
+    
+    for pattern in metadata_patterns:
+        if re.search(pattern, line_lower):
+            return True
+    
+    # Additional heuristic: very short alphanumeric codes (likely form IDs)
+    # But not if it contains common words
+    if len(line_lower) <= 12 and re.match(r'^[a-z0-9_\-]+$', line_lower):
+        # Check if it's not a common abbreviation or word
+        common_words = ['yes', 'no', 'other', 'name', 'date', 'phone', 'email', 'city', 'state', 'zip']
+        if line_lower not in common_words:
+            # Could be a form code
+            return True
+    
+    return False

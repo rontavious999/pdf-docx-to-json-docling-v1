@@ -72,7 +72,8 @@ from .modules.text_preprocessing import (
     is_address_block,
     scrub_headers_footers,
     coalesce_soft_wraps,
-    is_numbered_list_item  # NEW Improvement 1
+    is_numbered_list_item,  # NEW Improvement 1
+    is_form_metadata  # NEW Improvement 6
 )
 from .modules.grid_parser import (
     looks_like_grid_header,
@@ -2191,6 +2192,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if is_numbered_list_item(line):
             if debug:
                 print(f"  [debug] skipping numbered list item: '{line[:60]}'")
+            i += 1
+            continue
+
+        # NEW Improvement 6: Skip form metadata (revision codes, copyright, etc.)
+        # Form identifiers should not become fields
+        if is_form_metadata(line):
+            if debug:
+                print(f"  [debug] skipping form metadata: '{line[:60]}'")
             i += 1
             continue
 
