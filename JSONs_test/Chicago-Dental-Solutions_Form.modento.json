@@ -1,0 +1,817 @@
+[
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "First Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "last_name",
+    "type": "input",
+    "title": "Last Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "preferred_name",
+    "type": "input",
+    "title": "Preferred Name",
+    "control": {
+      "hint": "Optional",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Birth Date",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "apt",
+    "type": "input",
+    "title": "Apt#",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zipcode",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "mobile_phone",
+    "type": "input",
+    "title": "Mobile Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "phone",
+    "type": "input",
+    "title": "Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "consent_email",
+    "type": "terms",
+    "title": "Consent to Text Message alerts",
+    "control": {
+      "text": "PURPOSE: This form is used to obtain your consent to communicate with you by email regarding your Protected Health Information. {{practice_name}} offers patients the opportunity to communicate by email. Transmitting patient information by email has a number of risks that patients should consider before granting consent to use email for these purposes. {{practice_name}} will use reasonable means to protect the security and confidentiality of email information sent and received. However, {{practice_name}} cannot guarantee the security and confidentiality of email communication and will not be liable for inadvertent disclosure of confidential information.\n\nI acknowledge that I have read and fully understand this consent form. I understand the risks associated with communication of email between {{practice_name}} and myself, and consent to the conditions outlined herein. Any questions I may have, been answered by {{practice_name}}.",
+      "agree_text": "I consent and accept the risk in receiving information via email",
+      "decline_text": "I do not want to receive information via email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "work_phone",
+    "type": "input",
+    "title": "Work Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "work_ext",
+    "type": "input",
+    "title": "Ext#",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "sex",
+    "type": "radio",
+    "title": "Gender",
+    "control": {
+      "options": [
+        {
+          "name": "Male",
+          "value": "male"
+        },
+        {
+          "name": "Female",
+          "value": "female"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        },
+        {
+          "name": "Prefer not to self identify",
+          "value": "not_say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "marital_status",
+    "type": "radio",
+    "title": "Marital Status",
+    "control": {
+      "options": [
+        {
+          "name": "Single",
+          "value": "single"
+        },
+        {
+          "name": "Married",
+          "value": "married"
+        },
+        {
+          "name": "Widowed",
+          "value": "widowed"
+        },
+        {
+          "name": "Divorced",
+          "value": "divorced"
+        },
+        {
+          "name": "Prefer not to say",
+          "value": "not say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "Email",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_name",
+    "type": "input",
+    "title": "Emergency Contact",
+    "control": {
+      "hint": "Who should we contact?",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "previous_dentist",
+    "type": "input",
+    "title": "Previous Dentist and/or Dental Office",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "insurance_has",
+    "type": "radio",
+    "title": "No, Dental Insurance",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder",
+    "type": "input",
+    "title": "Primary Insurance (Policy Holder)",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company",
+    "type": "input",
+    "title": "Name of Insurance Company",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state__primary",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder_2",
+    "type": "input",
+    "title": "Policy Holder Name: Birth Date#: /",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number",
+    "type": "input",
+    "title": "ID Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "ssn__primary",
+    "type": "input",
+    "title": "SSN",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "first_name_2",
+    "type": "input",
+    "title": "Name of Employer",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship",
+    "type": "input",
+    "title": "Relationship to Insurance Holder",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "responsible_party_name",
+    "type": "input",
+    "title": "Responsible Party Name",
+    "control": {
+      "hint": "Person responsible for payment",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder_3",
+    "type": "input",
+    "title": "Insured's Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_2",
+    "type": "states",
+    "title": "State #2",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": "self"
+      },
+      {
+        "op": "!=",
+        "key": "insurance_relationship",
+        "value": null
+      }
+    ],
+    "key": "insurance_holder_4",
+    "type": "input",
+    "title": "Policy Holder Name",
+    "control": {
+      "hint": "Full name of an insurance subscriber",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Birth Date: /",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship_2",
+    "type": "input",
+    "title": "Relationship to Insurance Holder #2",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "medical_conditions",
+    "type": "dropdown",
+    "title": "Do you have or have you had any of the following?",
+    "section": "Medical History",
+    "optional": false,
+    "control": {
+      "options": [
+        {
+          "name": "Actonel",
+          "value": "actonel"
+        },
+        {
+          "name": "Boniva",
+          "value": "boniva"
+        },
+        {
+          "name": "Comments",
+          "value": "comments"
+        },
+        {
+          "name": "Disease !Stroke !Swelling of Limbs !Thyroid Disease !Tonsillitis !Tuberculosis !Tumors/Growths !Ulcers !Venereal Disease !Yellow Jaundice",
+          "value": "disease_stroke_swelling_of_limbs_thyroid_disease_tonsillitis_tuberculosis"
+        },
+        {
+          "name": "Do you use tobacco?",
+          "value": "do_you_use_tobacco"
+        },
+        {
+          "name": "Frequent Headaches !Genital Herpes !Glaucoma !Hay Fever !Heart Attack/Failure !Heart Murmur !Heart Pacemaker !Heart Trouble/Disease !Hemophilia !Hepatitis A !Herpes !High Blood Pressure !High Cholesterol !Hives/Rash !Hypoglycemia",
+          "value": "frequent_headaches_genital_herpes_glaucoma_hay_fever_heart_attackfailure_heart"
+        },
+        {
+          "name": "Hypoglycemia !Irregular Heartbeat !Kidney Problems !Leukemia !Liver Disease !Low Blood Pressure !Mitral Valve Prolapse !Osteoporosis !Pain in Jaw Joints !Parathyroid Disease !Psychiatric Care !Radiation Treatments !Recent Weight Loss !Renal Dialyses !Rheumatic Fever",
+          "value": "hypoglycemia_irregular_heartbeat_kidney_problems_leukemia_liver_disease_low"
+        },
+        {
+          "name": "Please explain",
+          "value": "please_explain"
+        },
+        {
+          "name": "Rheurnatism !Scarlet Fever !Shingles !Sickle Cell Disease !Sinus Trouble !Spina Bifida !Stomach/Intestinal",
+          "value": "rheurnatism_scarlet_fever_shingles_sickle_cell_disease_sinus_trouble_spina"
+        },
+        {
+          "name": "Yes No",
+          "value": "yes_no"
+        },
+        {
+          "name": "questions.",
+          "value": "questions"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "are_you_under_a_physicians_care_now",
+    "title": "Are you under a physician’s care now?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "have_you_ever_been_hospitalized_had_major_surgery",
+    "title": "______________________ Have you ever been hospitalized/ had major surgery?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "have_you_ever_taken_fosamax",
+    "title": "Have you ever taken Fosamax",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "are_you_on_a_special_diet",
+    "title": "Are you on a special diet?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "do_you_use_controlled_substances",
+    "title": "Do you use controlled substances?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "women_are_you",
+    "title": "Women are you",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Pregnant",
+          "value": "pregnant"
+        },
+        {
+          "name": "Trying to get pregnant",
+          "value": "trying_to_get_pregnant"
+        },
+        {
+          "name": "Nursing",
+          "value": "nursing"
+        },
+        {
+          "name": "Taking oral contraceptives",
+          "value": "taking_oral_contraceptives"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "are_you_allergic_to_any_of_the_following",
+    "title": "Are you allergic to any of the following",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Aspirin",
+          "value": "aspirin"
+        },
+        {
+          "name": "Penicillin",
+          "value": "penicillin"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "latex_allergy",
+    "type": "radio",
+    "title": "Codeine Acrylic Metal Latex",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    },
+    "section": "Medical History",
+    "optional": false
+  },
+  {
+    "key": "local_anesthesia_sulfa_drugs_other",
+    "title": "Local Anesthesia Sulfa Drugs Other",
+    "section": "Medical History",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Local Anesthesia",
+          "value": "local_anesthesia"
+        },
+        {
+          "name": "Sulfa Drugs",
+          "value": "sulfa_drugs"
+        },
+        {
+          "name": "Other:_____________________________________________",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "have_you_had_any_serious_illness_not_listed_above",
+    "title": "Have you had any serious illness not listed above?",
+    "section": "Medical History",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "referrer",
+        "value": "Friend/Family"
+      }
+    ],
+    "key": "referred_by",
+    "type": "input",
+    "title": "I was Referred by",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "other",
+    "title": "Other",
+    "section": "General",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ],
+      "multi": true
+    }
+  }
+]

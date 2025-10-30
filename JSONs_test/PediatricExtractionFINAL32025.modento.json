@@ -1,0 +1,44 @@
+[
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "Patient Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of Birth",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "i_hereby_give_permission_to_to_perform_the_extraction_of",
+    "title": "I hereby give permission to to perform the extraction of tooth/teeth numbers: to be done with local anesthesia.",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  }
+]

@@ -1,0 +1,132 @@
+[
+  {
+    "key": "minor_discomfort_when_switching_aligners_during_treatment_is",
+    "title": "Terms",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Minor discomfort when switching aligners during treatment is expected. However, any concern regarding pain or difficulty with placing a new appliance should be immediately reported to your doctor. In some cases patients may experience irritation to gums, cheeks or lips during treatment, which should also be communicated to your doctor. In a small amount of cases, allergic reactions may be present. In the case of allergic reactions, please contact your doctor or healthcare provider immediately."
+    }
+  },
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "Print patient name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "or_in_case_of_a_minor_parent_or_legal_guardian",
+    "title": "(or in case of a minor, parent or legal guardian)",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "notify_your_doctor_if_you_have_any_medical_conditions_or_are_on",
+    "title": "Notify your doctor if you have any medical conditions or are on any medications as they could affect treatment.",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "congratulations_on_your_decision_to_pursue_orthodontic",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Congratulations on your decision to pursue orthodontic treatment for you or your child. SureSmile is an excellent choice made by your doctor to create beautiful, new smiles. Please read the following information and make sure that you ask any questions or raise any concerns you may have before signing this consent agreement."
+    }
+  },
+  {
+    "key": "failing_to_follow_you_doctors_instructions_may_interfere_with",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Failing to follow you doctors instructions may interfere with achieving treatment objectives. This includes not wearing appliances as directed or missed appointments. All treatment times are estimated and may be extended by eruption of teeth or issues related to patient’s specific dentition, including uncommon tooth shape and any other anomaly encountered during treatment."
+    }
+  },
+  {
+    "key": "inadequate_patient_oral_hygiene_during_treatment_may_result_in",
+    "title": "Terms (3)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Inadequate patient oral hygiene during treatment may result in decay, gum irritation, tissue disease or permanent discoloration of teeth. In the event that all hygiene instructions are not followed, including regular brushing/flossing and regular practice of standard oral hygiene, intraoral inflammation or gum disease may result."
+    }
+  },
+  {
+    "key": "orthodontic_treatment_involves_moving_teeth_and_in_some_cases",
+    "title": "Terms (4)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Orthodontic treatment involves moving teeth and, in some cases, after treatment is complete, teeth may shift. Retainers must be worn at the direction of your doctor to control this tendency. In short, wearing retainer’s post-treatment is essential to maintaining your new smile."
+    }
+  },
+  {
+    "key": "in_some_cases_additional_treatment_appliances_may_be_required",
+    "title": "Terms (5)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "In some cases, additional treatment appliances may be required for treatment plans. Such supplementary clinical requirements will be explained by your doctor. These may include the need for oral surgery to correct jaw position or severe crowding, which must be completed prior to aligner treatment."
+    }
+  },
+  {
+    "key": "orthodontic_appliances_can_possibly_be_swallowed_or_aspirated",
+    "title": "Terms (6)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Orthodontic appliances can possibly be swallowed or aspirated. Any looseness of aligners or any other appliance used during treatment should be immediately reported to your doctor. In cases involving extreme crowding or missing teeth, product breakage is more common."
+    }
+  },
+  {
+    "key": "in_signing_this_document_i_am_indicating_that_i_understand_the",
+    "title": "Terms (7)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "In signing this document, I am indicating that I understand the risks and options available for orthodontic treatment. Any concerns or questions that I may have had were sufficiently explained by my doctor and I consent to treatment for myself or a minor under my legal care."
+    }
+  }
+]

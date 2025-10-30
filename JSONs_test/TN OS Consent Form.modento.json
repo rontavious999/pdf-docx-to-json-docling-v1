@@ -1,0 +1,133 @@
+[
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "Patient Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of Birth",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "swelling_andor_bruising_and_discomfort_in_the_surgery_area",
+    "title": "SWELLING and/or BRUISING and DISCOMFORT in the surgery area.",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "antibiotics",
+    "type": "checkbox",
+    "title": "INFECTION: An infection could happen after surgery which may require antibiotics and/or surgical drainage.",
+    "section": "Medical History",
+    "optional": false
+  },
+  {
+    "key": "i_have_read_and_understand_the",
+    "title": "I have read and understand the above information and have no additional questions. I give consent to surgery.",
+    "section": "Medical History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "nearby_tooth_damage_possible_damagae_to_other_teeth_close_to",
+    "title": "NEARBY TOOTH DAMAGE: Possible damagae to other teeth close to the ones being removed (more often those with large fillings or crowns) or other tissues of the face or mouth might be harmed.",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Date",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "planned_procedure_diagnosis",
+    "title": "Planned Procedure: Diagnosis",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "alternative_treatment",
+    "title": "Alternative Treatment",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "the_dentist_andor_staff_have_explained_to_me_the_proposed",
+    "title": "The dentist and/or staff have explained to me the proposed treatment. I understand there is the option of no treatment. I understand there are certain potential risks with the procedure. These include the following",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "druganesthesia_reactions_local_anesthetic_will_be_used_for_your",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "DRUG/ANESTHESIA REACTIONS: Local anesthetic will be used for your surgery. You can expectedly react to ANY drug, ranging from getting a rash to having a life threatening crisis. Please inform us of any past allergies, major illnesses, or additional medications you are currently taking. It is IMPORTANT you tell us now, or you may be risking your own health."
+    }
+  },
+  {
+    "key": "incomplete_removal_of_tooth_fragment_and_sharp_crestal_bone_to",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "INCOMPLETE REMOVAL OF TOOTH FRAGMENT AND SHARP CRESTAL BONE: To avoid injury to vital structure such as nerves and sinuses, sometimes small root tips may be left in place. Sharp ridges or bone splinters may form later at the edge of the socket. This may require another surgery to smooth or remove."
+    }
+  }
+]

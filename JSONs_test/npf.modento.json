@@ -1,0 +1,670 @@
+[
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Today’s Date",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "Patient Name: First",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "preferred_name",
+    "type": "input",
+    "title": "MI Last Nickname",
+    "control": {
+      "hint": "Optional",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address: Street",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "apt",
+    "type": "input",
+    "title": "Apt",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "unit",
+    "type": "input",
+    "title": "Unit",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "suite",
+    "type": "input",
+    "title": "Suite",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "mobile_phone",
+    "type": "input",
+    "title": "Mobile",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "home_phone",
+    "type": "input",
+    "title": "Home",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "work_phone",
+    "type": "input",
+    "title": "Work",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "email",
+    "type": "input",
+    "title": "E-Mail",
+    "control": {
+      "hint": "joe@example.com",
+      "input_type": "email"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "drivers_license",
+    "type": "input",
+    "title": "Driver's License #",
+    "control": {
+      "hint": null,
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "phone",
+    "type": "input",
+    "title": "Phone",
+    "control": {
+      "hint": null,
+      "input_type": "phone",
+      "phone_prefix": "+1"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "ssn",
+    "type": "input",
+    "title": "Social Security No",
+    "control": {
+      "hint": null,
+      "input_type": "ssn"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of Birth//",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "employer",
+    "type": "input",
+    "title": "Patient Employed By",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "occupation",
+    "type": "input",
+    "title": "Occupation",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "sex",
+    "type": "radio",
+    "title": "Sex",
+    "control": {
+      "options": [
+        {
+          "name": "Male",
+          "value": "male"
+        },
+        {
+          "name": "Female",
+          "value": "female"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        },
+        {
+          "name": "Prefer not to self identify",
+          "value": "not_say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "marital_status",
+    "type": "radio",
+    "title": "Marital Status",
+    "control": {
+      "options": [
+        {
+          "name": "Single",
+          "value": "single"
+        },
+        {
+          "name": "Married",
+          "value": "married"
+        },
+        {
+          "name": "Widowed",
+          "value": "widowed"
+        },
+        {
+          "name": "Divorced",
+          "value": "divorced"
+        },
+        {
+          "name": "Prefer not to say",
+          "value": "not say"
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "in_case_of_emergency_who_should_be_notified",
+    "title": "In case of emergency, who should be notified?",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "for_childrenminors_only_is_the_patient_a_minor",
+    "title": "FOR CHILDREN/MINORS ONLY: Is the patient a Minor?",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "radio",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
+    "key": "full_time_student",
+    "type": "radio",
+    "title": "Full-time Student",
+    "control": {
+      "options": [
+        {
+          "name": "Yes",
+          "value": true
+        },
+        {
+          "name": "No",
+          "value": false
+        }
+      ]
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "first_name_2",
+    "type": "input",
+    "title": "Name of School",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "first",
+    "title": "First",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "last",
+    "title": "Last",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_relationship",
+    "type": "input",
+    "title": "Birth Relationship to Patient",
+    "control": {
+      "hint": "Relationship to patient",
+      "input_type": "text"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "other",
+    "title": "Other",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "if_patient_is_a_minor_primary_residence",
+    "title": "If patient is a Minor, Primary residence",
+    "section": "Patient Information",
+    "optional": false,
+    "type": "dropdown",
+    "control": {
+      "options": [
+        {
+          "name": "Both Parents",
+          "value": "both_parents"
+        },
+        {
+          "name": "Mom",
+          "value": "mom"
+        },
+        {
+          "name": "Dad",
+          "value": "dad"
+        },
+        {
+          "name": "Step Parent",
+          "value": "step_parent"
+        },
+        {
+          "name": "Shared Custody",
+          "value": "shared_custody"
+        },
+        {
+          "name": "Guardian",
+          "value": "guardian"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "employer_2",
+    "type": "input",
+    "title": "Employer",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "first_name_3",
+    "type": "input",
+    "title": "Name of InsuredBirthdateSSN",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company",
+    "type": "input",
+    "title": "Insurance Company",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "city_2",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "state_2",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "zipcode_2",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company_2",
+    "type": "input",
+    "title": "Dental Plan Name",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_company_3",
+    "type": "input",
+    "title": "Plan",
+    "control": {
+      "hint": "Company name",
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_group_number",
+    "type": "input",
+    "title": "Group Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_id_number",
+    "type": "input",
+    "title": "ID Number",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "if": [
+      {
+        "key": "insurance_has",
+        "value": true
+      }
+    ],
+    "key": "insurance_relationship",
+    "type": "radio",
+    "title": "Patient Relationship to Insured",
+    "control": {
+      "options": [
+        {
+          "name": "Self",
+          "value": "self"
+        },
+        {
+          "name": "Spouse",
+          "value": "spouse"
+        },
+        {
+          "name": "Child",
+          "value": "child"
+        },
+        {
+          "name": "Other",
+          "value": "other"
+        }
+      ]
+    },
+    "section": "Insurance",
+    "optional": false
+  },
+  {
+    "key": "dental_conditions",
+    "type": "dropdown",
+    "title": "Do you have or have you had any of the following?",
+    "section": "Dental History",
+    "optional": false,
+    "control": {
+      "options": [
+        {
+          "name": "Address: Street",
+          "value": "address_street"
+        },
+        {
+          "name": "City",
+          "value": "city"
+        },
+        {
+          "name": "Date",
+          "value": "date"
+        },
+        {
+          "name": "Dental Plan Name",
+          "value": "dental_plan_name"
+        },
+        {
+          "name": "Group Number",
+          "value": "group_number"
+        },
+        {
+          "name": "ID Number",
+          "value": "id_number"
+        },
+        {
+          "name": "Insurance Company",
+          "value": "insurance_company"
+        },
+        {
+          "name": "Name of InsuredBirthdateSSN",
+          "value": "name_of_insuredbirthdatessn"
+        },
+        {
+          "name": "Patient Relationship to Insured",
+          "value": "patient_relationship_to_insured"
+        },
+        {
+          "name": "Phone",
+          "value": "phone"
+        },
+        {
+          "name": "Plan",
+          "value": "plan"
+        },
+        {
+          "name": "State",
+          "value": "state"
+        },
+        {
+          "name": "Zip",
+          "value": "zip"
+        }
+      ],
+      "multi": true
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  }
+]

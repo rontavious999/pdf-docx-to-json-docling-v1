@@ -1,0 +1,66 @@
+[
+  {
+    "key": "first_name",
+    "type": "input",
+    "title": "Patient Name",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "DOB",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "i_certify_that_i_have_read",
+    "title": "I certify that I have read the contents of this form. I understand the possible advantages of proceeding with the recommended treatment and the possible risks and consequences of refusing the recommended treatment.",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "you_have_the_right_and_obligation_to_make_decisions_regarding",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "You have the right and obligation to make decisions regarding your health care. Your dentist can provide you with the necessary information and advice, but you must participate in the decision-making process. This form will acknowledge your refusal of treatment recommended by your dentist."
+    }
+  },
+  {
+    "key": "having_been_informed_i_elect_not_to_have_the_necessary_xrays_at",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "Having been informed, I elect not to have the necessary x-rays at this time. I hereby release the doctor and any team members from any liability for all injuries or damages I may sustain because of my refusal. I attest that I have had the opportunity to ask questions and all my questions have been answered to my satisfaction."
+    }
+  }
+]

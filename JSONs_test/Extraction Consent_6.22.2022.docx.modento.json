@@ -1,0 +1,56 @@
+[
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Date",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "the_benefits_of_extraction_removal_of_teeth_have_been_explained",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "The benefits of extraction (removal of teeth) have been explained to me. I understand that surgical extraction may be necessary. Referral to a specialist (oral surgeon) has been offered. Proposed fees have been explained to me, including any third party insurance benefits. I understand that third party benefits may be different than discussed, as they are not under the control of this office."
+    }
+  },
+  {
+    "key": "the_doctor_will_make_every_effort_to_avoid_these_complications",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "The doctor will make every effort to avoid these complications. Medical history must be accurate and current, and post-operative instructions need to be strictly followed to limit the risks involved with surgery. Alternative treatment (including the option of no treatment) has been explained to me. I understand the risks of not having extractions performed include (but are not limited to): infection, swelling, pain, gum disease, malocclusion, and systemic disease."
+    }
+  },
+  {
+    "key": "patient_consent_i_print_name_have",
+    "title": "Terms (3)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "PATIENT CONSENT: I, _____________________________________(print name) have been fully informed of the surgery to be performed. I understand the risks and benefits of the procedure, alternative treatments, and the necessity for follow-up and self care. I understand the potential outcome of not undergoing treatment. I am aware that additional treatment may be necessary. I have had an opportunity to ask my doctor any questions, all of which have been answered to my satisfaction."
+    }
+  }
+]

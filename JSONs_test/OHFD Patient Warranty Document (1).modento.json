@@ -1,0 +1,67 @@
+[
+  {
+    "key": "fillings_on_the_incisal_edge_of_anterior_teeth_edge_of_front",
+    "title": "Fillings on the incisal edge of anterior teeth (edge of front teeth) are not recommended due to the high fail rate and will not be covered by warranty.",
+    "section": "Dental History",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "when_a_tooth_has_a_cavity_the_dentist_removes_the_decay_and",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "When a tooth has a cavity, the dentist removes the decay and replaces it with a composite filling, which is ideally no more than 40% of the tooth. The tooth is what supports the filling. When you get a cavity that takes up 50% or more of the tooth, a crown is indicated. A crown covers the entire tooth and holds the tooth together. If a composite tooth colored restoration is the recommended treatment of choice, we will replace or repair it in the event of failure for a period of two (2) years."
+    }
+  },
+  {
+    "key": "we_will_repair_or_replace_sealants_for_a_period_of_one_1_year",
+    "title": "Terms (2)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "We will repair or replace sealants for a period of one (1) year after placement. To ensure the longevity of sealants, patients should have proper oral hygiene at home (at least brushing teeth twice a day and flossing one’s teeth at least once a day), and the patient should avoid sticky candies and eating ice. *"
+    }
+  },
+  {
+    "key": "we_will_warranty_complete_dentures_or_partial_dentures_for_a",
+    "title": "Terms (3)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "We will warranty complete dentures or partial dentures for a period of five (5) years for a chipped or broken tooth or broken flange if the problem occurs during normal use. Full upper and lower denture patients must be seen at least once every 12 months, and patients with partial dentures must be seen at the recommended preventive care intervals. *"
+    }
+  },
+  {
+    "key": "as_popcorn_kernels_ice_bones_or_using_the_teeth_as_tools_as",
+    "title": "Terms (4)",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "as popcorn kernels, ice, bones, or using the teeth as tools as when opening things. A night guard appliance will be required for patients indicating bruxism (grinding) as this behavior can cause implants to fail. Smoking of any kind voids this warranty. *"
+    }
+  }
+]

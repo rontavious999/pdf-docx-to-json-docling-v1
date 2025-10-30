@@ -1,0 +1,54 @@
+[
+  {
+    "key": "todays_date_2",
+    "type": "date",
+    "title": "or authorized representative: Date.",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "by_signing_this_consent_for_final",
+    "title": "By signing this Consent for final processing. I give Dr. my consent for final processing and acknowledge my approval of the appearance.",
+    "section": "General",
+    "optional": false,
+    "type": "input",
+    "control": {
+      "input_type": "text"
+    }
+  },
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Patient's Name (Please Print) : Date",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "General",
+    "optional": false
+  },
+  {
+    "key": "i_have_been_given_the_opportunity_to_view_my_dentures_in_the",
+    "title": "Terms",
+    "section": "Consent",
+    "optional": false,
+    "type": "terms",
+    "control": {
+      "agree_text": "I have read and agree to the terms.",
+      "html_text": "I have been given the opportunity to view my dentures in the mouth prior to final processing. I approve the color, shape, feel and overall appearance of my dentures. I understand that once the dentures arc processed by the laboratory, the factors of color, shape, feel and overall appearance cannot be changed without additional and possibly significant time being taken and fees assessed."
+    }
+  }
+]

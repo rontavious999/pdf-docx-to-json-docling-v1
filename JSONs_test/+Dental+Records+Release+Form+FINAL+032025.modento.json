@@ -1,0 +1,93 @@
+[
+  {
+    "if": [
+      {
+        "key": "emergency_providing",
+        "value": true
+      }
+    ],
+    "key": "emergency_name",
+    "type": "input",
+    "title": "Full name",
+    "control": {
+      "hint": "Who should we contact?",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "date_of_birth",
+    "type": "date",
+    "title": "Date of birth",
+    "control": {
+      "input_type": "past"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "address",
+    "type": "input",
+    "title": "Address",
+    "control": {
+      "hint": "Street Address, Apt#",
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "city",
+    "type": "input",
+    "title": "City",
+    "control": {
+      "hint": null,
+      "input_type": "name"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "state",
+    "type": "states",
+    "title": "State",
+    "control": {
+      "hint": "Select state..."
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "zipcode",
+    "type": "input",
+    "title": "Zip",
+    "control": {
+      "hint": null,
+      "input_type": "zip"
+    },
+    "section": "Patient Information",
+    "optional": false
+  },
+  {
+    "key": "todays_date",
+    "type": "date",
+    "title": "Date of release",
+    "control": {
+      "input_type": "any"
+    },
+    "section": "Dental History",
+    "optional": false
+  },
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  }
+]

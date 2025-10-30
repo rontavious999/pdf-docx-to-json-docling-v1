@@ -1,0 +1,23 @@
+[
+  {
+    "key": "signature",
+    "type": "block_signature",
+    "title": "Signature",
+    "control": {
+      "language": "en",
+      "variant": "adult_no_guardian_details"
+    },
+    "section": "Signature",
+    "optional": false
+  },
+  {
+    "key": "delayed_healing_dry_socket_necessitating_several_postoperative",
+    "title": "Delayed healing (dry socket) necessitating several post-operative visits  Damage to sinuses requiring additional treatment or surgical repair at a later date  Fracture or dislocation of the jaw  Damage to the nerves during tooth removal resulting in temporary, or possibly partial or permanent numbness or tingling of the lip, chin, tongue, or other areas",
+    "section": "Consent",
+    "optional": false,
+    "type": "date",
+    "control": {
+      "input_type": "past"
+    }
+  }
+]
