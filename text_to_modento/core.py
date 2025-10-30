@@ -1876,18 +1876,32 @@ def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]
     return (key, title, field_type)
 
 
-def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
+def detect_multi_field_line(line: str, section: str = "", prev_context: List[str] = None) -> Optional[List[Tuple[str, str]]]:
     """
-    Detect lines with a single label followed by multiple blank fields.
+    Improvement 3: Detect lines with a single label followed by multiple blank fields,
+    with enhanced context awareness.
     
     Example: "Phone: Mobile _____ Home _____ Work _____"
     Returns: [("phone_mobile", "Mobile"), ("phone_home", "Home"), ("phone_work", "Work")]
+    
+    Improvement 3 Enhancement:
+    - "Responsible Party: First ___ Last ___" in Insurance section
+      → [("responsible_party_first_name", "First Name"), ("responsible_party_last_name", "Last Name")]
+    - "Guardian Name: First ___ Last ___"
+      → [("guardian_first_name", "First Name"), ("guardian_last_name", "Last Name")]
+    
+    Args:
+        line: The line to parse
+        section: Current section (e.g., "Insurance", "Patient Information")
+        prev_context: List of previous lines for context extraction
     
     Priority 2.1: Multi-Field Label Splitting
     - Detects multiple underscores or blanks after a single label
     - Identifies common sub-field keywords (Home/Work/Cell, Mobile/Office, Primary/Secondary)
     - Uses spacing analysis to detect distinct blank columns
     """
+    if prev_context is None:
+        prev_context = []
     # Pattern: Label: followed by multiple keywords with blanks/underscores
     # Common keywords for sub-fields
     sub_field_keywords = {
@@ -1925,6 +1939,52 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     base_label = label_match.group(1).strip()
     remainder = label_match.group(2)
     
+    # Improvement 3: Extract contextual prefix from label or previous lines
+    context_prefix = None
+    
+    # Check if the label itself contains context keywords
+    label_lower = base_label.lower()
+    context_keywords = {
+        'guardian': 'guardian',
+        'responsible party': 'responsible_party',
+        'emergency contact': 'emergency_contact',
+        'insured': 'insured',
+        'policy holder': 'policy_holder',
+        'policyholder': 'policy_holder',
+        'subscriber': 'subscriber',
+        'patient': 'patient',
+        'employer': 'employer',
+        'spouse': 'spouse',
+        'parent': 'parent',
+        'child': 'child',
+    }
+    
+    for keyword, prefix in context_keywords.items():
+        if keyword in label_lower:
+            context_prefix = prefix
+            break
+    
+    # If no context in label, check previous 2 lines
+    if not context_prefix and prev_context:
+        for prev_line in prev_context[-2:]:
+            prev_lower = prev_line.lower()
+            for keyword, prefix in context_keywords.items():
+                if keyword in prev_lower:
+                    # Extract the context phrase before colon if present
+                    if ':' in prev_line:
+                        context_phrase = prev_line.split(':')[0].strip()
+                        context_prefix = slugify(context_phrase)[:20]
+                    else:
+                        context_prefix = prefix
+                    break
+            if context_prefix:
+                break
+    
+    # If in Insurance section and still no context, use "insurance" prefix for name fields
+    if not context_prefix and section and 'insurance' in section.lower():
+        if any(keyword in label_lower for keyword in ['name', 'insured', 'policy']):
+            context_prefix = 'insurance'
+    
     # Patch 2: Normalize slashes to spaces (e.g., "Day/Evening" -> "Day Evening")
     remainder = re.sub(r'/', ' ', remainder)
     
@@ -1954,11 +2014,25 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     base_key = slugify(base_label)
     result = []
     for display_name, suffix_key in keywords_found:
-        field_key = f"{base_key}_{suffix_key}"
+        # Improvement 3: Apply context prefix to create meaningful field keys
+        if context_prefix:
+            # If context is from the label itself (e.g., "Guardian Name"), 
+            # and suffix is a name component, create contextual key
+            if suffix_key in ['first', 'last', 'middle', 'middle_initial']:
+                field_key = f"{context_prefix}_{suffix_key}_name"
+            else:
+                field_key = f"{context_prefix}_{suffix_key}"
+        else:
+            field_key = f"{base_key}_{suffix_key}"
+        
         # Archivev21 Fix 3: For name fields, use simpler titles
-        if base_label.lower() in ['patient name', 'name', 'insured name', "insured's name"]:
+        if base_label.lower() in ['patient name', 'name', 'insured name', "insured's name", 
+                                   'guardian name', 'responsible party name', 'policy holder name']:
             # Use just the subfield name as title (e.g., "First Name", "Last Name")
-            field_title = f"{display_name.title()} Name" if display_name.lower() in ['first', 'last', 'middle'] else display_name.title()
+            if suffix_key in ['first', 'last', 'middle', 'middle_initial']:
+                field_title = f"{display_name.title()} Name" if display_name.lower() in ['first', 'last', 'middle'] else display_name.title()
+            else:
+                field_title = display_name.title()
         else:
             field_title = f"{base_label} ({display_name})"
         result.append((field_key, field_title))
@@ -2812,10 +2886,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             j = max(j, k)
 
         # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
-        multi_fields = detect_multi_field_line(line)
+        # Improvement 3: Pass section and context for enhanced field naming
+        prev_context = lines[max(0, i-3):i] if i > 0 else []
+        multi_fields = detect_multi_field_line(line, cur_section, prev_context)
         if multi_fields:
             if debug:
                 print(f"  [debug] multi-field detected: {line[:60]}... -> {len(multi_fields)} fields")
+                if multi_fields:
+                    print(f"  [debug]   Keys: {[k for k, _ in multi_fields]}")
             for field_key, field_title in multi_fields:
                 # Determine input type based on base field
                 input_type = "text"
