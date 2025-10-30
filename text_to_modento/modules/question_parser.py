@@ -75,9 +75,17 @@ def is_consent_or_terms_text(text: str) -> bool:
     if match_count >= 2:
         return True
     
-    # Single strong indicator with sufficient length
+    # Single strong indicator - check strongest patterns first
+    # First 3 patterns are very strong indicators even in short text
+    for pattern in consent_phrases[:3]:
+        if re.search(pattern, text_lower):
+            # If text is long OR starts with these strong patterns, it's consent
+            if len(text) > 30 or re.match(pattern, text_lower):
+                return True
+    
+    # Other patterns need longer text to be confident
     if len(text) > 80:
-        for pattern in consent_phrases[:5]:  # First 5 are strongest
+        for pattern in consent_phrases[3:]:
             if re.search(pattern, text_lower):
                 return True
     
@@ -178,14 +186,22 @@ def infer_field_type_from_context(title: str, has_options: bool = False,
     if has_options and option_count > 6:
         return 'dropdown'
     
+    # Yes/No questions are radio (check before multi-selection keywords)
+    # Also check for common question patterns that imply Yes/No
+    yes_no_patterns = [
+        r'\b(yes\s*(?:or|/)\s*no|y\s*(?:or|/)\s*n)\b',
+        r'\b(are\s+you|do\s+you|have\s+you|did\s+you|is\s+the|will\s+you)',  # Question patterns
+    ]
+    for pattern in yes_no_patterns:
+        if re.search(pattern, title_lower):
+            # If it's a question without explicit options, likely radio
+            if not has_options or option_count <= 2:
+                return 'radio'
+    
     # Multi-selection indicators suggest dropdown
     dropdown_keywords = ['select all', 'check all', 'choose all', 'multiple', 'which of the following']
     if any(keyword in title_lower for keyword in dropdown_keywords):
         return 'dropdown'
-    
-    # Yes/No questions are radio
-    if re.search(r'\b(yes\s*(?:or|/)\s*no|y\s*(?:or|/)\s*n)\b', title_lower):
-        return 'radio'
     
     # Default to input if nothing else matches
     return 'input'
