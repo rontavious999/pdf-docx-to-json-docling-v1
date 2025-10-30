@@ -112,6 +112,7 @@ from .modules.question_parser import (
     classify_date_input,
     norm_title,  # Patch 2: Moved to question_parser for better organization
     generate_contextual_date_key,  # Improvement 6: Date field disambiguation
+    infer_multi_select_from_context,  # NEW Improvement 8: Smart multi-select detection
 )
 
 # ---------- Paths
@@ -3051,6 +3052,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     for tok in re.split(r"[,/;]", cleaned_question_title):
                         tok = clean_token(tok)
                         if tok: options.append(make_option(tok, None))
+                
+                # NEW Improvement 8: Use smart multi-select detection
+                # Override make_radio decision with context-aware logic
+                option_names = [opt['name'] for opt in options]
+                is_multi = infer_multi_select_from_context(cleaned_question_title, option_names, cur_section)
+                make_radio = not is_multi  # If multi-select, not radio; if single-select, is radio
+                
                 control: Dict = {"options": options}
                 if not make_radio:
                     control["multi"] = True

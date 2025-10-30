@@ -624,3 +624,68 @@ def generate_contextual_date_key(title: str, prev_lines: list, section: str) -> 
     
     # Default fallback
     return 'date'
+
+
+def infer_multi_select_from_context(title: str, options: list, section: str = "") -> bool:
+    """
+    NEW Improvement 8: Determine if a field should be multi-select based on context.
+    
+    Helps distinguish when a field with options should allow multiple selections (dropdown)
+    vs single selection (radio).
+    
+    Multi-select indicators:
+    - Medical history: "Do you have any of the following" → Always multi
+    - Allergy lists: "Are you allergic to" → Always multi
+    - "Check all that apply", "Select all" → Always multi
+    - 5+ options → Usually multi-select
+    
+    Single-select indicators:
+    - Yes/No questions → Always single
+    - Gender → Always single
+    - Marital status → Always single
+    - 2-3 options → Usually single unless context indicates otherwise
+    
+    Args:
+        title: Field title/label
+        options: List of option names
+        section: Current section name
+        
+    Returns:
+        True if field should be multi-select, False for single-select
+    """
+    if not title:
+        # Default based on option count
+        return len(options) >= 5
+    
+    title_lower = title.lower()
+    
+    # Definite multi-select patterns
+    multi_patterns = [
+        r'do you have.*any of the following',
+        r'have you had.*any of the following',
+        r'have you ever had.*any of the following',
+        r'are you allergic to.*following',
+        r'allergic to.*any of the following',
+        r'check all that apply',
+        r'select all',
+        r'select\s+any',
+    ]
+    
+    if any(re.search(p, title_lower) for p in multi_patterns):
+        return True
+    
+    # Definite single-select patterns
+    single_patterns = [
+        r'\bgendern\b',
+        r'\bsex\b',
+        r'marital status',
+        r'\byes\s*/\s*no\b',
+        r'\byes\s+or\s+no\b',
+    ]
+    
+    if any(re.search(p, title_lower) for p in single_patterns):
+        return False
+    
+    # Default: multi if 5+ options, single otherwise
+    # This is a reasonable heuristic: fields with many options typically allow multiple selections
+    return len(options) >= 5
