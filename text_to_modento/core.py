@@ -82,7 +82,8 @@ from .modules.grid_parser import (
     detect_multicolumn_checkbox_grid,
     parse_multicolumn_checkbox_grid,
     extract_text_for_checkbox,
-    extract_text_only_items_at_columns
+    extract_text_only_items_at_columns,
+    detect_medical_conditions_grid
 )
 from .modules.template_catalog import (
     TemplateCatalog,
@@ -2228,6 +2229,30 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     print(f"  [debug] skipping category header: '{line[:60]}'")
                 i += 1
                 continue
+
+        # Improvement 4: Check for medical conditions grid pattern
+        # This detects "Do you have any of the following?" followed by many checkbox lines
+        medical_grid = detect_medical_conditions_grid(lines, i, debug)
+        if medical_grid:
+            # Create a multi-select dropdown question with all the conditions
+            key = slugify(medical_grid['title'])
+            if len(key) > 50:
+                key = "medical_conditions" if "medical" in cur_section.lower() else "dental_conditions"
+            
+            questions.append(Question(
+                key,
+                medical_grid['title'],
+                cur_section if cur_section else "Medical History",
+                "dropdown",
+                control={"options": medical_grid['options'], "multi": True}
+            ))
+            
+            if debug:
+                print(f"  [debug] medical_grid -> '{medical_grid['title']}' with {len(medical_grid['options'])} options")
+            
+            # Skip past the grid
+            i = medical_grid['end_idx'] + 1
+            continue
 
         # Archivev8 Fix 1: Check for orphaned checkbox pattern
         # Use raw line (not collapsed) to preserve spacing

@@ -20,8 +20,9 @@ import re
 from typing import List, Optional, Dict, TYPE_CHECKING
 
 # Import from other modules
-from .text_preprocessing import collapse_spaced_caps
+from .text_preprocessing import collapse_spaced_caps, is_heading
 from .constants import CHECKBOX_ANY, CHECKBOX_MARK_RE
+from .question_parser import clean_option_text
 
 # Type hints for circular import - these are actually imported from core at runtime
 if TYPE_CHECKING:
@@ -799,4 +800,167 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
         )
     
     return None
+
+
+def detect_medical_conditions_grid(lines: List[str], start_idx: int, debug: bool = False) -> Optional[dict]:
+    """
+    Improvement 4: Detect medical history checkbox grids with multiple columns.
+    
+    Pattern:
+    - Question line: "Do you have, or have you had..."
+    - Multiple lines with inline checkboxes
+    - Typically 20-50+ options across 2-3 columns
+    
+    Args:
+        lines: List of text lines
+        start_idx: Starting index to check
+        debug: Enable debug output
+    
+    Returns:
+        dict with grid info if detected, None otherwise
+        {
+            'title': 'Medical Conditions',
+            'options': [{'name': 'Chest Pains', 'value': 'chest_pains'}, ...],
+            'layout': 'multicolumn',
+            'end_idx': int  # Index where grid ends
+        }
+    """
+    _get_question_deps()  # Ensure dependencies are loaded
+    
+    if start_idx >= len(lines):
+        return None
+    
+    # Check for medical condition question pattern
+    question_patterns = [
+        r'do\s+you\s+have.*(?:or\s+have\s+you\s+had).*(?:any\s+of\s+the\s+following|conditions)',
+        r'medical\s+(?:history|conditions)',
+        r'health\s+(?:history|conditions)',
+        r'have\s+you\s+(?:ever\s+)?had\s+any\s+of\s+the\s+following',
+    ]
+    
+    first_line = lines[start_idx].lower()
+    matched_pattern = False
+    for pattern in question_patterns:
+        if re.search(pattern, first_line):
+            matched_pattern = True
+            break
+    
+    if not matched_pattern:
+        return None
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: Found question pattern at line {start_idx}")
+    
+    # Collect all checkbox lines that follow
+    checkbox_lines = []
+    i = start_idx + 1
+    max_lines = min(len(lines), start_idx + 30)  # Max 30 lines to check
+    
+    while i < max_lines:
+        line = lines[i]
+        line_stripped = line.strip()
+        
+        if re.search(CHECKBOX_ANY, line):
+            checkbox_lines.append((i, line))
+        elif line_stripped and not is_heading(line_stripped):
+            # Check if this is still part of the grid or a new section
+            # If we've collected checkboxes and now see non-checkbox text, might be done
+            if len(checkbox_lines) >= 5:
+                # Check if it's just descriptive text between options
+                if len(line_stripped) > 50:  # Long text likely not an option
+                    break
+            elif len(checkbox_lines) > 0 and len(line_stripped) > 30:
+                # Short grid but hit substantial text - stop
+                break
+        i += 1
+    
+    if len(checkbox_lines) < 5:  # Minimum threshold for medical grid
+        if debug:
+            print(f"  [debug] detect_medical_conditions_grid: Only {len(checkbox_lines)} checkbox lines, need 5+")
+        return None
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: Found {len(checkbox_lines)} checkbox lines")
+    
+    # Extract all options
+    options = []
+    seen_options = set()  # Deduplicate
+    
+    for line_idx, line in checkbox_lines:
+        # Handle multiple checkboxes per line
+        # Split by checkbox markers
+        parts = re.split(CHECKBOX_ANY, line)
+        
+        for part_idx, item in enumerate(parts[1:], 1):  # Skip text before first checkbox
+            item_text = item.strip()
+            
+            # Take first few words as the option (conditions are typically 1-3 words)
+            words = item_text.split()
+            if not words:
+                continue
+            
+            # Determine how many words to take
+            # Medical conditions are usually 1-4 words
+            max_words = 4
+            clean_words = []
+            
+            for word in words[:max_words]:
+                # Stop if we hit punctuation or another checkbox indicator
+                if word in ['!', '□', '☐', '☑', '■']:
+                    break
+                # Stop if we hit lowercase 'or', 'and' (likely separator)
+                if word.lower() in ['or', 'and', 'the']:
+                    break
+                clean_words.append(word)
+            
+            if not clean_words:
+                continue
+            
+            option_text = ' '.join(clean_words)
+            
+            # Clean the option text
+            option_text = clean_option_text(option_text)
+            
+            # Skip if empty after cleaning
+            if not option_text or len(option_text) < 2:
+                continue
+            
+            # Deduplicate
+            option_lower = option_text.lower()
+            if option_lower in seen_options:
+                continue
+            
+            seen_options.add(option_lower)
+            options.append({
+                'name': option_text,
+                'value': slugify(option_text)
+            })
+    
+    if len(options) < 5:  # Need meaningful number of options
+        if debug:
+            print(f"  [debug] detect_medical_conditions_grid: Only {len(options)} valid options extracted")
+        return None
+    
+    # Extract title from first line
+    title_line = lines[start_idx].strip()
+    # Remove trailing punctuation
+    title = title_line.rstrip(':?.').strip()
+    
+    # If title is too long (>100 chars), shorten it
+    if len(title) > 100:
+        title = "Medical Conditions"
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: SUCCESS - extracted {len(options)} options")
+        print(f"  [debug]   Title: {title}")
+        print(f"  [debug]   Sample options: {[o['name'] for o in options[:5]]}")
+    
+    return {
+        'title': title,
+        'options': options,
+        'layout': 'multicolumn',
+        'end_idx': checkbox_lines[-1][0] if checkbox_lines else start_idx + 1,
+        'type': 'dropdown',
+        'multi': True
+    }
 
