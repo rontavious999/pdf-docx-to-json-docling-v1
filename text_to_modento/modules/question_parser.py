@@ -538,3 +538,89 @@ def norm_title(s: str) -> str:
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
+
+
+def generate_contextual_date_key(title: str, prev_lines: list, section: str) -> str:
+    """
+    Improvement 6: Generate contextual key for date fields based on surrounding context.
+    
+    Eliminates generic date_2, date_3 suffixes by using context clues:
+    - In Signature section → "signature_date" or "date_signed"
+    - After "Treatment" → "treatment_date"
+    - After "Appointment" → "appointment_date"
+    - In Patient Info section → "date_of_birth" or "todays_date"
+    - After "Last visit" → "last_visit_date"
+    
+    Args:
+        title: The field title/label (e.g., "Date", "Date of Birth")
+        prev_lines: List of previous lines for context extraction
+        section: Current section (e.g., "Signature", "Patient Information")
+    
+    Returns:
+        Contextual date key (e.g., "signature_date", "treatment_date")
+    """
+    if not prev_lines:
+        prev_lines = []
+    
+    title_lower = title.lower()
+    
+    # Check explicit date types in title
+    if 'birth' in title_lower or 'dob' in title_lower:
+        return 'date_of_birth'
+    if 'signature' in title_lower or 'signed' in title_lower:
+        return 'signature_date'
+    if 'today' in title_lower or 'current' in title_lower:
+        return 'todays_date'
+    if 'treatment' in title_lower:
+        return 'treatment_date'
+    if 'appointment' in title_lower:
+        return 'appointment_date'
+    if 'visit' in title_lower:
+        return 'visit_date'
+    if 'procedure' in title_lower:
+        return 'procedure_date'
+    if 'consent' in title_lower:
+        return 'consent_date'
+    
+    # Check previous line context (look back 2-3 lines)
+    if prev_lines:
+        prev_text = ' '.join(prev_lines[-3:]).lower()
+        
+        # Context mapping: keyword → date key
+        context_map = {
+            'treatment': 'treatment_date',
+            'appointment': 'appointment_date',
+            'last visit': 'last_visit_date',
+            'next visit': 'next_visit_date',
+            'visit': 'visit_date',
+            'procedure': 'procedure_date',
+            'next appointment': 'next_appointment_date',
+            'emergency': 'emergency_date',
+            'referred': 'referral_date',
+            'signature': 'signature_date',
+            'signed': 'signature_date',
+            'consent': 'consent_date',
+        }
+        
+        for keyword, date_key in context_map.items():
+            if keyword in prev_text:
+                return date_key
+    
+    # Section-based defaults
+    if section:
+        section_lower = section.lower()
+        section_defaults = {
+            'signature': 'signature_date',
+            'patient information': 'todays_date',
+            'treatment': 'treatment_date',
+            'consent': 'consent_date',
+            'insurance': 'insurance_date',
+            'emergency': 'emergency_date',
+        }
+        
+        for section_keyword, date_key in section_defaults.items():
+            if section_keyword in section_lower:
+                return date_key
+    
+    # Default fallback
+    return 'date'

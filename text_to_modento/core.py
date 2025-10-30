@@ -109,6 +109,7 @@ from .modules.question_parser import (
     classify_input_type,
     classify_date_input,
     norm_title,  # Patch 2: Moved to question_parser for better organization
+    generate_contextual_date_key,  # Improvement 6: Date field disambiguation
 )
 
 # ---------- Paths
@@ -2940,8 +2941,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Production readiness: Remove trailing underscores before date detection
         title_for_check = re.sub(r'_+$', '', title).strip()
         if DATE_LABEL_RE.search(title_for_check):
-            key = slugify(title or "date")
-            if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
+            # Improvement 6: Use contextual date key instead of generic slugify
+            prev_context = lines[max(0, i-3):i] if i > 0 else []
+            key = generate_contextual_date_key(title or "date", prev_context, cur_section)
+            
+            if insurance_scope and "insurance" in cur_section.lower(): 
+                key = f"{key}{insurance_scope}"
             # Archivev18 Fix 1: Clean date field titles to remove template artifacts
             clean_title = clean_field_title(title) if title else "Date"
             questions.append(Question(key, clean_title, cur_section, "date",
