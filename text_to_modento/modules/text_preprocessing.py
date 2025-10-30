@@ -110,9 +110,9 @@ def read_text_file(p: Path) -> str:
         return p.read_text(encoding="latin-1", errors="replace")
 
 
-def is_heading(line: str) -> bool:
+def is_heading(line: str, context: dict = None) -> bool:
     """
-    Determine if a line is a section heading.
+    Improvement 10: Enhanced heading detection with context awareness.
     
     Section headings are typically:
     - All uppercase or title case or starts with capital letter
@@ -122,14 +122,66 @@ def is_heading(line: str) -> bool:
     - Do NOT contain checkboxes
     - Do NOT match known field label patterns
     - Do NOT contain question marks
+    
+    Args:
+        line: Line to check
+        context: Optional dict with:
+            - 'has_checkbox': Whether line contains checkbox
+            - 'next_line': Next line for underline detection
+            - 'original_line': Original line for spacing analysis
+            - 'line_position': Position in document
     """
+    if context is None:
+        context = {}
+    
     t = collapse_spaced_caps(line.strip())
     if not t:
         return False
     
     # Archivev10 Fix 1: Don't treat lines with checkboxes as headings
-    if re.search(CHECKBOX_ANY, t):
+    # Improvement 10: Use context if available
+    has_checkbox = context.get('has_checkbox', False) or re.search(CHECKBOX_ANY, t)
+    if has_checkbox:
         return False
+    
+    # Improvement 10: Strong header indicators (common section names)
+    strong_headers = [
+        'patient information',
+        'medical history',
+        'dental history',
+        'insurance information',
+        'consent',
+        'signature',
+        'emergency contact',
+        'responsible party',
+        'health history',
+        'treatment information',
+        'financial information',
+        'dental benefit plan',
+        'responsible party information',
+    ]
+    
+    line_lower = t.lower().rstrip(':')
+    for header in strong_headers:
+        if header == line_lower or line_lower.startswith(header):
+            return True
+    
+    # Improvement 10: All caps and short text (strong header indicator)
+    if t.isupper() and 3 <= len(t.split()) <= 5:
+        return True
+    
+    # Improvement 10: Underlined headers (next line is underscores/dashes)
+    if context.get('next_line'):
+        next_line = context['next_line'].strip()
+        if re.match(r'^[_\-=]{5,}$', next_line):
+            return True
+    
+    # Improvement 10: Centered text heuristic (lots of leading spaces)
+    if context.get('original_line'):
+        original = context['original_line']
+        leading_spaces = len(original) - len(original.lstrip())
+        if leading_spaces > 10 and len(t.split()) <= 4:
+            return True
     
     # Archivev12 Fix: Don't treat known field labels as headings
     # Archivev13 Fix: Use search instead of match, and allow # suffix
