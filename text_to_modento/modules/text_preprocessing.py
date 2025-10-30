@@ -698,3 +698,75 @@ def is_form_metadata(line: str) -> bool:
             return True
     
     return False
+
+
+def is_practice_location_text(line: str, context: list = None) -> bool:
+    """
+    NEW Improvement 7: Detect if line is practice/office location information.
+    
+    Office addresses and location names embedded in forms should not become fields.
+    
+    Indicators:
+    - Contains "Dental" + address components
+    - Multiple consecutive lines with addresses  
+    - Pattern: "Name + Street + City, State ZIP"
+    - Common dental practice keywords
+    
+    Args:
+        line: Line to check
+        context: Previous lines for multi-address detection
+        
+    Returns:
+        True if line appears to be practice location information
+    """
+    if not line or len(line) < 10:
+        return False
+    
+    if context is None:
+        context = []
+    
+    # Common practice name keywords
+    dental_practice_keywords = [
+        'dental care',
+        'dental center',
+        'dental solutions',
+        'dental office',
+        'dental group',
+        'dental associates',
+        'dentistry',
+        'orthodontics',
+        'oral surgery',
+    ]
+    
+    # Address patterns
+    address_patterns = [
+        r'\d+\s+[NSEW]\.?\s+\w+\s+(ave|avenue|st|street|rd|road|blvd|boulevard|dr|drive|ln|lane|way|ct|court)',  # Street address
+        r',\s*[A-Z]{2}\s+\d{5}',                       # City, ST ZIP
+        r'\d{5}(-\d{4})?$',                            # ZIP code at end
+    ]
+    
+    line_lower = line.lower()
+    
+    # Check if line has dental keyword + address
+    has_dental_keyword = any(kw in line_lower for kw in dental_practice_keywords)
+    has_address = any(re.search(p, line, re.I) for p in address_patterns)
+    
+    if has_dental_keyword and has_address:
+        return True
+    
+    # Check if surrounded by similar address lines (multi-location forms)
+    # This helps catch address-only lines in between practice names
+    if context and len(context) >= 1:
+        context_has_addresses = sum(
+            any(re.search(p, ctx, re.I) for p in address_patterns)
+            for ctx in context[-2:] if ctx
+        )
+        # If previous lines had addresses and this line has an address, likely continuation
+        if context_has_addresses >= 1 and has_address:
+            return True
+    
+    # Check if line is mostly an address (street number + street name pattern)
+    if re.search(r'^\s*\d+\s+[NSEW]\.?\s+\w+', line):
+        return True
+    
+    return False

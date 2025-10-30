@@ -73,7 +73,8 @@ from .modules.text_preprocessing import (
     scrub_headers_footers,
     coalesce_soft_wraps,
     is_numbered_list_item,  # NEW Improvement 1
-    is_form_metadata  # NEW Improvement 6
+    is_form_metadata,  # NEW Improvement 6
+    is_practice_location_text  # NEW Improvement 7
 )
 from .modules.grid_parser import (
     looks_like_grid_header,
@@ -2201,6 +2202,15 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if is_form_metadata(line):
             if debug:
                 print(f"  [debug] skipping form metadata: '{line[:60]}'")
+            i += 1
+            continue
+
+        # NEW Improvement 7: Skip practice location text (office addresses)
+        # Practice addresses should not become data fields
+        prev_context = lines[max(0, i-2):i] if i > 0 else []
+        if is_practice_location_text(line, prev_context):
+            if debug:
+                print(f"  [debug] skipping practice location: '{line[:60]}'")
             i += 1
             continue
 
