@@ -602,3 +602,43 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
         out.append(merged)
         i += 1
     return out
+
+
+def is_numbered_list_item(line: str) -> bool:
+    """
+    NEW Improvement 1: Detect if line is a numbered list item that should be part of Terms/consent.
+    
+    Consent forms contain numbered risk/benefit lists like "(i)", "(ii)", "(iii)", etc.
+    These should not be parsed as individual input fields but rather be part of parent consent text.
+    
+    Patterns detected:
+    - (i), (ii), (iii), ..., (xxx) - Roman numerals in parentheses
+    - (1), (2), (3) - Arabic numerals in parentheses
+    - i), ii), iii) - Roman numerals with closing parenthesis only
+    - Usually followed by lowercase text (continuation of list)
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line appears to be a numbered list item from consent text
+    """
+    if not line:
+        return False
+    
+    # Match patterns at start of line
+    list_patterns = [
+        r'^\s*\([ivxlcdm]+\)\s+[a-z]',  # (i) lowercase continuation
+        r'^\s*\(\d+\)\s+[a-z]',          # (1) lowercase continuation
+        r'^\s*[ivxlcdm]+\)\s+[a-z]',    # i) lowercase continuation
+        # Also match even without lowercase after (for edge cases)
+        r'^\s*\([ivxlcdm]{1,4}\)\s*[a-z]', # (i), (ii), (iii), (iv) etc
+        r'^\s*\(\d{1,2}\)\s*[a-z]',        # (1), (2), ..., (99)
+    ]
+    
+    line_lower = line.lower().strip()
+    for pattern in list_patterns:
+        if re.match(pattern, line_lower):
+            return True
+    
+    return False

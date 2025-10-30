@@ -71,7 +71,8 @@ from .modules.text_preprocessing import (
     detect_repeated_lines,
     is_address_block,
     scrub_headers_footers,
-    coalesce_soft_wraps
+    coalesce_soft_wraps,
+    is_numbered_list_item  # NEW Improvement 1
 )
 from .modules.grid_parser import (
     looks_like_grid_header,
@@ -2184,6 +2185,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         
         if not line:
             i += 1; continue
+
+        # NEW Improvement 1: Skip numbered list items (e.g., "(i)", "(ii)", "(vii)")
+        # These are part of consent/terms text and should not be separate fields
+        if is_numbered_list_item(line):
+            if debug:
+                print(f"  [debug] skipping numbered list item: '{line[:60]}'")
+            i += 1
+            continue
 
         # Insurance anchoring
         if INSURANCE_BLOCK_RE.search(line):
