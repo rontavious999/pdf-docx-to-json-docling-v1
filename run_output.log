@@ -40,43 +40,55 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
 ✅ Processed: documents/TN OS Consent Form.docx
 ✅ Processed: documents/Informed Consent Complete Dentures & Partial Dentures.docx
 ✅ Extraction complete!
+  [debug] preprocess_lines: 51 -> 52 lines
   [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
   [debug] skipping descriptive header: 'Nerve injury, which may occur from the surgical procedure an'
   [debug] skipping descriptive header: 'As a result of the injection or use of anesthesia, at times '
   [warn] No dictionary match for field: 'Terms' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
   [warn] No dictionary match for field: 'But I wish to proceed with the Recommended Treatment described above.' (key: but_i_wish_to_proceed_with_the_recommended_treatment_described)
   [warn] No dictionary match for field: 'If I have elected a banked bone or bone substitute graft, there is a rare chance of disease spread from the processed bone.' (key: if_i_have_elected_a_banked_bone_or_bone_substitute_graft_there)
-[✓] +Bone+Grafting+Consent+FINAL+32025.txt -> +Bone+Grafting+Consent+FINAL+32025.modento.json (6 items)
-    ↳ reused 3/6 from dictionary (50%)
+[✓] +Bone+Grafting+Consent+FINAL+32025.txt -> +Bone+Grafting+Consent+FINAL+32025.modento.json (7 items)
+    ↳ reused 4/7 from dictionary (57%)
   [debug] template matches:
     ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
-    ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
+    ✓ 'Relationship (If patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Date of Birth
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 1, 'General': 3, 'Consent': 1}
+    • section_inference -> Emergency Contact :: Relationship (If patient is a minor) (score=2)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 7 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'General': 2, 'Consent': 1, 'Emergency Contact': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
-  [debug] preprocess_lines: 29 -> 34 lines
-[✓] +Dental+Records+Release+Form+FINAL+032025.txt -> +Dental+Records+Release+Form+FINAL+032025.modento.json (8 items)
-    ↳ reused 8/8 from dictionary (100%)
+  [debug] preprocess_lines: 29 -> 36 lines
+  [debug] gate: parent_routing -> 'Patient/legal guardian’s name (printed)' -> parent_name
+[✓] +Dental+Records+Release+Form+FINAL+032025.txt -> +Dental+Records+Release+Form+FINAL+032025.modento.json (11 items)
+    ↳ reused 11/11 from dictionary (100%)
   [debug] template matches:
     ✓ 'Full name' -> emergency_name (title_exact, score=0.95, cov=1.00)
     ✓ 'Date of birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'Address' -> address (key_exact, score=1.00, cov=1.00)
     ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
-    ✓ 'State' -> state (key_exact, score=1.00, cov=1.00)
+    ✓ 'State: ___' -> state (key_exact, score=1.00, cov=1.00)
     ✓ 'Zip' -> zipcode (title_exact, score=0.95, cov=1.00)
     ✓ 'Date of release' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient/legal guardian’s name (printed)' -> parent_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
+    • rehome -> Patient Information :: Patient/legal guardian’s name (printed)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • Section ordering: Reordered 11 fields
+    •   Section distribution: {'Patient Information': 7, 'Dental History': 1, 'Signature': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
-  [debug] preprocess_lines: 67 -> 68 lines
+  [debug] preprocess_lines: 67 -> 69 lines
   [debug] skipping form metadata: 'Gingivectomy'
   [debug] skipping descriptive header: 'I understand that alternatives to periodontal surgery includ'
-  [debug] fill-in-blank detected: Name of Patient : ___________________________________... -> name_of_patient
   [warn] No dictionary match for field: '= ie |' (key: ie)
   [warn] No dictionary match for field: '= ie |' (key: ie_2)
   [warn] No dictionary match for field: 'This consent form should be ready in conjunction with the Oral Surgery and Local Anaesthetic Consent forms.' (key: this_consent_form_should_be_ready_in_conjunction_with_the_oral)
@@ -92,29 +104,35 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: i_have_read_this_consent_form)
   [warn] No dictionary match for field: 'Terms' (key: i_realize_that_signing_does_not_mean_that_i_am_under_an)
   [warn] No dictionary match for field: '(CF Gingivectomy)' (key: cf_gingivectomy)
-[✓] CFGingivectomy.txt -> CFGingivectomy.modento.json (18 items)
-    ↳ reused 3/18 from dictionary (16%)
+[✓] CFGingivectomy.txt -> CFGingivectomy.modento.json (17 items)
+    ↳ reused 5/17 from dictionary (29%)
   [debug] template matches:
     ✓ 'Name of Patient' -> first_name (alias_contains, score=0.93, cov=1.00)
-    ✓ 'Date of Birth-' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Name of Patient
-    • rehome -> Patient Information :: Date of Birth-
+    • rehome -> Patient Information :: Date of Birth
     • section_inference -> Dental History :: A Gingivectomy is a procedure where excess gum tissue is removed. The benefit of selective gum removal is for aesthetic improvement or to gain access to a lesion on a tooth for restorative repair. (score=2)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
     • unique_title -> 'Terms' → 'Terms (5)' (numeric)
     • unique_title -> 'Terms' → 'Terms (6)' (numeric)
-    • Section ordering: Reordered 18 fields
-    •   Section distribution: {'Patient Information': 2, 'Dental History': 2, 'Signature': 1, 'General': 6, 'Consent': 7}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 20 fields to 17 fields
+    • Section ordering: Reordered 17 fields
+    •   Section distribution: {'Patient Information': 2, 'Dental History': 2, 'Signature': 3, 'General': 6, 'Consent': 4}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
-  [debug] preprocess_lines: 111 -> 113 lines
+  [debug] preprocess_lines: 111 -> 131 lines
   [debug] inline checkbox with text: [ ] No Dental Insurance... -> dental_insurance
+  [debug] gate: ssn_scoped -> 'SSN' -> ssn__primary
+  [debug] gate: ssn_scoped -> 'SSN' -> ssn__primary
   [debug] gate: yn_with_followup -> '______________________ Have you ever had a serious head/ neck injury?' + explanation field
-  [debug] detect_medical_conditions_grid: Found question pattern at line 45
+  [debug] detect_medical_conditions_grid: Found question pattern at line 62
   [debug] detect_medical_conditions_grid: Found 14 checkbox lines
   [debug] Skipping duplicate condition: 'Hypoglycemia'
   [debug] Skipping duplicate condition: 'Chest Pains'
@@ -197,50 +215,75 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [debug] fill-in-blank detected: If yes, please explain:_____________________________________... -> if_yes_please_explain
   [debug] fill-in-blank detected: Comments:___________________________________________________... -> comments
   [warn] No dictionary match for field: 'Other' (key: other)
-  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: medical_conditions)
+  [warn] No dictionary match for field: 'State: ___' (key: state__primary_2)
   [warn] No dictionary match for field: 'Are you under a physician’s care now?' (key: are_you_under_a_physicians_care_now)
   [warn] No dictionary match for field: '______________________ Have you ever had a serious head/ neck injury?' (key: have_you_ever_had_a_serious_head_neck_injury)
   [warn] No dictionary match for field: 'Have you ever been hospitalized/ had major surgery?' (key: have_you_ever_been_hospitalized_had_major_surgery)
   [warn] No dictionary match for field: 'Phen-Fen or Redux? [ ] Yes [ ] No ___________________________________' (key: phenfen_or_redux_yes_no)
-  [warn] No dictionary match for field: 'Do you have, or have you had, any of the following' (key: do_you_have_or_have_you_had_any_of_the_following)
   [warn] No dictionary match for field: 'Have you had any serious illness not listed above?' (key: have_you_had_any_serious_illness_not_listed_above)
-[✓] Chicago-Dental-Solutions_Form.txt -> Chicago-Dental-Solutions_Form.modento.json (15 items)
-    ↳ reused 7/15 from dictionary (46%)
+[✓] Chicago-Dental-Solutions_Form.txt -> Chicago-Dental-Solutions_Form.modento.json (29 items)
+    ↳ reused 23/29 from dictionary (79%)
   [debug] template matches:
     ✓ 'First Name' -> first_name (key_exact, score=1.00, cov=1.00)
     ✓ 'Last Name' -> last_name (key_exact, score=1.00, cov=1.00)
     ✓ 'Consent to Email alerts' -> email (alias_contains, score=0.93, cov=1.00)
     ✓ 'No, Dental Insurance' -> insurance_has (alias_exact, score=0.96, cov=1.00)
     ✓ 'Primary Insurance (Policy Holder)' -> insurance_holder (alias_exact, score=0.96, cov=1.00)
-    ✓ 'Name of Insurance Company: State: Policy Holder Name: Birth Date#: / / Member ID/ SS#: Group#: Name of Employer: Relationship to Insurance Holder: Self Parent Child Spouse Other: Responsible Party (someone other than self is the Insurance Policy Holder) Name of Insurance Company: State: Policy Holder Name: Birth Date: / / Member ID/ SS#: Group#: Name of Employer: Relationship to Insurance Holder: Self Parent Child Spouse Other' -> date_of_birth (key_base_exact, score=0.98, cov=1.00)
+    ✓ 'Name of Insurance Company' -> insurance_company (alias_exact, score=0.96, cov=1.00)
+    ✓ 'State: ___' -> state (key_base_exact, score=0.98, cov=1.00)
+    ✓ 'Policy Holder Name' -> insurance_holder (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Birth Date#' -> date_of_birth (key_base_exact, score=0.98, cov=1.00)
+    ✓ 'ID Number' -> insurance_id_number (title_exact, score=0.95, cov=1.00)
+    ✓ 'SSN' -> ssn (key_base_exact, score=0.98, cov=1.00)
+    ✓ 'Group#' -> insurance_group_number (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Name of Employer' -> first_name (alias_contains, score=0.83, cov=1.00)
+    ✓ 'Relationship to Insurance Holder' -> emergency_relationship (alias_contains, score=0.83, cov=1.00)
+    ✓ 'Insured's Name' -> insurance_holder (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Insurance Company' -> insurance_company (key_exact, score=1.00, cov=1.00)
+    ✓ 'Birth Date' -> date_of_birth (title_exact, score=0.85, cov=1.00)
+    ✓ 'Relationship to Insurance Holder' -> emergency_relationship (alias_contains, score=0.83, cov=1.00)
+    ✓ 'Do you have or have you had any of the following?' -> medical_conditions (key_exact, score=1.00, cov=1.00)
+    ✓ 'Do you have, or have you had, any of the following' -> medical_conditions (title_exact, score=0.28, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
+    • duplicate_consolidation -> Removed duplicate date_of_birth from Insurance
+    • unique_title -> 'State: ___' → 'State: ___ (Primary)' (suffix)
+    • unique_title -> 'Relationship to Insurance Holder' → 'Relationship to Insurance Holder #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_view_my_dentures_in_the)
-  [warn] No dictionary match for field: 'By signing this Consent for final processing. I give Dr. my consent for final processing and acknowledge my approval of the appearance.' (key: by_signing_this_consent_for_final)
-[✓] Consent Final Process Full or Partial Denture.txt -> Consent Final Process Full or Partial Denture.modento.json (5 items)
-    ↳ reused 3/5 from dictionary (60%)
+[✓] Consent Final Process Full or Partial Denture.txt -> Consent Final Process Full or Partial Denture.modento.json (6 items)
+    ↳ reused 5/6 from dictionary (83%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Patient's Name (Please Print) : Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
     ✓ 'or authorized representative: Date.' -> todays_date (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • Section ordering: Reordered 5 fields
-    •   Section distribution: {'Signature': 2, 'General': 2, 'Consent': 1}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Signature': 4, 'General': 1, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_view_my_dentures_in_the)
-  [warn] No dictionary match for field: 'By signing this Consent for final processing, I give Dr. my consent for final processing and acknowledge my approval of the appearance.' (key: by_signing_this_consent_for_final)
-[✓] DentureProcessingConsentFINAL122024.txt -> DentureProcessingConsentFINAL122024.modento.json (5 items)
-    ↳ reused 3/5 from dictionary (60%)
+[✓] DentureProcessingConsentFINAL122024.txt -> DentureProcessingConsentFINAL122024.modento.json (6 items)
+    ↳ reused 5/6 from dictionary (83%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Patient's Name (Please Print) : Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
     ✓ 'or authorized representative: Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • Section ordering: Reordered 5 fields
-    •   Section distribution: {'Signature': 2, 'General': 2, 'Consent': 1}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Signature': 4, 'General': 1, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping numbered list item: '(1) gum tissues which cannot bear the pressures placed upon '
@@ -253,33 +296,41 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: loose_dentures_complete_dentures_normally_become_less_secure)
   [warn] No dictionary match for field: 'Terms' (key: failure_of_supporting_teeth_andor_soft_tissues_natural_teeth)
   [warn] No dictionary match for field: 'administering and prescribing all anesthetics and/or medications.' (key: administering_and_prescribing_all_anesthetics_andor_medications)
-[✓] DentureandPartialConsentFINAL122024.txt -> DentureandPartialConsentFINAL122024.modento.json (6 items)
-    ↳ reused 1/6 from dictionary (16%)
+[✓] DentureandPartialConsentFINAL122024.txt -> DentureandPartialConsentFINAL122024.modento.json (4 items)
+    ↳ reused 2/4 from dictionary (50%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • section_inference -> Medical History :: administering and prescribing all anesthetics and/or medications. (strong keyword match)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Medical History': 1, 'Signature': 1, 'Consent': 4}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 7 fields to 4 fields
+    • Section ordering: Reordered 4 fields
+    •   Section distribution: {'Medical History': 1, 'Signature': 2, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 33 -> 34 lines
   [debug] skipping form metadata: 'Medications'
   [debug] skipping descriptive header: 'These treatments include no treatment, waiting for more defi'
   [debug] skipping form metadata: 'Consent'
+  [warn] No dictionary match for field: 'Diagnosis' (key: diagnosis)
   [warn] No dictionary match for field: 'Terms' (key: prescribed_medications_and_drugs_may_cause_drowsiness_and_lack)
-[✓] Endo Consent .txt -> Endo Consent .modento.json (3 items)
-    ↳ reused 2/3 from dictionary (66%)
+[✓] Endo Consent .txt -> Endo Consent .modento.json (5 items)
+    ↳ reused 3/5 from dictionary (60%)
   [debug] template matches:
-    ✓ 'Tooth Number: Diagnosis' -> tooth_number (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Tooth Number' -> tooth_number (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • Section ordering: Reordered 3 fields
-    •   Section distribution: {'Signature': 1, 'Consent': 2}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Signature': 2, 'Consent': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 49 -> 51 lines
   [debug] skipping descriptive header: 'Alternative methods of treatment have been explained to me, '
   [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
   [debug] skipping descriptive header: 'Nerve injury resulting in temporary or permanent numbness, i'
@@ -293,17 +344,22 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Cracking or fracturing of the root or crown of the tooth.' (key: cracking_or_fracturing_of_the_root_or_crown_of_the_tooth)
   [warn] No dictionary match for field: 'Pain, infection and swelling.' (key: pain_infection_and_swelling)
   [warn] No dictionary match for field: 'Difficulty opening and closing.' (key: difficulty_opening_and_closing)
-[✓] EndoConsentFINAL122024.txt -> EndoConsentFINAL122024.modento.json (12 items)
-    ↳ reused 3/12 from dictionary (25%)
+[✓] EndoConsentFINAL122024.txt -> EndoConsentFINAL122024.modento.json (13 items)
+    ↳ reused 5/13 from dictionary (38%)
   [debug] template matches:
     ✓ 'Temporomandibular Dysfunction resulting in jaw pain.' -> jaw_pain_clicking (alias_contains, score=0.93, cov=1.00)
     ✓ 'Relationship (If patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • section_inference -> Dental History :: Cracking or fracturing of the root or crown of the tooth. (score=2)
+    • section_inference -> Emergency Contact :: Relationship (If patient is a minor) (score=2)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
-    • Section ordering: Reordered 12 fields
-    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'General': 8, 'Consent': 2}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 14 fields to 13 fields
+    • Section ordering: Reordered 13 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 2, 'General': 8, 'Consent': 1, 'Emergency Contact': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 40 -> 41 lines
@@ -317,18 +373,22 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '● Recurrent decay' (key: recurrent_decay)
   [warn] No dictionary match for field: 'Terms' (key: it_is_imperative_that_you_follow_the_doctors_recommendations)
   [warn] No dictionary match for field: 'Terms' (key: treatment_to_be_performed_i_understand_the_risks_and_benefits)
-[✓] Endodontic Consent_6.20.2022.txt -> Endodontic Consent_6.20.2022.modento.json (7 items)
-    ↳ reused 3/7 from dictionary (42%)
+[✓] Endodontic Consent_6.20.2022.txt -> Endodontic Consent_6.20.2022.modento.json (6 items)
+    ↳ reused 4/6 from dictionary (66%)
   [debug] template matches:
     ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the' -> first_name (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
-    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
-    • Section ordering: Reordered 7 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 4}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 8 fields to 6 fields
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Signature': 3, 'Consent': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 43 -> 44 lines
@@ -338,20 +398,25 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: the_benefits_of_extraction_removal_of_teeth_have_been_explained)
   [warn] No dictionary match for field: 'Terms' (key: the_doctor_will_make_every_effort_to_avoid_these_complications)
   [warn] No dictionary match for field: 'Terms' (key: to_be_performed_i_understand_the_risks_and_benefits_of_the)
-[✓] Extraction Consent_6.22.2022.docx.txt -> Extraction Consent_6.22.2022.docx.modento.json (6 items)
-    ↳ reused 3/6 from dictionary (50%)
+[✓] Extraction Consent_6.22.2022.docx.txt -> Extraction Consent_6.22.2022.docx.modento.json (4 items)
+    ↳ reused 4/4 from dictionary (100%)
   [debug] template matches:
     ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the surgery' -> first_name (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
-    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the surgery
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 3}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 7 fields to 4 fields
+    • Section ordering: Reordered 4 fields
+    •   Section distribution: {'Signature': 3, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 51 -> 53 lines
   [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
   [debug] skipping descriptive header: 'Post-operative bleeding, oozing, infection and/or bone infec'
   [debug] skipping descriptive header: 'Damage to, or fracture of, adjacent teeth or tooth restorati'
@@ -363,17 +428,20 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Bruising and/or swelling, restricted mouth opening for several days or weeks.' (key: bruising_andor_swelling_restricted_mouth_opening_for_several)
   [warn] No dictionary match for field: 'Loss or removal of bone during tooth extraction.' (key: loss_or_removal_of_bone_during_tooth_extraction)
   [warn] No dictionary match for field: 'Jaw fracture.' (key: jaw_fracture)
-[✓] ExtractionConsentFINAL122024.txt -> ExtractionConsentFINAL122024.modento.json (9 items)
-    ↳ reused 3/9 from dictionary (33%)
+[✓] ExtractionConsentFINAL122024.txt -> ExtractionConsentFINAL122024.modento.json (11 items)
+    ↳ reused 5/11 from dictionary (45%)
   [debug] template matches:
     ✓ '(Patient/Parent/Guardian)	Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
     ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Date of Birth
     • section_inference -> Medical History :: Drug reactions and side effects. (score=2)
-    • Section ordering: Reordered 9 fields
-    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 2, 'General': 4, 'Consent': 1}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 11 fields
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 4, 'General': 4, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 27 -> 28 lines
@@ -381,22 +449,27 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
   [warn] No dictionary match for field: 'Terms' (key: gingivectomy_is_a_type_of_surgery_that_involves_the_removal_of)
   [warn] No dictionary match for field: 'Terms' (key: a_gingivectomy_is_performed_to_reduce_pocket_size_to_allow_for)
-  [warn] No dictionary match for field: 'Smoking and poor oral hygiene will significantly interfere with healing and cause disease recurrence. Medical history must be updated & accurate before surgery is performed.' (key: smoking_and_poor_oral_hygiene_will_significantly_interfere_with)
   [warn] No dictionary match for field: 'Terms' (key: if_no_treatment_is_rendered_or_if_active_treatment_is)
   [warn] No dictionary match for field: 'Terms' (key: surgery_to_be_performed_i_understand_the_risks_and_benefits_of)
-[✓] Gingivectomy Consent_6.23.2022.txt -> Gingivectomy Consent_6.23.2022.modento.json (8 items)
-    ↳ reused 3/8 from dictionary (37%)
+[✓] Gingivectomy Consent_6.23.2022.txt -> Gingivectomy Consent_6.23.2022.modento.json (6 items)
+    ↳ reused 5/6 from dictionary (83%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the' -> first_name (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
-    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
-    • Section ordering: Reordered 8 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 5}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • unique_title -> 'Signature' → 'Signature #4' (suffix)
+    • consent_grouping -> Consolidated 9 fields to 6 fields
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Signature': 4, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping descriptive header: 'Please remove contact lenses and any jewelry, nail polish, r'
@@ -408,16 +481,18 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Wear short sleeves and loose fitting, comfortable clothing.' (key: wear_short_sleeves_and_loose_fitting_comfortable_clothing)
   [warn] No dictionary match for field: 'Please arrive 10-15 minutes prior to your appointment time.' (key: please_arrive_1015_minutes_prior_to_your_appointment_time)
   [warn] No dictionary match for field: 'We reserve the right to cancel/stop the appointment at any time for the safety and comfort of the patient.' (key: we_reserve_the_right_to_cancelstop_the_appointment_at_any_time)
-[✓] IV Sedation Pre-op.txt -> IV Sedation Pre-op.modento.json (10 items)
-    ↳ reused 2/10 from dictionary (20%)
+[✓] IV Sedation Pre-op.txt -> IV Sedation Pre-op.modento.json (11 items)
+    ↳ reused 3/11 from dictionary (27%)
   [debug] template matches:
     ✓ 'Please leave any valuables with your escort or at home.' -> home_phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Please leave any valuables with your escort or at home.
     • section_inference -> Medical History :: Do NOT eat or drink anything during the 8 hours prior to your procedure – the only exception is drinking water up to 3 hours before your appointment (along with any prescription medication). (strong keyword match)
-    • Section ordering: Reordered 10 fields
-    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 1, 'General': 7}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 11 fields
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 2, 'General': 7}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 48 -> 49 lines
@@ -425,19 +500,24 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
   [warn] No dictionary match for field: 'Terms' (key: smoking_and_alcohol_consumption_will_affect_healing_and_may)
   [warn] No dictionary match for field: 'Terms' (key: be_performed_i_understand_the_risks_and_benefits_of_the)
-[✓] Implant Consent_6.27.2022.txt -> Implant Consent_6.27.2022.modento.json (5 items)
-    ↳ reused 3/5 from dictionary (60%)
+[✓] Implant Consent_6.27.2022.txt -> Implant Consent_6.27.2022.modento.json (4 items)
+    ↳ reused 4/4 from dictionary (100%)
   [debug] template matches:
     ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the surgery to' -> first_name (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
-    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the surgery to
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
-    • Section ordering: Reordered 5 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 2}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 6 fields to 4 fields
+    • Section ordering: Reordered 4 fields
+    •   Section distribution: {'Signature': 3, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 42 -> 43 lines
   [debug] skipping form metadata: 'Infection'
   [debug] skipping form metadata: 'Pain'
   [debug] gate: parent_routing -> 'Parent/Guardian’s Name' -> parent_name
@@ -448,22 +528,29 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Bleeding. This may occur either at the time of the procedure or in the first 2 weeks after.' (key: bleeding_this_may_occur_either_at_the_time_of_the_procedure_or)
   [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
   [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
-[✓] Informed Consent - Labial Frenectomy.txt -> Informed Consent - Labial Frenectomy.modento.json (10 items)
-    ↳ reused 4/10 from dictionary (40%)
+[✓] Informed Consent - Labial Frenectomy.txt -> Informed Consent - Labial Frenectomy.modento.json (12 items)
+    ↳ reused 6/12 from dictionary (50%)
   [debug] template matches:
-    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient’s Name' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Patient’s Name
+    • rehome -> Patient Information :: Patient Date of Birth
     • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Consent :: Symptoms and examination of their mouth. We want you to be aware of the commonly known risks and side effects of this procedure. (score=1)
+    • section_inference -> Consent :: associated with complications. These are some risks/complications, which can include (score=2)
     • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
     • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
-    • Section ordering: Reordered 10 fields
-    •   Section distribution: {'Patient Information': 2, 'Medical History': 1, 'Dental History': 1, 'Signature': 1, 'General': 5}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Patient Information': 3, 'Medical History': 1, 'Dental History': 1, 'Signature': 2, 'General': 3, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 51 -> 52 lines
   [debug] skipping descriptive header: 'upper lip. The tight upper lip can trap food and drink, resu'
   [debug] skipping form metadata: 'Infection'
   [debug] skipping form metadata: 'Pain'
@@ -480,21 +567,28 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Bleeding. This may occur either at the time of the procedure or in the first 2 weeks after.' (key: bleeding_this_may_occur_either_at_the_time_of_the_procedure_or)
   [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
   [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
-[✓] Informed Consent - Lip Tie and Tongue Tie Release.txt -> Informed Consent - Lip Tie and Tongue Tie Release.modento.json (15 items)
-    ↳ reused 4/15 from dictionary (26%)
+[✓] Informed Consent - Lip Tie and Tongue Tie Release.txt -> Informed Consent - Lip Tie and Tongue Tie Release.modento.json (17 items)
+    ↳ reused 6/17 from dictionary (35%)
   [debug] template matches:
-    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient’s Name' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Patient’s Name
+    • rehome -> Patient Information :: Patient Date of Birth
     • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Consent :: symptoms, examination of their mouth and your choice. We want you to be aware of the commonly known risks and side effects of this procedure. (score=1)
     • section_inference -> Medical History :: as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in (strong keyword match)
+    • section_inference -> Consent :: No treatment could result in some or all of the conditions listed under “Lip Tie” and “Tongue Tie” above. (score=1)
+    • section_inference -> Consent :: associated with complications. These are some risks/complications, which can include (score=2)
     • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
     • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
-    • Section ordering: Reordered 15 fields
-    •   Section distribution: {'Patient Information': 2, 'Medical History': 2, 'Dental History': 1, 'Signature': 1, 'General': 9}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 17 fields
+    •   Section distribution: {'Patient Information': 3, 'Medical History': 2, 'Dental History': 1, 'Signature': 2, 'General': 6, 'Consent': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping numbered list item: '(1) gum tissues which cannot bear the pressures placed upon '
@@ -505,10 +599,11 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: failure_of_supporting_teeth_andor_soft_tissues_natural_teeth)
   [warn] No dictionary match for field: 'Terms' (key: smilekingervdental_com_www_kingervdental_com_9_it_is_the)
   [warn] No dictionary match for field: 'Terms' (key: informed_consent_i_have_been_given_the_opportunity_to_ask_any)
-  [warn] No dictionary match for field: 'satisfactory. By signing this form, I freely give my consent to allow and authorize Dr.	to' (key: satisfactory_by_signing_this_form_i_freely_give_my_consent_to)
-[✓] Informed Consent Complete Dentures & Partial Dentures.txt -> Informed Consent Complete Dentures & Partial Dentures.modento.json (9 items)
-    ↳ reused 1/9 from dictionary (11%)
+[✓] Informed Consent Complete Dentures & Partial Dentures.txt -> Informed Consent Complete Dentures & Partial Dentures.modento.json (5 items)
+    ↳ reused 3/5 from dictionary (60%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
@@ -517,10 +612,14 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (5)' (numeric)
     • unique_title -> 'Terms' → 'Terms (6)' (numeric)
     • unique_title -> 'Terms' → 'Terms (7)' (numeric)
-    • Section ordering: Reordered 9 fields
-    •   Section distribution: {'Signature': 1, 'General': 1, 'Consent': 7}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 10 fields to 5 fields
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Signature': 3, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 52 -> 54 lines
   [debug] skipping descriptive header: 'I understand drat there are risks and complications associat'
   [debug] skipping descriptive header: '. Necessity for a more extensive restoration, such as a crow'
   [debug] skipping descriptive header: '. As a result of the injection or use of anesthesia, there m'
@@ -535,19 +634,24 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '. tooth structure found during preparation.' (key: tooth_structure_found_during_preparation)
   [warn] No dictionary match for field: '. Inability to exactly match tooth coloration.' (key: inability_to_exactly_match_tooth_coloration)
   [warn] No dictionary match for field: '. Changes in the shade of the composite restoration over time as a result of the oral environment.' (key: changes_in_the_shade_of_the_composite_restoration_over_time_as)
-[✓] Informed Consent Composite Restoratio.txt -> Informed Consent Composite Restoratio.modento.json (13 items)
-    ↳ reused 3/13 from dictionary (23%)
+[✓] Informed Consent Composite Restoratio.txt -> Informed Consent Composite Restoratio.modento.json (15 items)
+    ↳ reused 5/15 from dictionary (33%)
   [debug] template matches:
     ✓ '. Sensitivity" of teeth following the placement of the restorations, ty pically temporary.' -> sensitivity (alias_contains, score=0.93, cov=1.00)
     ✓ 'Relationship (If patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • section_inference -> Medical History :: . Drug reactions and side effects. (score=2)
     • section_inference -> Dental History :: . Damage to adjacent teeth or tooth restorations. (score=2)
-    • Section ordering: Reordered 13 fields
-    •   Section distribution: {'Medical History': 1, 'Dental History': 1, 'Signature': 1, 'General': 7, 'Consent': 3}
+    • section_inference -> Emergency Contact :: Relationship (If patient is a minor) (score=2)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 15 fields
+    •   Section distribution: {'Medical History': 1, 'Dental History': 1, 'Signature': 2, 'General': 7, 'Consent': 3, 'Emergency Contact': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 39 -> 41 lines
   [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
   [debug] skipping descriptive header: '. Uncomfortable or strange feelings, which is typically temp'
   [warn] No dictionary match for field: 'procedure(s) on me or my dependent as follows' (key: procedures_on_me_or_my_dependent_as_follows)
@@ -556,20 +660,24 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '. Unsatisfactory aesthetics or appearance. You will be given the opportunity to approve the final restoration prior to permanent cementation.' (key: unsatisfactory_aesthetics_or_appearance_you_will_be_given_the)
   [warn] No dictionary match for field: '. Unsatisfactory longevity of crowns and bridges.' (key: unsatisfactory_longevity_of_crowns_and_bridges)
   [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_injection_or_use_of_anesthesia_at_times)
-[✓] Informed Consent Crown & Bridge Prosthetic.txt -> Informed Consent Crown & Bridge Prosthetic.modento.json (10 items)
-    ↳ reused 4/10 from dictionary (40%)
+[✓] Informed Consent Crown & Bridge Prosthetic.txt -> Informed Consent Crown & Bridge Prosthetic.modento.json (12 items)
+    ↳ reused 6/12 from dictionary (50%)
   [debug] template matches:
     ✓ '. Sensitivity of teeth. If present, usually resolves within weeks or sometimes longer after placement.' -> sensitivity (alias_contains, score=0.93, cov=1.00)
     ✓ '(Patient/Parent/Guardian) Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
     ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Date of Birth
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
-    • Section ordering: Reordered 10 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'General': 4, 'Consent': 3}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 4, 'General': 4, 'Consent': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 53 -> 55 lines
   [debug] skipping descriptive header: 'Alternative methods of treatment have been explained to me, '
   [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
   [debug] skipping descriptive header: '. Nerve injury resulting in temporary or permanent numbness,'
@@ -585,18 +693,22 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '. Pain, infection and swelling.' (key: pain_infection_and_swelling)
   [warn] No dictionary match for field: '. Difficulty opening and closing.' (key: difficulty_opening_and_closing)
   [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_injection_or_use_of_anesthesia_there_may_be)
-[✓] Informed Consent Endodonti Procedure.txt -> Informed Consent Endodonti Procedure.modento.json (15 items)
-    ↳ reused 3/15 from dictionary (20%)
+[✓] Informed Consent Endodonti Procedure.txt -> Informed Consent Endodonti Procedure.modento.json (16 items)
+    ↳ reused 5/16 from dictionary (31%)
   [debug] template matches:
     ✓ '. Temporomandibular Dysfunction resulting in jaw pain.' -> jaw_pain_clicking (alias_contains, score=0.93, cov=1.00)
     ✓ '(Patient/Parent/Guardian)	Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • section_inference -> Dental History :: . Cracking or fracturing of the root or crown of the tooth. (score=2)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
-    • Section ordering: Reordered 15 fields
-    •   Section distribution: {'Dental History': 1, 'Signature': 2, 'General': 7, 'Consent': 5}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 17 fields to 16 fields
+    • Section ordering: Reordered 16 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 4, 'General': 7, 'Consent': 4}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping descriptive header: 'I understand that there are risks and potential complication'
@@ -613,22 +725,27 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'However, I wish to proceed with the treatment described above.' (key: however_i_wish_to_proceed_with_the_treatment_described_above)
   [warn] No dictionary match for field: 'Drug reactions and side effects.' (key: drug_reactions_and_side_effects)
   [warn] No dictionary match for field: 'Delayed healing, necessitating post-operative care and treatment.' (key: delayed_healing_necessitating_postoperative_care_and_treatment)
-[✓] Informed Consent Implant Supported Prosthetics.txt -> Informed Consent Implant Supported Prosthetics.modento.json (11 items)
-    ↳ reused 3/11 from dictionary (27%)
+[✓] Informed Consent Implant Supported Prosthetics.txt -> Informed Consent Implant Supported Prosthetics.modento.json (12 items)
+    ↳ reused 4/12 from dictionary (33%)
   [debug] template matches:
     ✓ 'Patient Name (Printed)' -> first_name (alias_contains, score=0.93, cov=1.00)
     ✓ 'Relationship (if patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Name (Printed)
-    • Section ordering: Reordered 11 fields
-    •   Section distribution: {'Patient Information': 1, 'Dental History': 8, 'Signature': 1, 'General': 1}
+    • section_inference -> Emergency Contact :: Relationship (if patient is a minor) (score=2)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Patient Information': 1, 'Dental History': 8, 'Signature': 2, 'Emergency Contact': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 55 -> 57 lines
   [debug] skipping form metadata: 'Injury'
   [debug] skipping form metadata: 'Breakage'
   [debug] skipping form metadata: 'CONSENT'
-  [warn] No dictionary match for field: 'Tooth No.(s): {{tooth_number}} Shade Selection: {{shade_selection}} Type of Inlay/Onlay: {{type_of_crown}}' (key: tooth_nos_tooth_number_shade_selection_shade_selection_type_of)
+  [warn] No dictionary match for field: 'Shade Selection' (key: shade_selection)
+  [warn] No dictionary match for field: 'Type of Inlay/Onlay' (key: type_of_inlayonlay)
   [warn] No dictionary match for field: 'Terms' (key: the_purpose_of_this_document_is_to_provide_written_information)
   [warn] No dictionary match for field: 'I agree to assume the risks' (key: i_agree_to_assume_the_risks)
   [warn] No dictionary match for field: 'Terms' (key: during_the_reduction_of_tooth_structure_or_adjustments_done_to)
@@ -639,12 +756,15 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: this_may_occur_because_of_the_differences_between_natural_teeth)
   [warn] No dictionary match for field: 'Terms' (key: in_some_cases_years_of_wear_on_the_teeth_will_create_a)
   [warn] No dictionary match for field: 'Terms' (key: i_understand_it_is_my_responsibility)
-[✓] Informed Consent Information.txt -> Informed Consent Information.modento.json (13 items)
-    ↳ reused 2/13 from dictionary (15%)
+[✓] Informed Consent Information.txt -> Informed Consent Information.modento.json (10 items)
+    ↳ reused 4/10 from dictionary (40%)
   [debug] template matches:
+    ✓ 'Tooth No.(s)' -> tooth_number (alias_exact, score=0.96, cov=1.00)
     ✓ 'SSN' -> ssn (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
+    • section_inference -> Consent :: I agree to assume the risks (score=2)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
@@ -653,8 +773,10 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (7)' (numeric)
     • unique_title -> 'Terms' → 'Terms (8)' (numeric)
     • unique_title -> 'Terms' → 'Terms (9)' (numeric)
-    • Section ordering: Reordered 13 fields
-    •   Section distribution: {'Signature': 1, 'General': 2, 'Consent': 10}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 16 fields to 10 fields
+    • Section ordering: Reordered 10 fields
+    •   Section distribution: {'Signature': 2, 'General': 1, 'Consent': 7}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping descriptive header: '. Post-operative pain, bleeding, oozing, soft tissue infecti'
@@ -670,10 +792,11 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '. Regrowth of the tissue which was removed in the biopsy.' (key: regrowth_of_the_tissue_which_was_removed_in_the_biopsy)
   [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_lidocaine_injection_or_use_of_other_local)
 [✓] Informed Consent for Biopsy.txt -> Informed Consent for Biopsy.modento.json (12 items)
-    ↳ reused 3/12 from dictionary (25%)
+    ↳ reused 4/12 from dictionary (33%)
   [debug] template matches:
     ✓ '(Patient/Parent/Guardian) Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
     ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Date of Birth
@@ -681,8 +804,10 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 13 fields to 12 fields
     • Section ordering: Reordered 12 fields
-    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 2, 'General': 2, 'Consent': 6}
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 3, 'General': 2, 'Consent': 5}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping form metadata: 'Notice to treating office: This form is to be signed by your'
@@ -741,19 +866,19 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'effect;' (key: effect)
   [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_adequate_time_to_read_and_have_read_the)
   [warn] No dictionary match for field: 'Terms' (key: i_understand_that_use_of_my)
-  [warn] No dictionary match for field: 'If signatory is under 21, the parent or legal Guardian must also sign to signify agreement.' (key: if_signatory_is_under_21_the_parent_or_legal_guardian_must_also)
-[✓] Invisalign Patient Consent.txt -> Invisalign Patient Consent.modento.json (17 items)
-    ↳ reused 4/17 from dictionary (23%)
+[✓] Invisalign Patient Consent.txt -> Invisalign Patient Consent.modento.json (9 items)
+    ↳ reused 6/9 from dictionary (66%)
   [debug] template matches:
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
     ✓ 'State' -> state (key_exact, score=1.00, cov=1.00)
     ✓ 'Zipcode' -> zipcode (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: City
     • rehome -> Patient Information :: State
     • rehome -> Patient Information :: Zipcode
-    • rehome -> Patient Information :: If signatory is under 21, the parent or legal Guardian must also sign to signify agreement.
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
@@ -764,8 +889,11 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (9)' (numeric)
     • unique_title -> 'Terms' → 'Terms (10)' (numeric)
     • unique_title -> 'Terms' → 'Terms (11)' (numeric)
-    • Section ordering: Reordered 17 fields
-    •   Section distribution: {'Patient Information': 4, 'Signature': 1, 'General': 1, 'Consent': 11}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 18 fields to 9 fields
+    • Section ordering: Reordered 9 fields
+    •   Section distribution: {'Patient Information': 3, 'Signature': 3, 'General': 1, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping descriptive header: 'If the cavity is close to the nerve, the doctor will advise '
@@ -775,45 +903,55 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: we_will_repair_or_replace_sealants_for_a_period_of_one_1_year)
   [warn] No dictionary match for field: 'Terms' (key: we_will_warranty_complete_dentures_or_partial_dentures_for_a)
   [warn] No dictionary match for field: 'Terms' (key: as_popcorn_kernels_ice_bones_or_using_the_teeth_as_tools_as)
-[✓] OHFD Patient Warranty Document (1).txt -> OHFD Patient Warranty Document (1).modento.json (6 items)
-    ↳ reused 1/6 from dictionary (16%)
+[✓] OHFD Patient Warranty Document (1).txt -> OHFD Patient Warranty Document (1).modento.json (5 items)
+    ↳ reused 2/5 from dictionary (40%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'Consent': 4}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 7 fields to 5 fields
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 2, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 24 -> 25 lines
   [warn] No dictionary match for field: 'I hereby give permission to to perform the extraction of tooth/teeth numbers: to be done with local anesthesia.' (key: i_hereby_give_permission_to_to_perform_the_extraction_of)
-[✓] PediatricExtractionFINAL32025.txt -> PediatricExtractionFINAL32025.modento.json (4 items)
-    ↳ reused 3/4 from dictionary (75%)
+[✓] PediatricExtractionFINAL32025.txt -> PediatricExtractionFINAL32025.modento.json (5 items)
+    ↳ reused 4/5 from dictionary (80%)
   [debug] template matches:
     ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
     ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Name
     • rehome -> Patient Information :: Date of Birth
     • section_inference -> Dental History :: I hereby give permission to to perform the extraction of tooth/teeth numbers: to be done with local anesthesia. (score=2)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 22 -> 23 lines
   [warn] No dictionary match for field: 'Terms' (key: i_understand_that_it_is_my)
   [warn] No dictionary match for field: '1. Arrive 10 minutes prior to my appointment to complete the necessary paperwork.' (key: q_1_arrive_10_minutes_prior_to_my_appointment_to_complete_the)
   [warn] No dictionary match for field: '2. Secure a responsible escort to drive you home from your appointment and monitor you for 6 hours following your appointment. * Not abiding by this will compromise the safety of the procedure and we cannot proceed with your appointment. *' (key: q_2_secure_a_responsible_escort_to_drive_you_home_from_your)
   [warn] No dictionary match for field: '3. No food or liquids 8 hours prior to my appointment. No water 3 hours prior to my appointment. * Not abiding by this will compromise the safety of the procedure and we cannot proceed with your appointment. *' (key: q_3_no_food_or_liquids_8_hours_prior_to_my_appointment_no_water)
-[✓] Pre Sedation Form.txt -> Pre Sedation Form.modento.json (6 items)
-    ↳ reused 2/6 from dictionary (33%)
+[✓] Pre Sedation Form.txt -> Pre Sedation Form.modento.json (8 items)
+    ↳ reused 4/8 from dictionary (50%)
   [debug] template matches:
     ✓ '| DOB' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: | DOB
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Patient Information': 1, 'Signature': 1, 'General': 3, 'Consent': 1}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • Section ordering: Reordered 8 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 3, 'General': 3, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [warn] No dictionary match for field: 'Congratulations!' (key: congratulations)
@@ -823,14 +961,16 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: '¢ Retainer #3: Back-up' (key: retainer_3_backup)
   [warn] No dictionary match for field: '¢ Retainer #4: Back-up' (key: retainer_4_backup)
   [warn] No dictionary match for field: 'All 4 retainers are identical. Clean with toothbrush and water every morning before putting into the case. If you do not wear retainers, your teeth will move. This is a required part of the treatment. You got this!' (key: all_4_retainers_are_identical_clean_with_toothbrush_and_water)
-[✓] Scan_20251014 (3).txt -> Scan_20251014 (3).modento.json (8 items)
-    ↳ reused 1/8 from dictionary (12%)
+[✓] Scan_20251014 (3).txt -> Scan_20251014 (3).modento.json (9 items)
+    ↳ reused 2/9 from dictionary (22%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • section_inference -> Dental History :: All 4 retainers are identical. Clean with toothbrush and water every morning before putting into the case. If you do not wear retainers, your teeth will move. This is a required part of the treatment. You got this! (score=2)
-    • Section ordering: Reordered 8 fields
-    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'General': 6}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 9 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 2, 'General': 6}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] detect_medical_conditions_grid: Found question pattern at line 18
@@ -845,31 +985,34 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: orthodontic_appliances_can_possibly_be_swallowed_or_aspirated)
   [warn] No dictionary match for field: 'Terms' (key: in_signing_this_document_i_am_indicating_that_i_understand_the)
   [warn] No dictionary match for field: '(or in case of a minor, parent or legal guardian)' (key: or_in_case_of_a_minor_parent_or_legal_guardian)
-[✓] SureSmileConsent122024.txt -> SureSmileConsent122024.modento.json (12 items)
-    ↳ reused 2/12 from dictionary (16%)
+[✓] SureSmileConsent122024.txt -> SureSmileConsent122024.modento.json (7 items)
+    ↳ reused 3/7 from dictionary (42%)
   [debug] template matches:
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Print patient name' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Terms
     • rehome -> Patient Information :: Print patient name
     • rehome -> Patient Information :: (or in case of a minor, parent or legal guardian)
-    • section_inference -> Medical History :: Notify your doctor if you have any medical conditions or are on any medications as they could affect treatment. (strong keyword match)
+    • section_inference -> Emergency Contact :: Notify your doctor if you have any medical conditions or are on any medications as they could affect treatment. (score=1)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
     • unique_title -> 'Terms' → 'Terms (3)' (numeric)
     • unique_title -> 'Terms' → 'Terms (4)' (numeric)
     • unique_title -> 'Terms' → 'Terms (5)' (numeric)
     • unique_title -> 'Terms' → 'Terms (6)' (numeric)
     • unique_title -> 'Terms' → 'Terms (7)' (numeric)
-    • Section ordering: Reordered 12 fields
-    •   Section distribution: {'Patient Information': 3, 'Medical History': 1, 'Signature': 1, 'Consent': 7}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 13 fields to 7 fields
+    • Section ordering: Reordered 7 fields
+    •   Section distribution: {'Patient Information': 2, 'Signature': 2, 'Consent': 2, 'Emergency Contact': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
-  [debug] preprocess_lines: 42 -> 43 lines
+  [debug] preprocess_lines: 42 -> 44 lines
   [debug] fill-in-blank detected: Date: _____________... -> date
-  [debug] fill-in-blank detected: Patient Name: ________________________________... -> patient_name
   [debug] skipping descriptive header: 'NERVE DAMAGE: Damage to the lover jaw nerves could occur aft'
-  [warn] No dictionary match for field: 'Planned Procedure: Diagnosis' (key: planned_procedure_diagnosis)
+  [warn] No dictionary match for field: 'Planned Procedure' (key: planned_procedure)
+  [warn] No dictionary match for field: 'Diagnosis' (key: diagnosis)
   [warn] No dictionary match for field: 'Alternative Treatment' (key: alternative_treatment)
   [warn] No dictionary match for field: 'The dentist and/or staff have explained to me the proposed treatment. I understand there is the option of no treatment. I understand there are certain potential risks with the procedure. These include the following' (key: the_dentist_andor_staff_have_explained_to_me_the_proposed)
   [warn] No dictionary match for field: 'SWELLING and/or BRUISING and DISCOMFORT in the surgery area.' (key: swelling_andor_bruising_and_discomfort_in_the_surgery_area)
@@ -877,26 +1020,32 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'NEARBY TOOTH DAMAGE: Possible damagae to other teeth close to the ones being removed (more often those with large fillings or crowns) or other tissues of the face or mouth might be harmed.' (key: nearby_tooth_damage_possible_damagae_to_other_teeth_close_to)
   [warn] No dictionary match for field: 'Terms' (key: incomplete_removal_of_tooth_fragment_and_sharp_crestal_bone_to)
   [warn] No dictionary match for field: 'I have read and understand the above information and have no additional questions. I give consent to surgery.' (key: i_have_read_and_understand_the)
-[✓] TN OS Consent Form.txt -> TN OS Consent Form.modento.json (13 items)
-    ↳ reused 5/13 from dictionary (38%)
+[✓] TN OS Consent Form.txt -> TN OS Consent Form.modento.json (14 items)
+    ↳ reused 6/14 from dictionary (42%)
   [debug] template matches:
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
     ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
     ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'INFECTION: An infection could happen after surgery which may require antibiotics and/or surgical drainage.' -> antibiotics (alias_contains, score=0.93, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Name
     • rehome -> Patient Information :: Date of Birth
+    • section_inference -> Insurance :: Planned Procedure (score=1)
+    • section_inference -> Consent :: The dentist and/or staff have explained to me the proposed treatment. I understand there is the option of no treatment. I understand there are certain potential risks with the procedure. These include the following (score=2)
     • section_inference -> Medical History :: SWELLING and/or BRUISING and DISCOMFORT in the surgery area. (strong keyword match)
     • section_inference -> Medical History :: INFECTION: An infection could happen after surgery which may require antibiotics and/or surgical drainage. (strong keyword match)
     • section_inference -> Dental History :: NEARBY TOOTH DAMAGE: Possible damagae to other teeth close to the ones being removed (more often those with large fillings or crowns) or other tissues of the face or mouth might be harmed. (score=4)
-    • section_inference -> Medical History :: I have read and understand the above information and have no additional questions. I give consent to surgery. (strong keyword match)
+    • section_inference -> Consent :: I have read and understand the above information and have no additional questions. I give consent to surgery. (score=2)
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
-    • Section ordering: Reordered 13 fields
-    •   Section distribution: {'Patient Information': 2, 'Medical History': 3, 'Dental History': 1, 'Signature': 1, 'General': 4, 'Consent': 2}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 15 fields to 14 fields
+    • Section ordering: Reordered 14 fields
+    •   Section distribution: {'Patient Information': 2, 'Insurance': 1, 'Medical History': 2, 'Dental History': 1, 'Signature': 2, 'General': 3, 'Consent': 3}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 46 -> 47 lines
   [debug] skipping descriptive header: 'speech problems, challenges with breathing through the nose,'
   [debug] skipping form metadata: 'Infection'
   [debug] skipping form metadata: 'Pain'
@@ -912,21 +1061,28 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
   [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
   [warn] No dictionary match for field: 'I understand the above statements and have had my questions answered.' (key: i_understand_the_above_statements_and_have_had_my_questions)
-[✓] Tongue Tie Release informed consent.txt -> Tongue Tie Release informed consent.modento.json (14 items)
-    ↳ reused 4/14 from dictionary (28%)
+[✓] Tongue Tie Release informed consent.txt -> Tongue Tie Release informed consent.modento.json (16 items)
+    ↳ reused 6/16 from dictionary (37%)
   [debug] template matches:
-    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient’s Name' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
     ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Patient’s Name
+    • rehome -> Patient Information :: Patient Date of Birth
     • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Consent :: symptoms, examination of their mouth and your choice. We want you to be aware of the commonly known risks and side effects of this procedure. (score=1)
     • section_inference -> Medical History :: as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in (strong keyword match)
+    • section_inference -> Insurance :: (benefits) of laser vs. scalpel or scissors include lower probability of reattachment of the tissue, less (score=1)
+    • section_inference -> Consent :: associated with complications. These are some risks/complications, which can include (score=2)
     • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
     • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
-    • Section ordering: Reordered 14 fields
-    •   Section distribution: {'Patient Information': 2, 'Medical History': 2, 'Dental History': 1, 'Signature': 1, 'General': 8}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 16 fields
+    •   Section distribution: {'Patient Information': 3, 'Insurance': 1, 'Medical History': 2, 'Dental History': 1, 'Signature': 2, 'General': 5, 'Consent': 2}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping form metadata: 'INTRODUCTION'
@@ -942,10 +1098,11 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: cervical_abrasionerosion_these_are_conditions_which_affect_the)
   [warn] No dictionary match for field: 'Terms' (key: root_resorption_this_is_a_condition_where_the_root_of_the_tooth)
   [warn] No dictionary match for field: 'Terms' (key: relapse_after_the_zoom_treatment_it_is_natural_for_the_teeth)
-  [warn] No dictionary match for field: 'By signing this document in the space provided I indicate that I have read and understand the entire document and that I give my permission for Zoom treatment to be performed on me.' (key: by_signing_this_document_in_the)
-[✓] ZOOMConsentFINAL122024.txt -> ZOOMConsentFINAL122024.modento.json (12 items)
-    ↳ reused 1/12 from dictionary (8%)
+[✓] ZOOMConsentFINAL122024.txt -> ZOOMConsentFINAL122024.modento.json (4 items)
+    ↳ reused 3/4 from dictionary (75%)
   [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
@@ -957,8 +1114,11 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (8)' (numeric)
     • unique_title -> 'Terms' → 'Terms (9)' (numeric)
     • unique_title -> 'Terms' → 'Terms (10)' (numeric)
-    • Section ordering: Reordered 12 fields
-    •   Section distribution: {'Signature': 1, 'Consent': 11}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • unique_title -> 'Signature' → 'Signature #3' (suffix)
+    • consent_grouping -> Consolidated 13 fields to 4 fields
+    • Section ordering: Reordered 4 fields
+    •   Section distribution: {'Signature': 3, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] skipping form metadata: 'Forms'
@@ -981,14 +1141,15 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Terms' (key: it_is_a_patients_responsibility_to_seek_attention_from_the)
   [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_ask_any_questions)
   [warn] No dictionary match for field: 'Dr' (key: dr)
-[✓] consent_crown_bridge_prosthetics.txt -> consent_crown_bridge_prosthetics.modento.json (21 items)
-    ↳ reused 6/21 from dictionary (28%)
+[✓] consent_crown_bridge_prosthetics.txt -> consent_crown_bridge_prosthetics.modento.json (20 items)
+    ↳ reused 7/20 from dictionary (35%)
   [debug] template matches:
     ✓ '3. Sensitivity of teeth' -> sensitivity (alias_contains, score=0.93, cov=1.00)
     ✓ 'Tooth No(s)' -> tooth_number (alias_exact, score=0.96, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
     ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
@@ -998,51 +1159,81 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • unique_title -> 'Terms' → 'Terms (6)' (numeric)
     • unique_title -> 'Terms' → 'Terms (7)' (numeric)
     • unique_title -> 'Terms' → 'Terms (8)' (numeric)
-    • Section ordering: Reordered 21 fields
-    •   Section distribution: {'Signature': 2, 'General': 4, 'Consent': 15}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 22 fields to 20 fields
+    • Section ordering: Reordered 20 fields
+    •   Section distribution: {'Signature': 3, 'General': 4, 'Consent': 13}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
-  [debug] preprocess_lines: 40 -> 58 lines
+  [debug] preprocess_lines: 40 -> 94 lines
   [debug] fill-in-blank detected: Insurance Company____________________________________... -> insurance_company
   [debug] fill-in-blank detected: Phone______________________... -> phone
-  [debug] fill-in-blank detected: Address: Street_____________________________... -> address_street
-  [debug] fill-in-blank detected: City_________________________... -> city
-  [debug] skipping form metadata: 'State____'
-  [debug] skipping form metadata: 'Zip________'
-  [debug] fill-in-blank detected: Dental Plan Name_____________________________... -> dental_plan_name
-  [debug] fill-in-blank detected: Plan ______________... -> plan
-  [debug] fill-in-blank detected: ID Number ______________________________... -> id_number
-  [debug] fill-in-blank detected: Insurance Company____________________________________... -> insurance_company
-  [debug] fill-in-blank detected: Phone______________________... -> phone
-  [debug] fill-in-blank detected: Address: Street_____________________________... -> address_street
-  [debug] fill-in-blank detected: City_________________________... -> city
-  [debug] skipping form metadata: 'State____'
-  [debug] skipping form metadata: 'Zip________'
   [debug] fill-in-blank detected: Dental Plan Name_____________________________... -> dental_plan_name
   [debug] fill-in-blank detected: Plan ______________... -> plan
   [debug] fill-in-blank detected: ID Number ______________________________... -> id_number
   [debug] fill-in-blank detected: Date_________________... -> date
-  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: dental_conditions)
+  [warn] No dictionary match for field: 'State: ___' (key: state_6)
   [warn] No dictionary match for field: 'I have read the above and agree to the financial and scheduling terms.(initial)' (key: i_have_read_the_above_and_agree_to_the_financial_and_scheduling)
-[✓] npf.txt -> npf.modento.json (7 items)
-    ↳ reused 5/7 from dictionary (71%)
+[✓] npf.txt -> npf.modento.json (33 items)
+    ↳ reused 33/33 from dictionary (100%)
   [debug] template matches:
     ✓ 'Today’s Date' -> todays_date (key_exact, score=1.00, cov=1.00)
-    ✓ 'Full-time Student' -> full_time_student (alias_contains, score=0.98, cov=1.00)
-    ✓ 'Name of School' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - First' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Last' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Preferred Name' -> preferred_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient Name - Street' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Suite' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
+    ✓ 'State' -> state (key_exact, score=1.00, cov=1.00)
+    ✓ 'Zipcode' -> zipcode (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient Name - Mobile' -> mobile_phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Home' -> home_phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Work' -> work_phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Mail' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'State' -> state (title_exact, score=0.95, cov=1.00)
+    ✓ 'Patient Name - Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient Name - Employed By' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Occupation' -> occupation (key_exact, score=1.00, cov=1.00)
+    ✓ 'State' -> state (title_exact, score=0.95, cov=1.00)
+    ✓ 'Patient Name - Patient' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Mobile Phone' -> mobile_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Phone' -> phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Home Phone' -> home_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Patient Name - School' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Birth' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Name - Other' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'State' -> state (title_exact, score=0.95, cov=1.00)
+    ✓ 'State' -> state (title_exact, score=0.95, cov=1.00)
+    ✓ 'Do you have or have you had any of the following?' -> medical_conditions (title_exact, score=0.00, cov=1.00)
+    ✓ 'State' -> state (title_exact, score=0.95, cov=1.00)
     ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
-    • Modento compliance validation found 1 issues:
+    • rehome -> Patient Information :: State: ___
+    • rehome -> Patient Information :: State
+    • duplicate_consolidation -> Removed duplicate mobile_phone_2 from Patient Information
+    • duplicate_consolidation -> Removed duplicate home_phone_2 from Patient Information
+    • unique_title -> 'State' → 'State #2' (suffix)
+    • unique_title -> 'State' → 'State #3' (suffix)
+    • unique_title -> 'Patient Name - Birth' → 'Patient Name - Birth #10' (suffix)
+    • unique_title -> 'State' → 'State #4' (suffix)
+    • unique_title -> 'State' → 'State #5' (suffix)
+    • unique_title -> 'State' → 'State #6' (suffix)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • Section ordering: Reordered 33 fields
+    •   Section distribution: {'Patient Information': 28, 'Dental History': 2, 'Signature': 3}
+    • Modento compliance validation found 2 issues:
+    •   - Duplicate key: state_6
     •   - No signature field found
-  [debug] preprocess_lines: 208 -> 227 lines
+  [debug] preprocess_lines: 208 -> 226 lines
   [debug] fill-in-blank detected: Last Name __________________________... -> last_name
   [debug] fill-in-blank detected: First Name _________________________... -> first_name
   [debug] fill-in-blank detected: MI _____... -> mi
   [debug] gate: inline_text_options -> 'Sex' with 4 options
   [debug] fill-in-blank detected: Soc. Sec. # ___________________________________________... -> soc_sec
   [debug] fill-in-blank detected: City ____________________________... -> city
-  [debug] fill-in-blank detected: Email ____________________________________________... -> email
   [debug] fill-in-blank detected: Occupation _________________________________________________... -> occupation
   [debug] fill-in-blank detected: DOB ____________________... -> dob
   [debug] gate: parent_routing -> 'Parent Name' -> parent_name
@@ -1079,19 +1270,17 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
   [warn] No dictionary match for field: 'Account' (key: account)
   [warn] No dictionary match for field: 'Your last cleaning / Your last oral cancer screening / Your last complete X-rays / What is the most important thing to you about your future smile and dental health?' (key: your_last_cleaning_your_last_oral_cancer_screening_your_last)
   [warn] No dictionary match for field: 'What is the most important thing to you about your dental visit today?' (key: what_is_the_most_important_thing_to_you_about_your_dental_visit)
-  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: dental_conditions)
   [warn] No dictionary match for field: 'Do you have or have you had any of the following medical conditions?' (key: medical_conditions_consolidated)
   [warn] No dictionary match for field: 'Type' (key: type)
   [warn] No dictionary match for field: 'Oxycodone' (key: oxycodone)
   [warn] No dictionary match for field: 'Tylenol 3)' (key: tylenol_3)
-  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: medical_conditions)
   [warn] No dictionary match for field: 'If yes please explain __________________________' (key: if_yes_please_explain)
   [warn] No dictionary match for field: 'Are you taking or have you recently taken any prescription or over the counter medicine(s)' (key: are_you_taking_or_have_you_recently_taken_any_prescription_or)
   [warn] No dictionary match for field: 'Have you ever in the past, or are you now currently taking any medications for Osteopenia/Osteoporosis or Bone Disease?' (key: have_you_ever_in_the_past_or_are_you_now_currently_taking_any)
   [warn] No dictionary match for field: 'If so, please list medications' (key: if_so_please_list_medications)
   [warn] No dictionary match for field: 'Have you ever had surgery?' (key: have_you_ever_had_surgery)
 [✓] npf1.txt -> npf1.modento.json (65 items)
-    ↳ reused 57/65 from dictionary (87%)
+    ↳ reused 59/65 from dictionary (90%)
   [debug] template matches:
     ✓ 'Today’s Date' -> todays_date (key_exact, score=1.00, cov=1.00)
     ✓ 'Last Name' -> last_name (key_exact, score=1.00, cov=1.00)
@@ -1108,7 +1297,6 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     ✓ 'Email' -> email (key_exact, score=1.00, cov=1.00)
     ✓ 'Home Phone' -> home_phone (key_exact, score=1.00, cov=1.00)
     ✓ 'Phone' -> phone (key_exact, score=1.00, cov=1.00)
-    ✓ 'Mobile Phone' -> mobile_phone (key_exact, score=1.00, cov=1.00)
     ✓ 'Driver's License #' -> drivers_license (key_exact, score=1.00, cov=1.00)
     ✓ 'Employer' -> employer (key_exact, score=1.00, cov=1.00)
     ✓ 'Work Phone' -> work_phone (key_exact, score=1.00, cov=1.00)
@@ -1139,6 +1327,7 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     ✓ 'Color Bite Chipped Teeth Spaces Crowding Smile Makeover Missing Teeth Whiter Teeth' -> spaces (alias_contains, score=0.93, cov=1.00)
     ✓ 'Why did you leave your previous dentist?' -> previous_dentist (alias_contains, score=0.93, cov=1.00)
     ✓ 'Name of your previous dentist' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Do you have or have you had any of the following?' -> medical_conditions (title_exact, score=0.00, cov=1.00)
     ✓ 'Discolored teeth Worn teeth Misshaped teeth Crooked teeth Spaces Overbite Flat teeth' -> worn_teeth (alias_contains, score=0.98, cov=1.00)
     ✓ 'Sensitivity (hot, cold, sweet) Pressure Broken teeth/fillings Worn teeth Dry Mouth' -> worn_teeth (alias_contains, score=0.98, cov=1.00)
     ✓ 'Grinding/Clenching Headaches Jaw Joint (TMJ) pain Jaw Joint (TMJ) clicking/popping Bad Bite Speech Impediment Mouth Breathing Sore Muscles (neck, shoulders) Difficulty Opening or Closing Difficulty Chewing on either side' -> jaw_pain_clicking (alias_contains, score=0.05, cov=1.00)
@@ -1147,8 +1336,10 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     ✓ 'Sleep Apnea Snoring Daytime Drowsiness Bed wetting (for children)' -> sleep_apnea (alias_contains, score=0.00, cov=1.00)
     ✓ 'Nitrous Oxide Oral Sedation (Pill) IV Sedation' -> sedation_preference (alias_contains, score=0.18, cov=1.00)
     ✓ 'Antibiotics (Penicillin/Amoxicillin /Clindamycin)' -> antibiotics (alias_contains, score=0.93, cov=1.00)
-    ✓ 'Are you under the care of a physician' -> 1.under_care (fuzzy, score=0.90, cov=0.89)
+    ✓ 'Do you have or have you had any of the following?' -> medical_conditions (key_exact, score=1.00, cov=1.00)
+    ✓ 'Are you under the care of a physician' -> 1.under_care (fuzzy, score=0.95, cov=0.89)
     ✓ 'SSN' -> ssn (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Phone # (
@@ -1180,37 +1371,43 @@ The `max_size` parameter is deprecated and will be removed in v4.26. Please spec
     • malformed_grid_detected -> 'Nitrous Oxide Oral Sedation (Pill) IV Sedation...' with 5 options
     • unique_title -> 'Employer' → 'Employer #2' (suffix)
     • unique_title -> 'If yes please explain __________________________' → 'Are you under the care of a physician - Please explain' (context)
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
     • Section ordering: Reordered 65 fields
-    •   Section distribution: {'Patient Information': 30, 'Insurance': 7, 'Medical History': 11, 'Dental History': 9, 'Signature': 1, 'General': 3, 'Emergency Contact': 4}
+    •   Section distribution: {'Patient Information': 29, 'Insurance': 7, 'Medical History': 11, 'Dental History': 9, 'Signature': 2, 'General': 3, 'Emergency Contact': 4}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
+  [debug] preprocess_lines: 29 -> 30 lines
   [debug] skipping descriptive header: 'I understand that there are risks associated with any dental'
   [debug] skipping descriptive header: 'Damage to the nerves during tooth removal resulting in tempo'
-[✓] tooth20removal20consent20form.txt -> tooth20removal20consent20form.modento.json (1 items)
-    ↳ reused 1/1 from dictionary (100%)
+[✓] tooth20removal20consent20form.txt -> tooth20removal20consent20form.modento.json (3 items)
+    ↳ reused 3/3 from dictionary (100%)
   [debug] template matches:
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
     • Modento compliance validation found 1 issues:
     •   - No signature field found
   [debug] preprocess_lines: 21 -> 22 lines
-  [debug] fill-in-blank detected: Patient Name:_______________________________________... -> patient_name
-  [debug] fill-in-blank detected: DOB: ___________________... -> dob
   [warn] No dictionary match for field: 'Terms' (key: you_have_the_right_and_obligation_to_make_decisions_regarding)
   [warn] No dictionary match for field: 'I certify that I have read the contents of this form. I understand the possible advantages of proceeding with the recommended treatment and the possible risks and consequences of refusing the recommended treatment.' (key: i_certify_that_i_have_read)
   [warn] No dictionary match for field: 'Terms' (key: having_been_informed_i_elect_not_to_have_the_necessary_xrays_at)
-[✓] zCONSENT-XRAY REFUSAL.txt -> zCONSENT-XRAY REFUSAL.modento.json (6 items)
-    ↳ reused 3/6 from dictionary (50%)
+[✓] zCONSENT-XRAY REFUSAL.txt -> zCONSENT-XRAY REFUSAL.modento.json (5 items)
+    ↳ reused 4/5 from dictionary (80%)
   [debug] template matches:
     ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
-    ✓ 'DOB' -> date_of_birth (title_exact, score=0.95, cov=1.00)
+    ✓ 'DOB' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
     ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
   [debug] gates:
     • rehome -> Patient Information :: Patient Name
     • rehome -> Patient Information :: DOB
     • unique_title -> 'Terms' → 'Terms (2)' (numeric)
-    • Section ordering: Reordered 6 fields
-    •   Section distribution: {'Patient Information': 2, 'Dental History': 1, 'Signature': 1, 'Consent': 2}
+    • unique_title -> 'Signature' → 'Signature #2' (suffix)
+    • consent_grouping -> Consolidated 7 fields to 5 fields
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Patient Information': 2, 'Signature': 2, 'Consent': 1}
     • Modento compliance validation found 1 issues:
     •   - No signature field found
 [1/2] Running unstructured_extract.py …
