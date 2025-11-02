@@ -151,6 +151,13 @@ from .modules.ocr_correction import (
     correct_phone_number_patterns,
     correct_date_patterns,
 )
+# Performance Recommendations: Enhanced detection and consent handling
+from .modules.performance_enhancements import (
+    detect_inline_checkbox_options,
+    enhance_field_type_detection,
+    consolidate_procedural_consent_blocks,
+    is_procedural_consent_text,
+)
 
 # ---------- Paths
 
@@ -2686,6 +2693,22 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 questions.append(Question(key, ttl, cur_section, qtype, control=ctrl))
             i += 1; continue
 
+        # Performance Recommendation #3: Enhanced inline checkbox detection
+        checkbox_result = detect_inline_checkbox_options(line)
+        if checkbox_result:
+            field_label, options = checkbox_result
+            title = clean_field_title(field_label)
+            key = slugify(title)
+            # Determine if radio or checkbox based on context
+            from .modules.performance_enhancements import infer_radio_vs_checkbox
+            field_type = infer_radio_vs_checkbox(options, title)
+            control = {"options": options}
+            if field_type == "checkbox":
+                control["multi"] = True
+            questions.append(Question(key, title, cur_section, field_type, control=control))
+            if debug: print(f"  [debug] enhanced_checkbox -> '{title}' with {len(options)} options ({field_type})")
+            i += 1; continue
+
         # Single-checkbox → boolean radio (e.g., Responsible Party …)
         mbox = SINGLE_BOX_RE.match(line)
         if mbox and RESP_PARTY_RE.search(line):
@@ -4794,6 +4817,12 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Improvement #15: Add confidence scores to fields
     payload = add_confidence_scores(payload)
+    
+    # Performance Recommendation #2: Consolidate procedural consent blocks
+    payload = consolidate_procedural_consent_blocks(payload)
+    
+    # Performance Recommendation #3: Enhance field type detection
+    payload = [enhance_field_type_detection(field) for field in payload]
     
     # Modento Schema Compliance: Final validation
     payload = postprocess_validate_modento_compliance(payload, dbg=dbg)

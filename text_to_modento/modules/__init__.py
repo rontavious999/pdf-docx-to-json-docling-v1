@@ -19,6 +19,17 @@ from .ml_field_detector import (
     initialize_ml_detector
 )
 
+# Export performance enhancements (Performance Recommendations 1-3)
+from .performance_enhancements import (
+    detect_inline_checkbox_options,
+    infer_radio_vs_checkbox,
+    enhance_field_type_detection,
+    is_procedural_consent_text,
+    consolidate_procedural_consent_blocks,
+    track_unmatched_field_for_expansion,
+    suggest_dictionary_additions
+)
+
 __all__ = [
     'preprocess_text_with_ocr_correction',
     'preprocess_field_label',
@@ -28,5 +39,12 @@ __all__ = [
     'correct_field_label',
     'MLFieldDetector',
     'FieldPrediction',
-    'initialize_ml_detector'
+    'initialize_ml_detector',
+    'detect_inline_checkbox_options',
+    'infer_radio_vs_checkbox',
+    'enhance_field_type_detection',
+    'is_procedural_consent_text',
+    'consolidate_procedural_consent_blocks',
+    'track_unmatched_field_for_expansion',
+    'suggest_dictionary_additions'
 ]
