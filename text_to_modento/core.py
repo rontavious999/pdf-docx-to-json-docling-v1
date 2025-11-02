@@ -74,7 +74,10 @@ from .modules.text_preprocessing import (
     coalesce_soft_wraps,
     is_numbered_list_item,  # NEW Improvement 1
     is_form_metadata,  # NEW Improvement 6
-    is_practice_location_text  # NEW Improvement 7
+    is_practice_location_text,  # NEW Improvement 7
+    is_instructional_paragraph,  # Improvement #7
+    separate_field_label_from_blanks,  # Improvement #1
+    normalize_compound_field_line  # Improvement #5
 )
 from .modules.grid_parser import (
     looks_like_grid_header,
@@ -114,6 +117,9 @@ from .modules.question_parser import (
     norm_title,  # Patch 2: Moved to question_parser for better organization
     generate_contextual_date_key,  # Improvement 6: Date field disambiguation
     infer_multi_select_from_context,  # NEW Improvement 8: Smart multi-select detection
+    recognize_semantic_field_label,  # Improvement #4
+    detect_empty_vs_filled_field,  # Improvement #14
+    infer_field_context_from_section,  # Improvement #12
 )
 # Parity Improvements: Import field detection and consent handling modules
 from .modules.field_detection import (
@@ -130,6 +136,20 @@ from .modules.consent_handler import (
     is_risk_list_header,
     group_risk_list_items,
     normalize_signature_field,
+)
+# Improvement #10, #11, #15: Import postprocessing enhancements
+from .modules.postprocessing import (
+    consolidate_duplicate_fields_enhanced,
+    infer_section_boundaries,
+    calculate_field_confidence,
+    add_confidence_scores,
+    filter_low_confidence_fields,
+)
+# Improvement #2: Enhanced OCR correction
+from .modules.ocr_correction import (
+    enhance_dental_term_corrections,
+    correct_phone_number_patterns,
+    correct_date_patterns,
 )
 
 # ---------- Paths
@@ -1025,12 +1045,24 @@ def preprocess_lines(lines: List[str]) -> List[str]:
     Parity Improvements:
     - Improvement #1: Detect and split colon-delimited multi-field blocks
     - Improvement #2: Enhanced multi-sub-field label splitting
+    - Improvement #1: Field label separation from blanks
+    - Improvement #5: Compound field line normalization
     """
     processed = []
     for line in lines:
         # Skip empty lines
         if not line.strip():
             processed.append(line)
+            continue
+        
+        # Improvement #1: Separate field labels from underscores
+        line = separate_field_label_from_blanks(line)
+        
+        # Improvement #5: Try to normalize compound field lines
+        compound_fields = normalize_compound_field_line(line)
+        if len(compound_fields) > 1:
+            # Successfully split compound fields
+            processed.extend(compound_fields)
             continue
         
         # NEW Improvement #1: Try colon-delimited field splitting FIRST
@@ -2200,6 +2232,11 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
 # Core text-to-JSON conversion logic. Orchestrates field detection and Question creation.
 
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
+    # Improvement #2: Apply OCR corrections early in the pipeline
+    text = enhance_dental_term_corrections(text)
+    text = correct_phone_number_patterns(text)
+    text = correct_date_patterns(text)
+    
     # Step 1: Clean headers/footers but DON'T normalize yet (preserves tabs for field splitting)
     lines = scrub_headers_footers(text)
     lines = coalesce_soft_wraps(lines)
@@ -2253,6 +2290,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if is_practice_location_text(line, prev_context):
             if debug:
                 print(f"  [debug] skipping practice location: '{line[:60]}'")
+            i += 1
+            continue
+
+        # Improvement #7: Skip instructional paragraphs (consent/legal text)
+        # Long paragraphs with legal/consent language should not become fields
+        if is_instructional_paragraph(line):
+            if debug:
+                print(f"  [debug] skipping instructional text: '{line[:60]}...'")
             i += 1
             continue
 
@@ -4723,6 +4768,12 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     payload = postprocess_infer_sections(payload, dbg=dbg)
     payload = postprocess_consolidate_duplicates(payload, dbg=dbg)
     
+    # Improvement #10: Enhanced duplicate consolidation
+    payload = list(consolidate_duplicate_fields_enhanced(payload, debug=debug))
+    
+    # Improvement #11: Infer section boundaries
+    payload = list(infer_section_boundaries(payload, debug=debug))
+    
     # Archivev10 Fix 4: Consolidate malformed grid fields
     payload = postprocess_consolidate_malformed_grids(payload, dbg=dbg)
     
@@ -4740,6 +4791,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Modento Schema Compliance: Order sections according to conventions
     payload = postprocess_order_sections(payload, dbg=dbg)
+    
+    # Improvement #15: Add confidence scores to fields
+    payload = add_confidence_scores(payload)
     
     # Modento Schema Compliance: Final validation
     payload = postprocess_validate_modento_compliance(payload, dbg=dbg)
