@@ -1,0 +1,127 @@
+======================================================================
+⚠️  poppler-utils not found. Hi-res PDF extraction may fail.
+   Install: apt-get install poppler-utils (or brew install poppler on Mac)
+⚠️  tesseract-ocr not found. OCR capabilities limited.
+   Install: apt-get install tesseract-ocr (or brew install tesseract on Mac)
+======================================================================
+
+🚀 Starting extraction from documents to output
+🔧 Strategy: hi_res, Retry: False, Languages: eng, Tables: True, PageBreaks: False, hi_res_model: None
+❌ Extraction failed for documents/ZOOMConsentFINAL122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/ZOOMConsentFINAL122024.docx
+❌ Extraction failed for documents/SureSmileConsent122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/SureSmileConsent122024.docx
+❌ Extraction failed for documents/PediatricExtractionFINAL32025.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/PediatricExtractionFINAL32025.docx
+❌ Extraction failed for documents/DentureandPartialConsentFINAL122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/DentureandPartialConsentFINAL122024.docx
+❌ Extraction failed for documents/Endodontic Consent_6.20.2022.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Endodontic Consent_6.20.2022.pdf
+❌ Extraction failed for documents/Tongue Tie Release informed consent.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Tongue Tie Release informed consent.docx
+❌ Extraction failed for documents/Invisalign Patient Consent.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Invisalign Patient Consent.pdf
+❌ Extraction failed for documents/CFGingivectomy.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/CFGingivectomy.pdf
+❌ Extraction failed for documents/ExtractionConsentFINAL122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/ExtractionConsentFINAL122024.docx
+❌ Extraction failed for documents/tooth20removal20consent20form.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/tooth20removal20consent20form.pdf
+❌ Extraction failed for documents/Gingivectomy Consent_6.23.2022.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Gingivectomy Consent_6.23.2022.pdf
+❌ Extraction failed for documents/OHFD Patient Warranty Document (1).docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/OHFD Patient Warranty Document (1).docx
+❌ Extraction failed for documents/zCONSENT-XRAY REFUSAL.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/zCONSENT-XRAY REFUSAL.docx
+❌ Extraction failed for documents/Chicago-Dental-Solutions_Form.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Chicago-Dental-Solutions_Form.pdf
+❌ Extraction failed for documents/DentureProcessingConsentFINAL122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/DentureProcessingConsentFINAL122024.docx
+❌ Extraction failed for documents/Informed Consent for Biopsy.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent for Biopsy.docx
+❌ Extraction failed for documents/Informed Consent - Labial Frenectomy.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent - Labial Frenectomy.docx
+❌ Extraction failed for documents/Consent Final Process Full or Partial Denture.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Consent Final Process Full or Partial Denture.docx
+❌ Extraction failed for documents/Pre Sedation Form.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Pre Sedation Form.docx
+❌ Extraction failed for documents/Implant Consent_6.27.2022.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Implant Consent_6.27.2022.pdf
+❌ Extraction failed for documents/Informed Consent Endodonti Procedure.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Endodonti Procedure.docx
+❌ Extraction failed for documents/Endo Consent .docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Endo Consent .docx
+❌ Extraction failed for documents/Informed Consent Composite Restoratio.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Composite Restoratio.docx
+❌ Extraction failed for documents/Scan_20251014 (3).pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Scan_20251014 (3).pdf
+❌ Extraction failed for documents/EndoConsentFINAL122024.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/EndoConsentFINAL122024.docx
+❌ Extraction failed for documents/+Bone+Grafting+Consent+FINAL+32025.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/+Bone+Grafting+Consent+FINAL+32025.docx
+❌ Extraction failed for documents/Extraction Consent_6.22.2022.docx.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Extraction Consent_6.22.2022.docx.pdf
+❌ Extraction failed for documents/npf.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/npf.pdf
+❌ Extraction failed for documents/IV Sedation Pre-op.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/IV Sedation Pre-op.docx
+❌ Extraction failed for documents/Informed Consent Crown & Bridge Prosthetic.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Crown & Bridge Prosthetic.docx
+❌ Extraction failed for documents/+Dental+Records+Release+Form+FINAL+032025.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/+Dental+Records+Release+Form+FINAL+032025.docx
+❌ Extraction failed for documents/Informed Consent - Lip Tie and Tongue Tie Release.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent - Lip Tie and Tongue Tie Release.docx
+❌ Extraction failed for documents/Informed Consent Implant Supported Prosthetics.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Implant Supported Prosthetics.docx
+❌ Extraction failed for documents/consent_crown_bridge_prosthetics.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/consent_crown_bridge_prosthetics.pdf
+❌ Extraction failed for documents/Informed Consent Information.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Information.pdf
+❌ Extraction failed for documents/npf1.pdf: partition_pdf() is not available because one or more dependencies are not installed. Use: pip install "unstructured[pdf]" (including quotes) to install the required dependencies
+✅ Processed: documents/npf1.pdf
+❌ Extraction failed for documents/TN OS Consent Form.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/TN OS Consent Form.docx
+❌ Extraction failed for documents/Informed Consent Complete Dentures & Partial Dentures.docx: partition_docx() is not available because one or more dependencies are not installed. Use: pip install "unstructured[docx]" (including quotes) to install the required dependencies
+✅ Processed: documents/Informed Consent Complete Dentures & Partial Dentures.docx
+✅ Extraction complete!
+[skip] empty file: +Bone+Grafting+Consent+FINAL+32025.txt
+[skip] empty file: +Dental+Records+Release+Form+FINAL+032025.txt
+[skip] empty file: CFGingivectomy.txt
+[skip] empty file: Chicago-Dental-Solutions_Form.txt
+[skip] empty file: Consent Final Process Full or Partial Denture.txt
+[skip] empty file: DentureProcessingConsentFINAL122024.txt
+[skip] empty file: DentureandPartialConsentFINAL122024.txt
+[skip] empty file: Endo Consent .txt
+[skip] empty file: EndoConsentFINAL122024.txt
+[skip] empty file: Endodontic Consent_6.20.2022.txt
+[skip] empty file: Extraction Consent_6.22.2022.docx.txt
+[skip] empty file: ExtractionConsentFINAL122024.txt
+[skip] empty file: Gingivectomy Consent_6.23.2022.txt
+[skip] empty file: IV Sedation Pre-op.txt
+[skip] empty file: Implant Consent_6.27.2022.txt
+[skip] empty file: Informed Consent - Labial Frenectomy.txt
+[skip] empty file: Informed Consent - Lip Tie and Tongue Tie Release.txt
+[skip] empty file: Informed Consent Complete Dentures & Partial Dentures.txt
+[skip] empty file: Informed Consent Composite Restoratio.txt
+[skip] empty file: Informed Consent Crown & Bridge Prosthetic.txt
+[skip] empty file: Informed Consent Endodonti Procedure.txt
+[skip] empty file: Informed Consent Implant Supported Prosthetics.txt
+[skip] empty file: Informed Consent Information.txt
+[skip] empty file: Informed Consent for Biopsy.txt
+[skip] empty file: Invisalign Patient Consent.txt
+[skip] empty file: OHFD Patient Warranty Document (1).txt
+[skip] empty file: PediatricExtractionFINAL32025.txt
+[skip] empty file: Pre Sedation Form.txt
+[skip] empty file: Scan_20251014 (3).txt
+[skip] empty file: SureSmileConsent122024.txt
+[skip] empty file: TN OS Consent Form.txt
+[skip] empty file: Tongue Tie Release informed consent.txt
+[skip] empty file: ZOOMConsentFINAL122024.txt
+[skip] empty file: consent_crown_bridge_prosthetics.txt
+[skip] empty file: npf.txt
+[skip] empty file: npf1.txt
+[skip] empty file: tooth20removal20consent20form.txt
+[skip] empty file: zCONSENT-XRAY REFUSAL.txt
+[1/2] Running unstructured_extract.py …
+[2/2] Running text_to_modento.py …
+✅ Done.

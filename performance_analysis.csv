@@ -1,0 +1,104 @@
+PERFORMANCE ANALYSIS REPORT
+Generated:,/home/runner/work/pdf-docx-to-json-unstructured-v1/pdf-docx-to-json-unstructured-v1
+
+DICTIONARY VS OUTPUT COMPARISON
+Metric,Value
+Total Available Fields in Dictionary,219
+Total Dictionary Sections,22
+Total Unique Keys in Dictionary,219
+
+Total Fields Extracted from Documents,187
+Fields Matched to Dictionary,119
+Fields NOT in Dictionary (new/unique),102
+
+Dictionary Coverage (% of dictionary used),54.34%
+Dictionary Match Rate (% of extracted fields matched),63.64%
+
+OVERALL STATISTICS
+Metric,Value
+Total Documents Processed,25
+Total Fields Extracted,187
+Total Fields Matched to Dictionary,119
+Total Unmatched Fields,102
+Overall Match Rate (%),63.64
+Average Accuracy per Document (%),70.95
+Average Fields per Document,7.48
+Average Sections per Document,2.28
+Total Content Size (KB),69.54
+Average Document Size (KB),2.78
+Total Characters,70994
+Average Characters per Document,2839.76
+Total Lines,991
+Average Lines per Document,39.64
+
+ACCURACY DISTRIBUTION
+Range,Count,Percentage
+90-100%,7,28.0%
+80-90%,2,8.0%
+70-80%,4,16.0%
+60-70%,3,12.0%
+50-60%,4,16.0%
+Below 50%,5,20.0%
+
+DETAILED PER-DOCUMENT METRICS
+Filename,Total Fields,Matched Fields,Unmatched Fields,Match Accuracy (%),Raw Questions,Sections,File Size (bytes),Characters,Lines,Section Breakdown,Type Breakdown,Sample Unmatched Fields
++Dental+Records+Release+Form+FINAL+032025,11,11,2,100.00,10,4,1167,1159,35,"Patient Information:7, Dental History:1, Consent:3","input:5, date:2, states:1, block_signature:3",Signature #2; Signature #3
+Consent Final Process Full or Partial Denture,4,4,2,100.00,3,2,876,868,20,"Patient Information:1, Consent:3","date:2, block_signature:2",or authorized representative: Date.; Signature #2
+DentureProcessingConsentFINAL122024,4,4,2,100.00,3,2,834,832,19,"Patient Information:1, Consent:3","date:2, block_signature:2",or authorized representative: Date; Signature #2
+ZOOMConsentFINAL122024,2,2,1,100.00,1,1,8841,8815,51,Consent:2,block_signature:2,Signature #2
+zCONSENT-XRAY REFUSAL,4,4,1,100.00,3,2,1963,1963,21,"Patient Information:2, Consent:2","input:1, date:1, block_signature:2",Signature #2
+Informed Consent Complete Dentures & Partial Dentures,2,2,1,100.00,1,1,5201,5197,37,Consent:2,block_signature:2,Signature #2
+Pre Sedation Form,4,4,2,100.00,3,2,1372,1370,21,"Patient Information:1, Consent:3","date:1, block_signature:3",Signature #2; Signature #3
+Informed Consent Crown & Bridge Prosthetic,8,7,3,87.50,7,3,2458,2446,39,"Patient Information:2, General:2, Consent:3, Emergency Contact:1","input:3, date:3, block_signature:2",Date #2; procedure(s) on me or my dependent as follows; Signature #2
+PediatricExtractionFINAL32025,6,5,2,83.33,5,2,1029,1019,25,"Patient Information:2, General:2, Consent:2","input:2, date:2, block_signature:2",Guardian; Signature #2
+Informed Consent - Labial Frenectomy,8,6,3,75.00,7,3,1336,1328,41,"Patient Information:3, Dental History:1, Consent:4","input:4, date:2, block_signature:2","Injury to the teeth, lip, gums, or tongue.; associated with complications. These are some risk; Sign"
+Informed Consent Endodonti Procedure,8,6,4,75.00,7,3,2743,2731,52,"Patient Information:1, General:2, Consent:4, Emergency Contact:1","input:4, date:2, block_signature:2",Date #2; me or my dependent as follows; (“Recommended Treatment”) and any; Signature #2
+Informed Consent for Biopsy,8,6,3,75.00,7,2,2611,2599,44,"Patient Information:2, General:3, Emergency Contact:1, Consent:2","input:4, date:2, block_signature:2",follows; (“Recommended Treatment”) and any such; Signature #2
+Informed Consent Composite Restoratio,8,6,4,75.00,7,3,2360,2348,51,"Patient Information:1, General:2, Consent:4, Emergency Contact:1","input:4, date:2, block_signature:2","Date #2; procedure(s) on me or my dependent as follows.; (‘""Recommended Treatment”) and any such add"
+DentureandPartialConsentFINAL122024,3,2,2,66.67,2,2,5106,5106,37,"Medical History:1, Consent:2","input:1, block_signature:2",administering and prescribing all anesthetics and/; Signature #2
+OHFD Patient Warranty Document (1),3,2,2,66.67,2,2,4889,4859,37,"Dental History:1, Consent:2","input:1, block_signature:2",Fillings on the incisal edge of anterior teeth (ed; Signature #2
+SureSmileConsent122024,5,3,3,60.00,4,3,3872,3867,39,"Patient Information:2, Emergency Contact:1, Consent:2","input:3, block_signature:2","(or in case of a minor, parent or legal guardian); Notify your doctor if you have any medical condit"
+ExtractionConsentFINAL122024,12,7,7,58.33,11,2,2934,2928,51,"Patient Information:2, Medical History:1, Dental History:4, General:2, Emergency Contact:1, Consent:2","input:7, date:3, block_signature:2",Drug reactions and side effects.; Loss or removal of bone during tooth extraction.; jaw fracture.; D
++Bone+Grafting+Consent+FINAL+32025,7,4,4,57.14,6,2,2703,2701,51,"Patient Information:1, Medical History:2, General:1, Emergency Contact:1, Consent:2","date:1, input:4, block_signature:2",If I have elected a banked bone or bone substitute; jaw fracture; But I wish to proceed with the Rec
+TN OS Consent Form,11,6,6,54.55,10,2,2966,2958,41,"Patient Information:2, Insurance:1, Medical History:2, Dental History:1, General:3, Consent:2","input:6, date:2, checkbox:1, block_signature:2",Planned Procedure; SWELLING and/or BRUISING and DISCOMFORT in the sur; NEARBY tooth DAMAGE: Possible
+EndoConsentFINAL122024,14,7,9,50.00,13,2,2670,2664,49,"Patient Information:9, Dental History:2, Emergency Contact:1, Consent:2","input:9, radio:1, date:2, block_signature:2",Instrument breakage in the root canal.; Inability to negotiate canals due to prior treatme; Irrepara
+Informed Consent - Lip Tie and Tongue Tie Release,13,6,8,46.15,12,3,2102,2086,51,"Patient Information:3, Medical History:1, Dental History:1, General:3, Consent:5","input:9, date:2, block_signature:2","as a cupping or heart shaped tongue when the tongu; Injury to the teeth, lip, gums, or tongue.; reco"
+Tongue Tie Release informed consent,14,6,9,42.86,13,2,1744,1732,45,"Patient Information:3, Insurance:1, Medical History:1, Dental History:1, Consent:8","input:10, date:2, block_signature:2",(benefits) of laser vs. scalpel or scissors includ; as a cupping or heart shaped tongue when the ton
+Endo Consent ,5,2,4,40.00,4,2,3804,3804,35,Consent:5,"input:3, block_signature:2",endodontic Information and consent Form; Number; Diagnosis; Signature #2
+Informed Consent Implant Supported Prosthetics,12,4,9,33.33,11,3,4085,4081,66,"Patient Information:1, Dental History:8, Emergency Contact:1, Consent:2","input:10, block_signature:2",Other alternative implant procedures.; Placement of a fixed dental bridge which will be s; Bone and/
+IV Sedation Pre-op,11,3,9,27.27,10,2,1545,1533,33,"Patient Information:2, Medical History:6, Dental History:1, Consent:2","input:9, block_signature:2",We reserve the right to cancel/stop the appointmen; Do NOT take any additional medications – (includ
+
+TOP 5 PERFORMERS (by accuracy)
+Filename,Accuracy (%),Total Fields,Matched Fields
++Dental+Records+Release+Form+FINAL+032025,100.00,11,11
+Consent Final Process Full or Partial Denture,100.00,4,4
+DentureProcessingConsentFINAL122024,100.00,4,4
+ZOOMConsentFINAL122024,100.00,2,2
+zCONSENT-XRAY REFUSAL,100.00,4,4
+
+BOTTOM 5 PERFORMERS (by accuracy)
+Filename,Accuracy (%),Total Fields,Matched Fields
+Informed Consent - Lip Tie and Tongue Tie Release,46.15,13,6
+Tongue Tie Release informed consent,42.86,14,6
+Endo Consent ,40.00,5,2
+Informed Consent Implant Supported Prosthetics,33.33,12,4
+IV Sedation Pre-op,27.27,11,3
+
+FIELD TYPE ANALYSIS
+Field Type,Total Count,Percentage
+input,99,52.94%
+block_signature,52,27.81%
+date,33,17.65%
+states,1,0.53%
+checkbox,1,0.53%
+radio,1,0.53%
+
+SECTION ANALYSIS
+Section Name,Total Count,Percentage
+Consent,73,39.04%
+Patient Information,48,25.67%
+Dental History,21,11.23%
+General,20,10.70%
+Medical History,14,7.49%
+Emergency Contact,9,4.81%
+Insurance,2,1.07%
