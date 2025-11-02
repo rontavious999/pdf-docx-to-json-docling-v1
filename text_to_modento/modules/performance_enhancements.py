@@ -20,6 +20,20 @@ from typing import Dict, List, Optional, Tuple, Set
 from .question_parser import slugify, classify_input_type, clean_field_title
 
 
+# ========== Constants ==========
+
+# Dictionary expansion thresholds
+DEFAULT_MIN_OCCURRENCES = 2  # Minimum times a field must appear to suggest dictionary addition
+
+# Consent text detection thresholds
+MIN_PROCEDURAL_TEXT_LENGTH = 40  # Minimum text length to consider for procedural consent
+MIN_TEXT_LENGTH_FOR_TERM_CHECK = 100  # Minimum length for medical term density check
+MIN_MEDICAL_TERMS = 3  # Minimum medical terms required per 100 chars for procedural text
+
+# Consent consolidation thresholds
+MIN_CONSENT_BUFFER_SIZE = 2  # Minimum number of consent fields to consolidate
+
+
 # ========== Recommendation 1: Dictionary Expansion Tracking ==========
 
 def track_unmatched_field_for_expansion(field: Dict, unmatched_tracker: Dict) -> None:
@@ -55,7 +69,7 @@ def track_unmatched_field_for_expansion(field: Dict, unmatched_tracker: Dict) ->
     unmatched_tracker[key]['count'] += 1
 
 
-def suggest_dictionary_additions(unmatched_tracker: Dict, min_occurrences: int = 2) -> List[Dict]:
+def suggest_dictionary_additions(unmatched_tracker: Dict, min_occurrences: int = DEFAULT_MIN_OCCURRENCES) -> List[Dict]:
     """
     Generate suggestions for fields to add to the dictionary.
     
@@ -114,7 +128,7 @@ def is_procedural_consent_text(text: str) -> bool:
     Returns:
         True if text appears to be procedural consent/instruction
     """
-    if len(text) < 40:
+    if len(text) < MIN_PROCEDURAL_TEXT_LENGTH:
         return False
     
     text_lower = text.lower()
@@ -154,8 +168,8 @@ def is_procedural_consent_text(text: str) -> bool:
     
     term_count = sum(1 for term in medical_terms if term in text_lower)
     
-    # Procedural text typically has 3+ medical terms per 100 chars
-    if len(text) > 100 and term_count >= 3:
+    # Procedural text typically has MIN_MEDICAL_TERMS+ medical terms per 100 chars
+    if len(text) > MIN_TEXT_LENGTH_FOR_TERM_CHECK and term_count >= MIN_MEDICAL_TERMS:
         return True
     
     return False
@@ -189,7 +203,7 @@ def consolidate_procedural_consent_blocks(fields: List[Dict]) -> List[Dict]:
             consent_buffer.append(field)
         else:
             # Flush buffer if we have consent fields
-            if len(consent_buffer) >= 2:
+            if len(consent_buffer) >= MIN_CONSENT_BUFFER_SIZE:
                 # Create consolidated consent block
                 consolidated = create_procedural_consent_block(consent_buffer)
                 result.append(consolidated)
@@ -203,7 +217,7 @@ def consolidate_procedural_consent_blocks(fields: List[Dict]) -> List[Dict]:
             result.append(field)
     
     # Flush remaining buffer
-    if len(consent_buffer) >= 2:
+    if len(consent_buffer) >= MIN_CONSENT_BUFFER_SIZE:
         consolidated = create_procedural_consent_block(consent_buffer)
         result.append(consolidated)
     elif len(consent_buffer) == 1:
