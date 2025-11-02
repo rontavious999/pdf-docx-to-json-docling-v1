@@ -71,7 +71,10 @@ from .modules.text_preprocessing import (
     detect_repeated_lines,
     is_address_block,
     scrub_headers_footers,
-    coalesce_soft_wraps
+    coalesce_soft_wraps,
+    is_numbered_list_item,  # NEW Improvement 1
+    is_form_metadata,  # NEW Improvement 6
+    is_practice_location_text  # NEW Improvement 7
 )
 from .modules.grid_parser import (
     looks_like_grid_header,
@@ -82,7 +85,8 @@ from .modules.grid_parser import (
     detect_multicolumn_checkbox_grid,
     parse_multicolumn_checkbox_grid,
     extract_text_for_checkbox,
-    extract_text_only_items_at_columns
+    extract_text_only_items_at_columns,
+    detect_medical_conditions_grid
 )
 from .modules.template_catalog import (
     TemplateCatalog,
@@ -108,6 +112,8 @@ from .modules.question_parser import (
     classify_input_type,
     classify_date_input,
     norm_title,  # Patch 2: Moved to question_parser for better organization
+    generate_contextual_date_key,  # Improvement 6: Date field disambiguation
+    infer_multi_select_from_context,  # NEW Improvement 8: Smart multi-select detection
 )
 
 # ---------- Paths
@@ -1875,18 +1881,32 @@ def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]
     return (key, title, field_type)
 
 
-def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
+def detect_multi_field_line(line: str, section: str = "", prev_context: List[str] = None) -> Optional[List[Tuple[str, str]]]:
     """
-    Detect lines with a single label followed by multiple blank fields.
+    Improvement 3: Detect lines with a single label followed by multiple blank fields,
+    with enhanced context awareness.
     
     Example: "Phone: Mobile _____ Home _____ Work _____"
     Returns: [("phone_mobile", "Mobile"), ("phone_home", "Home"), ("phone_work", "Work")]
+    
+    Improvement 3 Enhancement:
+    - "Responsible Party: First ___ Last ___" in Insurance section
+      → [("responsible_party_first_name", "First Name"), ("responsible_party_last_name", "Last Name")]
+    - "Guardian Name: First ___ Last ___"
+      → [("guardian_first_name", "First Name"), ("guardian_last_name", "Last Name")]
+    
+    Args:
+        line: The line to parse
+        section: Current section (e.g., "Insurance", "Patient Information")
+        prev_context: List of previous lines for context extraction
     
     Priority 2.1: Multi-Field Label Splitting
     - Detects multiple underscores or blanks after a single label
     - Identifies common sub-field keywords (Home/Work/Cell, Mobile/Office, Primary/Secondary)
     - Uses spacing analysis to detect distinct blank columns
     """
+    if prev_context is None:
+        prev_context = []
     # Pattern: Label: followed by multiple keywords with blanks/underscores
     # Common keywords for sub-fields
     sub_field_keywords = {
@@ -1924,6 +1944,52 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     base_label = label_match.group(1).strip()
     remainder = label_match.group(2)
     
+    # Improvement 3: Extract contextual prefix from label or previous lines
+    context_prefix = None
+    
+    # Check if the label itself contains context keywords
+    label_lower = base_label.lower()
+    context_keywords = {
+        'guardian': 'guardian',
+        'responsible party': 'responsible_party',
+        'emergency contact': 'emergency_contact',
+        'insured': 'insured',
+        'policy holder': 'policy_holder',
+        'policyholder': 'policy_holder',
+        'subscriber': 'subscriber',
+        'patient': 'patient',
+        'employer': 'employer',
+        'spouse': 'spouse',
+        'parent': 'parent',
+        'child': 'child',
+    }
+    
+    for keyword, prefix in context_keywords.items():
+        if keyword in label_lower:
+            context_prefix = prefix
+            break
+    
+    # If no context in label, check previous 2 lines
+    if not context_prefix and prev_context:
+        for prev_line in prev_context[-2:]:
+            prev_lower = prev_line.lower()
+            for keyword, prefix in context_keywords.items():
+                if keyword in prev_lower:
+                    # Extract the context phrase before colon if present
+                    if ':' in prev_line:
+                        context_phrase = prev_line.split(':')[0].strip()
+                        context_prefix = slugify(context_phrase)[:20]
+                    else:
+                        context_prefix = prefix
+                    break
+            if context_prefix:
+                break
+    
+    # If in Insurance section and still no context, use "insurance" prefix for name fields
+    if not context_prefix and section and 'insurance' in section.lower():
+        if any(keyword in label_lower for keyword in ['name', 'insured', 'policy']):
+            context_prefix = 'insurance'
+    
     # Patch 2: Normalize slashes to spaces (e.g., "Day/Evening" -> "Day Evening")
     remainder = re.sub(r'/', ' ', remainder)
     
@@ -1953,11 +2019,25 @@ def detect_multi_field_line(line: str) -> Optional[List[Tuple[str, str]]]:
     base_key = slugify(base_label)
     result = []
     for display_name, suffix_key in keywords_found:
-        field_key = f"{base_key}_{suffix_key}"
+        # Improvement 3: Apply context prefix to create meaningful field keys
+        if context_prefix:
+            # If context is from the label itself (e.g., "Guardian Name"), 
+            # and suffix is a name component, create contextual key
+            if suffix_key in ['first', 'last', 'middle', 'middle_initial']:
+                field_key = f"{context_prefix}_{suffix_key}_name"
+            else:
+                field_key = f"{context_prefix}_{suffix_key}"
+        else:
+            field_key = f"{base_key}_{suffix_key}"
+        
         # Archivev21 Fix 3: For name fields, use simpler titles
-        if base_label.lower() in ['patient name', 'name', 'insured name', "insured's name"]:
+        if base_label.lower() in ['patient name', 'name', 'insured name', "insured's name", 
+                                   'guardian name', 'responsible party name', 'policy holder name']:
             # Use just the subfield name as title (e.g., "First Name", "Last Name")
-            field_title = f"{display_name.title()} Name" if display_name.lower() in ['first', 'last', 'middle'] else display_name.title()
+            if suffix_key in ['first', 'last', 'middle', 'middle_initial']:
+                field_title = f"{display_name.title()} Name" if display_name.lower() in ['first', 'last', 'middle'] else display_name.title()
+            else:
+                field_title = display_name.title()
         else:
             field_title = f"{base_label} ({display_name})"
         result.append((field_key, field_title))
@@ -2109,6 +2189,31 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if not line:
             i += 1; continue
 
+        # NEW Improvement 1: Skip numbered list items (e.g., "(i)", "(ii)", "(vii)")
+        # These are part of consent/terms text and should not be separate fields
+        if is_numbered_list_item(line):
+            if debug:
+                print(f"  [debug] skipping numbered list item: '{line[:60]}'")
+            i += 1
+            continue
+
+        # NEW Improvement 6: Skip form metadata (revision codes, copyright, etc.)
+        # Form identifiers should not become fields
+        if is_form_metadata(line):
+            if debug:
+                print(f"  [debug] skipping form metadata: '{line[:60]}'")
+            i += 1
+            continue
+
+        # NEW Improvement 7: Skip practice location text (office addresses)
+        # Practice addresses should not become data fields
+        prev_context = lines[max(0, i-2):i] if i > 0 else []
+        if is_practice_location_text(line, prev_context):
+            if debug:
+                print(f"  [debug] skipping practice location: '{line[:60]}'")
+            i += 1
+            continue
+
         # Insurance anchoring
         if INSURANCE_BLOCK_RE.search(line):
             cur_section = "Insurance"; insurance_scope = None
@@ -2228,6 +2333,30 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     print(f"  [debug] skipping category header: '{line[:60]}'")
                 i += 1
                 continue
+
+        # Improvement 4: Check for medical conditions grid pattern
+        # This detects "Do you have any of the following?" followed by many checkbox lines
+        medical_grid = detect_medical_conditions_grid(lines, i, debug)
+        if medical_grid:
+            # Create a multi-select dropdown question with all the conditions
+            key = slugify(medical_grid['title'])
+            if len(key) > 50:
+                key = "medical_conditions" if "medical" in cur_section.lower() else "dental_conditions"
+            
+            questions.append(Question(
+                key,
+                medical_grid['title'],
+                cur_section if cur_section else "Medical History",
+                "dropdown",
+                control={"options": medical_grid['options'], "multi": True}
+            ))
+            
+            if debug:
+                print(f"  [debug] medical_grid -> '{medical_grid['title']}' with {len(medical_grid['options'])} options")
+            
+            # Skip past the grid
+            i = medical_grid['end_idx'] + 1
+            continue
 
         # Archivev8 Fix 1: Check for orphaned checkbox pattern
         # Use raw line (not collapsed) to preserve spacing
@@ -2787,10 +2916,14 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             j = max(j, k)
 
         # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
-        multi_fields = detect_multi_field_line(line)
+        # Improvement 3: Pass section and context for enhanced field naming
+        prev_context = lines[max(0, i-3):i] if i > 0 else []
+        multi_fields = detect_multi_field_line(line, cur_section, prev_context)
         if multi_fields:
             if debug:
                 print(f"  [debug] multi-field detected: {line[:60]}... -> {len(multi_fields)} fields")
+                if multi_fields:
+                    print(f"  [debug]   Keys: {[k for k, _ in multi_fields]}")
             for field_key, field_title in multi_fields:
                 # Determine input type based on base field
                 input_type = "text"
@@ -2837,8 +2970,12 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Production readiness: Remove trailing underscores before date detection
         title_for_check = re.sub(r'_+$', '', title).strip()
         if DATE_LABEL_RE.search(title_for_check):
-            key = slugify(title or "date")
-            if insurance_scope and "insurance" in cur_section.lower(): key = f"{key}{insurance_scope}"
+            # Improvement 6: Use contextual date key instead of generic slugify
+            prev_context = lines[max(0, i-3):i] if i > 0 else []
+            key = generate_contextual_date_key(title or "date", prev_context, cur_section)
+            
+            if insurance_scope and "insurance" in cur_section.lower(): 
+                key = f"{key}{insurance_scope}"
             # Archivev18 Fix 1: Clean date field titles to remove template artifacts
             clean_title = clean_field_title(title) if title else "Date"
             questions.append(Question(key, clean_title, cur_section, "date",
@@ -2925,6 +3062,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     for tok in re.split(r"[,/;]", cleaned_question_title):
                         tok = clean_token(tok)
                         if tok: options.append(make_option(tok, None))
+                
+                # NEW Improvement 8: Use smart multi-select detection
+                # Override make_radio decision with context-aware logic
+                option_names = [opt['name'] for opt in options]
+                is_multi = infer_multi_select_from_context(cleaned_question_title, option_names, cur_section)
+                make_radio = not is_multi  # If multi-select, not radio; if single-select, is radio
+                
                 control: Dict = {"options": options}
                 if not make_radio:
                     control["multi"] = True

@@ -20,8 +20,9 @@ import re
 from typing import List, Optional, Dict, TYPE_CHECKING
 
 # Import from other modules
-from .text_preprocessing import collapse_spaced_caps
+from .text_preprocessing import collapse_spaced_caps, is_heading
 from .constants import CHECKBOX_ANY, CHECKBOX_MARK_RE
+from .question_parser import clean_option_text
 
 # Type hints for circular import - these are actually imported from core at runtime
 if TYPE_CHECKING:
@@ -799,4 +800,236 @@ def parse_multicolumn_checkbox_grid(lines: List[str], grid_info: dict, debug: bo
         )
     
     return None
+
+
+def detect_medical_conditions_grid(lines: List[str], start_idx: int, debug: bool = False) -> Optional[dict]:
+    """
+    Improvement 4: Detect medical history checkbox grids with multiple columns.
+    
+    Pattern:
+    - Question line: "Do you have, or have you had..."
+    - Multiple lines with inline checkboxes
+    - Typically 20-50+ options across 2-3 columns
+    
+    Args:
+        lines: List of text lines
+        start_idx: Starting index to check
+        debug: Enable debug output
+    
+    Returns:
+        dict with grid info if detected, None otherwise
+        {
+            'title': 'Medical Conditions',
+            'options': [{'name': 'Chest Pains', 'value': 'chest_pains'}, ...],
+            'layout': 'multicolumn',
+            'end_idx': int  # Index where grid ends
+        }
+    """
+    _get_question_deps()  # Ensure dependencies are loaded
+    
+    if start_idx >= len(lines):
+        return None
+    
+    # Check for medical condition question pattern
+    question_patterns = [
+        r'do\s+you\s+have.*(?:or\s+have\s+you\s+had).*(?:any\s+of\s+the\s+following|conditions)',
+        r'medical\s+(?:history|conditions)',
+        r'health\s+(?:history|conditions)',
+        r'have\s+you\s+(?:ever\s+)?had\s+any\s+of\s+the\s+following',
+    ]
+    
+    first_line = lines[start_idx].lower()
+    matched_pattern = False
+    for pattern in question_patterns:
+        if re.search(pattern, first_line):
+            matched_pattern = True
+            break
+    
+    if not matched_pattern:
+        return None
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: Found question pattern at line {start_idx}")
+    
+    # Collect all checkbox lines that follow
+    checkbox_lines = []
+    i = start_idx + 1
+    max_lines = min(len(lines), start_idx + 30)  # Max 30 lines to check
+    
+    while i < max_lines:
+        line = lines[i]
+        line_stripped = line.strip()
+        
+        if re.search(CHECKBOX_ANY, line):
+            checkbox_lines.append((i, line))
+        elif line_stripped and not is_heading(line_stripped):
+            # Check if this is still part of the grid or a new section
+            # If we've collected checkboxes and now see non-checkbox text, might be done
+            if len(checkbox_lines) >= 5:
+                # Check if it's just descriptive text between options
+                if len(line_stripped) > 50:  # Long text likely not an option
+                    break
+            elif len(checkbox_lines) > 0 and len(line_stripped) > 30:
+                # Short grid but hit substantial text - stop
+                break
+        i += 1
+    
+    if len(checkbox_lines) < 5:  # Minimum threshold for medical grid
+        if debug:
+            print(f"  [debug] detect_medical_conditions_grid: Only {len(checkbox_lines)} checkbox lines, need 5+")
+        return None
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: Found {len(checkbox_lines)} checkbox lines")
+    
+    # Extract all options using Improvement 7's enhanced extraction
+    options = []
+    seen_options = set()  # Deduplicate
+    
+    for line_idx, line in checkbox_lines:
+        # Use Improvement 7: extract_clean_checkbox_options for better option parsing
+        clean_options = extract_clean_checkbox_options(line)
+        
+        for option_text in clean_options:
+            # Skip if empty
+            if not option_text or len(option_text) < 2:
+                continue
+            
+            # NEW Improvement 5: Enhanced deduplication with normalization
+            # Normalize: lowercase, replace slashes with space, remove punctuation, normalize whitespace
+            normalized = option_text.lower().replace('/', ' ')  # Treat slashes as space
+            normalized = re.sub(r'[^\w\s]', '', normalized).strip()
+            normalized = ' '.join(normalized.split())  # Normalize whitespace
+            
+            if normalized in seen_options:
+                if debug:
+                    print(f"  [debug] Skipping duplicate condition: '{option_text}'")
+                continue
+            
+            seen_options.add(normalized)
+            options.append({
+                'name': option_text,
+                'value': slugify(option_text)
+            })
+    
+    if len(options) < 5:  # Need meaningful number of options
+        if debug:
+            print(f"  [debug] detect_medical_conditions_grid: Only {len(options)} valid options extracted")
+        return None
+    
+    # Extract title from first line
+    title_line = lines[start_idx].strip()
+    # Remove trailing punctuation
+    title = title_line.rstrip(':?.').strip()
+    
+    # If title is too long (>100 chars), shorten it
+    if len(title) > 100:
+        title = "Medical Conditions"
+    
+    if debug:
+        print(f"  [debug] detect_medical_conditions_grid: SUCCESS - extracted {len(options)} options")
+        print(f"  [debug]   Title: {title}")
+        print(f"  [debug]   Sample options: {[o['name'] for o in options[:5]]}")
+    
+    return {
+        'title': title,
+        'options': options,
+        'layout': 'multicolumn',
+        'end_idx': checkbox_lines[-1][0] if checkbox_lines else start_idx + 1,
+        'type': 'dropdown',
+        'multi': True
+    }
+
+
+def extract_clean_checkbox_options(line: str) -> List[str]:
+    """
+    Improvement 7: Extract clean option text from line with multiple checkboxes.
+    
+    Handles:
+    - Adjacent checkboxes: "[ ] Option1 [ ] Option2"
+    - Slash-separated: "[ ] Opt1/Opt2" → separate options
+    - Repeated words (OCR errors): "Blood Blood Transfusion" → "Blood Transfusion"
+    - Truncates long options to first 3-5 words
+    
+    Args:
+        line: Line containing checkboxes and option text
+    
+    Returns:
+        List of clean option strings
+    """
+    # Split by checkbox markers
+    parts = re.split(CHECKBOX_ANY, line)
+    
+    options = []
+    for i, part in enumerate(parts[1:], 1):  # Skip text before first checkbox
+        text = part.strip()
+        
+        if not text:
+            continue
+        
+        # Text between this checkbox and next (if exists)
+        if i < len(parts) - 1:
+            # Look ahead to find where next checkbox would be
+            # Search for checkbox marker patterns in the text
+            next_checkbox_pos = len(text)
+            
+            # Check for explicit checkbox characters
+            for marker in ['□', '☐', '☑', '■', '❒', '◻', '✓', '✔']:
+                pos = text.find(marker)
+                if pos > 0:
+                    next_checkbox_pos = min(next_checkbox_pos, pos)
+            
+            # Check for bracket patterns like [ ] or [x]
+            bracket_match = re.search(r'\[[\sx]\]', text)
+            if bracket_match and bracket_match.start() > 0:
+                next_checkbox_pos = min(next_checkbox_pos, bracket_match.start())
+            
+            # Also check for "!" which is sometimes used as checkbox
+            excl_pos = text.find('!')
+            if excl_pos > 5:  # Only if not at the start (might be part of text)
+                next_checkbox_pos = min(next_checkbox_pos, excl_pos)
+            
+            text = text[:next_checkbox_pos].strip()
+        
+        # Clean the extracted text
+        if text:
+            # Remove duplicate words (common OCR error)
+            # Example: "Blood Blood Transfusion" → "Blood Transfusion"
+            words = text.split()
+            clean_words = []
+            for word in words:
+                if not clean_words or word.lower() != clean_words[-1].lower():
+                    clean_words.append(word)
+            text = ' '.join(clean_words)
+            
+            # Handle slash-separated options (but not URLs or file paths)
+            # Example: "Arthritis/Gout" should become two options
+            # But "AIDS/HIV Positive" or "Heart Attack/Failure" should stay as one
+            if '/' in text and len(text.split('/')) == 2 and not text.startswith('http'):
+                # Only split if BOTH parts are exactly single words (no spaces)
+                sub_parts = text.split('/')
+                if all(len(p.strip().split()) == 1 for p in sub_parts):
+                    # Also check that both parts are capitalized (medical condition names)
+                    if all(p.strip() and p.strip()[0].isupper() for p in sub_parts):
+                        # Split into multiple options
+                        sub_opts = [s.strip() for s in sub_parts if s.strip()]
+                        options.extend(sub_opts)
+                        continue
+            
+            # Take first 3-5 words as option name (medical conditions are typically short)
+            # But keep full text if it's already short
+            words = text.split()
+            if len(words) <= 5:
+                option_text = text
+            else:
+                # For longer text, take first 5 words
+                option_text = ' '.join(words[:5])
+            
+            # Apply clean_option_text for final cleanup
+            option_text = clean_option_text(option_text)
+            
+            if option_text and len(option_text) >= 2:
+                options.append(option_text)
+    
+    return options
 

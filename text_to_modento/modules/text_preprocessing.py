@@ -110,9 +110,9 @@ def read_text_file(p: Path) -> str:
         return p.read_text(encoding="latin-1", errors="replace")
 
 
-def is_heading(line: str) -> bool:
+def is_heading(line: str, context: dict = None) -> bool:
     """
-    Determine if a line is a section heading.
+    Improvement 10: Enhanced heading detection with context awareness.
     
     Section headings are typically:
     - All uppercase or title case or starts with capital letter
@@ -122,14 +122,66 @@ def is_heading(line: str) -> bool:
     - Do NOT contain checkboxes
     - Do NOT match known field label patterns
     - Do NOT contain question marks
+    
+    Args:
+        line: Line to check
+        context: Optional dict with:
+            - 'has_checkbox': Whether line contains checkbox
+            - 'next_line': Next line for underline detection
+            - 'original_line': Original line for spacing analysis
+            - 'line_position': Position in document
     """
+    if context is None:
+        context = {}
+    
     t = collapse_spaced_caps(line.strip())
     if not t:
         return False
     
     # Archivev10 Fix 1: Don't treat lines with checkboxes as headings
-    if re.search(CHECKBOX_ANY, t):
+    # Improvement 10: Use context if available
+    has_checkbox = context.get('has_checkbox', False) or re.search(CHECKBOX_ANY, t)
+    if has_checkbox:
         return False
+    
+    # Improvement 10: Strong header indicators (common section names)
+    strong_headers = [
+        'patient information',
+        'medical history',
+        'dental history',
+        'insurance information',
+        'consent',
+        'signature',
+        'emergency contact',
+        'responsible party',
+        'health history',
+        'treatment information',
+        'financial information',
+        'dental benefit plan',
+        'responsible party information',
+    ]
+    
+    line_lower = t.lower().rstrip(':')
+    for header in strong_headers:
+        if header == line_lower or line_lower.startswith(header):
+            return True
+    
+    # Improvement 10: All caps and short text (strong header indicator)
+    if t.isupper() and 3 <= len(t.split()) <= 5:
+        return True
+    
+    # Improvement 10: Underlined headers (next line is underscores/dashes)
+    if context.get('next_line'):
+        next_line = context['next_line'].strip()
+        if re.match(r'^[_\-=]{5,}$', next_line):
+            return True
+    
+    # Improvement 10: Centered text heuristic (lots of leading spaces)
+    if context.get('original_line'):
+        original = context['original_line']
+        leading_spaces = len(original) - len(original.lstrip())
+        if leading_spaces > 10 and len(t.split()) <= 4:
+            return True
     
     # Archivev12 Fix: Don't treat known field labels as headings
     # Archivev13 Fix: Use search instead of match, and allow # suffix
@@ -550,3 +602,171 @@ def coalesce_soft_wraps(lines: List[str]) -> List[str]:
         out.append(merged)
         i += 1
     return out
+
+
+def is_numbered_list_item(line: str) -> bool:
+    """
+    NEW Improvement 1: Detect if line is a numbered list item that should be part of Terms/consent.
+    
+    Consent forms contain numbered risk/benefit lists like "(i)", "(ii)", "(iii)", etc.
+    These should not be parsed as individual input fields but rather be part of parent consent text.
+    
+    Patterns detected:
+    - (i), (ii), (iii), ..., (xxx) - Roman numerals in parentheses
+    - (1), (2), (3) - Arabic numerals in parentheses
+    - i), ii), iii) - Roman numerals with closing parenthesis only
+    - Usually followed by lowercase text (continuation of list)
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line appears to be a numbered list item from consent text
+    """
+    if not line:
+        return False
+    
+    # Match patterns at start of line
+    list_patterns = [
+        r'^\s*\([ivxlcdm]+\)\s+[a-z]',  # (i) lowercase continuation
+        r'^\s*\(\d+\)\s+[a-z]',          # (1) lowercase continuation
+        r'^\s*[ivxlcdm]+\)\s+[a-z]',    # i) lowercase continuation
+        # Also match even without lowercase after (for edge cases)
+        r'^\s*\([ivxlcdm]{1,4}\)\s*[a-z]', # (i), (ii), (iii), (iv) etc
+        r'^\s*\(\d{1,2}\)\s*[a-z]',        # (1), (2), ..., (99)
+    ]
+    
+    line_lower = line.lower().strip()
+    for pattern in list_patterns:
+        if re.match(pattern, line_lower):
+            return True
+    
+    return False
+
+
+def is_form_metadata(line: str) -> bool:
+    """
+    NEW Improvement 6: Detect if line is form metadata that should be filtered out.
+    
+    Form identifiers, revision codes, and copyright text should not become fields.
+    
+    Patterns detected:
+    - Revision codes: "REV A", "F16015_REV_E", "v1.0", "Version 2.1"
+    - Copyright: "All rights reserved", "© 2024", "Copyright"
+    - Contact info: Phone numbers, websites at line boundaries
+    - Form codes: Alphanumeric codes like "F16015"
+    - Company boilerplate: Company names with "Inc", "LLC", etc.
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line appears to be form metadata
+    """
+    if not line or len(line) < 3:
+        return False
+    
+    # Patterns that indicate metadata
+    metadata_patterns = [
+        r'\brev\s*[a-z0-9]\b',                    # REV A, REV E, REV 1
+        r'[a-z]\d{4,6}_rev_[a-z0-9]',            # F16015_REV_E
+        r'\bv\d+\.\d+\b',                        # v1.0, v2.1
+        r'\bversion\s+\d+',                      # Version 1, Version 2.1
+        r'all\s+rights\s+reserved',              # Copyright text
+        r'©|copyright\s+\d{4}',                  # Copyright symbols/year
+        r'^\s*\(\d{3}\)\s*\d{3}-\d{4}\s*$',     # Standalone phone numbers
+        r'www\.\w+\.com',                        # Websites
+        r'^\s*[a-z]\d{4,6}\s*$',                # Form codes alone on line
+        r'\b(inc|llc|ltd|corp|corporation)\b.*\(\d{3}\)',  # Company with phone
+        r'align\s+technology.*inc',              # Specific company names
+        r'^\s*[a-z0-9]{6,}_[a-z]+_[a-z]\s*$',   # Codes like "F16015_REV_E"
+    ]
+    
+    line_lower = line.lower().strip()
+    
+    for pattern in metadata_patterns:
+        if re.search(pattern, line_lower):
+            return True
+    
+    # Additional heuristic: very short alphanumeric codes (likely form IDs)
+    # But not if it contains common words
+    if len(line_lower) <= 12 and re.match(r'^[a-z0-9_\-]+$', line_lower):
+        # Check if it's not a common abbreviation or word
+        common_words = ['yes', 'no', 'other', 'name', 'date', 'phone', 'email', 'city', 'state', 'zip']
+        if line_lower not in common_words:
+            # Could be a form code
+            return True
+    
+    return False
+
+
+def is_practice_location_text(line: str, context: list = None) -> bool:
+    """
+    NEW Improvement 7: Detect if line is practice/office location information.
+    
+    Office addresses and location names embedded in forms should not become fields.
+    
+    Indicators:
+    - Contains "Dental" + address components
+    - Multiple consecutive lines with addresses  
+    - Pattern: "Name + Street + City, State ZIP"
+    - Common dental practice keywords
+    
+    Args:
+        line: Line to check
+        context: Previous lines for multi-address detection
+        
+    Returns:
+        True if line appears to be practice location information
+    """
+    if not line or len(line) < 10:
+        return False
+    
+    if context is None:
+        context = []
+    
+    # Common practice name keywords
+    dental_practice_keywords = [
+        'dental care',
+        'dental center',
+        'dental solutions',
+        'dental office',
+        'dental group',
+        'dental associates',
+        'dentistry',
+        'orthodontics',
+        'oral surgery',
+    ]
+    
+    # Address patterns
+    address_patterns = [
+        r'\d+\s+[NSEW]\.?\s+\w+\s+(ave|avenue|st|street|rd|road|blvd|boulevard|dr|drive|ln|lane|way|ct|court)',  # Street address
+        r',\s*[A-Z]{2}\s+\d{5}',                       # City, ST ZIP
+        r'\d{5}(-\d{4})?$',                            # ZIP code at end
+    ]
+    
+    line_lower = line.lower()
+    
+    # Check if line has dental keyword + address
+    has_dental_keyword = any(kw in line_lower for kw in dental_practice_keywords)
+    has_address = any(re.search(p, line, re.I) for p in address_patterns)
+    
+    if has_dental_keyword and has_address:
+        return True
+    
+    # Check if surrounded by similar address lines (multi-location forms)
+    # This helps catch address-only lines in between practice names
+    if context and len(context) >= 1:
+        context_has_addresses = sum(
+            any(re.search(p, ctx, re.I) for p in address_patterns)
+            for ctx in context[-2:] if ctx
+        )
+        # If previous lines had addresses and this line has an address, likely continuation
+        if context_has_addresses >= 1 and has_address:
+            return True
+    
+    # Check if line is mostly an address (street number + street name pattern)
+    if re.search(r'^\s*\d+\s+[NSEW]\.?\s+\w+', line):
+        return True
+    
+    return False
