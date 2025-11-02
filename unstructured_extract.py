@@ -145,6 +145,41 @@ def process_folder(input_dir,
                 with open(out_path, 'w', encoding='utf-8') as f:
                     f.write(f"Extraction error: {str(e)}")
 
+def validate_dependencies():
+    """
+    Parity Improvement #15: Validate that required system dependencies are installed.
+    
+    Checks for:
+    - poppler-utils (for PDF processing with hi_res strategy)
+    - tesseract-ocr (for OCR capabilities)
+    
+    Returns warnings but doesn't fail - allows graceful degradation to 'fast' strategy.
+    """
+    import subprocess
+    import shutil
+    
+    warnings = []
+    
+    # Check for poppler-utils (pdfinfo command)
+    if not shutil.which('pdfinfo'):
+        warnings.append("⚠️  poppler-utils not found. Hi-res PDF extraction may fail.")
+        warnings.append("   Install: apt-get install poppler-utils (or brew install poppler on Mac)")
+    
+    # Check for tesseract
+    if not shutil.which('tesseract'):
+        warnings.append("⚠️  tesseract-ocr not found. OCR capabilities limited.")
+        warnings.append("   Install: apt-get install tesseract-ocr (or brew install tesseract on Mac)")
+    
+    if warnings:
+        print("=" * 70)
+        for warning in warnings:
+            print(warning)
+        print("=" * 70)
+        print()
+    
+    return len(warnings) == 0
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='High‑accuracy Document Text Extractor (Unstructured)')
     parser.add_argument('--in', dest='input', default='documents', help='Input folder path (default: documents)')
@@ -168,7 +203,13 @@ if __name__ == "__main__":
     parser.add_argument('--hi-res-model-name', default=None,
                         choices=[None, 'yolox', 'detectron2_onnx'],
                         help='Optional hi_res layout model override (yolox or detectron2_onnx)')
+    parser.add_argument('--skip-dependency-check', action='store_true',
+                        help='Skip dependency validation check')
     args = parser.parse_args()
+
+    # Parity Improvement #15: Validate dependencies
+    if not args.skip_dependency_check:
+        validate_dependencies()
 
     print(f"🚀 Starting extraction from {args.input} to {args.output}")
     print(f"🔧 Strategy: {args.strategy}, Retry: {args.retry}, Languages: {args.languages}, Tables: {args.infer_table_structure}, PageBreaks: {args.include_page_breaks}, hi_res_model: {args.hi_res_model_name}")

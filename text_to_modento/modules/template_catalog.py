@@ -285,7 +285,26 @@ class TemplateCatalog:
             tpl = self.by_key[best_k]
             ov = self._options_overlap(parsed_q, tpl)
             sc = best_score + 0.10 * ov + self._context_adjust(parsed_section, tpl.get("section",""))
-            if sc >= 0.85:
+            
+            # Parity Improvement #5: Lower threshold for medical/common fields
+            # Check if this is a medical or patient info field (more lenient matching)
+            section_lower = (tpl.get("section", "") or "").lower()
+            is_medical_patient = any(keyword in section_lower for keyword in 
+                                    ['medical', 'health', 'patient', 'insurance', 'emergency'])
+            
+            # Keyword-based matching boost
+            keyword_match_boost = 0.0
+            tpl_title_lower = (tpl.get("title", "") or "").lower()
+            for keyword in ['physician', 'hospitalized', 'medication', 'allergy', 'surgery']:
+                if keyword in norm_title and keyword in tpl_title_lower:
+                    keyword_match_boost += 0.05
+            
+            sc += keyword_match_boost
+            
+            # Lower threshold for medical/patient fields: 0.82 instead of 0.85
+            threshold = 0.82 if is_medical_patient else 0.85
+            
+            if sc >= threshold:
                 return FindResult(tpl, "", "fuzzy", sc, best_cov, best_k)
             if sc >= 0.75:
                 return FindResult(None, "", "near", sc, best_cov, best_k)

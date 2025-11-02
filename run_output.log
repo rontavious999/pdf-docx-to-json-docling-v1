@@ -1,0 +1,1218 @@
+The `max_size` parameter is deprecated and will be removed in v4.26. Please specify in `size['longest_edge'] instead`.
+🚀 Starting extraction from documents to output
+🔧 Strategy: hi_res, Retry: False, Languages: eng, Tables: True, PageBreaks: False, hi_res_model: None
+✅ Processed: documents/ZOOMConsentFINAL122024.docx
+✅ Processed: documents/SureSmileConsent122024.docx
+✅ Processed: documents/PediatricExtractionFINAL32025.docx
+✅ Processed: documents/DentureandPartialConsentFINAL122024.docx
+✅ Processed: documents/Endodontic Consent_6.20.2022.pdf
+✅ Processed: documents/Tongue Tie Release informed consent.docx
+✅ Processed: documents/Invisalign Patient Consent.pdf
+✅ Processed: documents/CFGingivectomy.pdf
+✅ Processed: documents/ExtractionConsentFINAL122024.docx
+✅ Processed: documents/tooth20removal20consent20form.pdf
+✅ Processed: documents/Gingivectomy Consent_6.23.2022.pdf
+✅ Processed: documents/OHFD Patient Warranty Document (1).docx
+✅ Processed: documents/zCONSENT-XRAY REFUSAL.docx
+✅ Processed: documents/Chicago-Dental-Solutions_Form.pdf
+✅ Processed: documents/DentureProcessingConsentFINAL122024.docx
+✅ Processed: documents/Informed Consent for Biopsy.docx
+✅ Processed: documents/Informed Consent - Labial Frenectomy.docx
+✅ Processed: documents/Consent Final Process Full or Partial Denture.docx
+✅ Processed: documents/Pre Sedation Form.docx
+✅ Processed: documents/Implant Consent_6.27.2022.pdf
+✅ Processed: documents/Informed Consent Endodonti Procedure.docx
+✅ Processed: documents/Endo Consent .docx
+✅ Processed: documents/Informed Consent Composite Restoratio.docx
+✅ Processed: documents/Scan_20251014 (3).pdf
+✅ Processed: documents/EndoConsentFINAL122024.docx
+✅ Processed: documents/+Bone+Grafting+Consent+FINAL+32025.docx
+✅ Processed: documents/Extraction Consent_6.22.2022.docx.pdf
+✅ Processed: documents/npf.pdf
+✅ Processed: documents/IV Sedation Pre-op.docx
+✅ Processed: documents/Informed Consent Crown & Bridge Prosthetic.docx
+✅ Processed: documents/+Dental+Records+Release+Form+FINAL+032025.docx
+✅ Processed: documents/Informed Consent - Lip Tie and Tongue Tie Release.docx
+✅ Processed: documents/Informed Consent Implant Supported Prosthetics.docx
+✅ Processed: documents/consent_crown_bridge_prosthetics.pdf
+✅ Processed: documents/Informed Consent Information.pdf
+✅ Processed: documents/npf1.pdf
+✅ Processed: documents/TN OS Consent Form.docx
+✅ Processed: documents/Informed Consent Complete Dentures & Partial Dentures.docx
+✅ Extraction complete!
+  [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
+  [debug] skipping descriptive header: 'Nerve injury, which may occur from the surgical procedure an'
+  [debug] skipping descriptive header: 'As a result of the injection or use of anesthesia, at times '
+  [warn] No dictionary match for field: 'Terms' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
+  [warn] No dictionary match for field: 'But I wish to proceed with the Recommended Treatment described above.' (key: but_i_wish_to_proceed_with_the_recommended_treatment_described)
+  [warn] No dictionary match for field: 'If I have elected a banked bone or bone substitute graft, there is a rare chance of disease spread from the processed bone.' (key: if_i_have_elected_a_banked_bone_or_bone_substitute_graft_there)
+[✓] +Bone+Grafting+Consent+FINAL+32025.txt -> +Bone+Grafting+Consent+FINAL+32025.modento.json (6 items)
+    ↳ reused 3/6 from dictionary (50%)
+  [debug] template matches:
+    ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Date of Birth
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 1, 'General': 3, 'Consent': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 29 -> 34 lines
+[✓] +Dental+Records+Release+Form+FINAL+032025.txt -> +Dental+Records+Release+Form+FINAL+032025.modento.json (8 items)
+    ↳ reused 8/8 from dictionary (100%)
+  [debug] template matches:
+    ✓ 'Full name' -> emergency_name (title_exact, score=0.95, cov=1.00)
+    ✓ 'Date of birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Address' -> address (key_exact, score=1.00, cov=1.00)
+    ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
+    ✓ 'State' -> state (key_exact, score=1.00, cov=1.00)
+    ✓ 'Zip' -> zipcode (title_exact, score=0.95, cov=1.00)
+    ✓ 'Date of release' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 67 -> 68 lines
+  [debug] skipping form metadata: 'Gingivectomy'
+  [debug] skipping descriptive header: 'I understand that alternatives to periodontal surgery includ'
+  [debug] fill-in-blank detected: Name of Patient : ___________________________________... -> name_of_patient
+  [warn] No dictionary match for field: '= ie |' (key: ie)
+  [warn] No dictionary match for field: '= ie |' (key: ie_2)
+  [warn] No dictionary match for field: 'This consent form should be ready in conjunction with the Oral Surgery and Local Anaesthetic Consent forms.' (key: this_consent_form_should_be_ready_in_conjunction_with_the_oral)
+  [warn] No dictionary match for field: 'Terms' (key: periodontal_surgery_may_be_seen_as_a_secondary_line_of)
+  [warn] No dictionary match for field: 'Terms' (key: periodontal_surgery_primarily_carried_out_to_eliminate_reduce)
+  [warn] No dictionary match for field: 'healthy gum tissue.' (key: healthy_gum_tissue)
+  [warn] No dictionary match for field: 'It is carried out to provide a more favourable long term outcome.' (key: it_is_carried_out_to_provide_a_more_favourable_long_term_outcome)
+  [warn] No dictionary match for field: 'A Gingivectomy is a procedure where excess gum tissue is removed. The benefit of selective gum removal is for aesthetic improvement or to gain access to a lesion on a tooth for restorative repair.' (key: a_gingivectomy_is_a_procedure_where_excess_gum_tissue_is)
+  [warn] No dictionary match for field: 'What are the risks?' (key: what_are_the_risks)
+  [warn] No dictionary match for field: 'Terms' (key: q_2_the_gum_tissue_may_grow_back_in_the_case_of_gaining_access)
+  [warn] No dictionary match for field: 'Terms' (key: q_3_unevenness_of_final_result_in_aesthetic_areas_our_goal_is)
+  [warn] No dictionary match for field: 'within -5 days.' (key: within_5_days)
+  [warn] No dictionary match for field: 'Terms' (key: i_have_read_this_consent_form)
+  [warn] No dictionary match for field: 'Terms' (key: i_realize_that_signing_does_not_mean_that_i_am_under_an)
+  [warn] No dictionary match for field: '(CF Gingivectomy)' (key: cf_gingivectomy)
+[✓] CFGingivectomy.txt -> CFGingivectomy.modento.json (18 items)
+    ↳ reused 3/18 from dictionary (16%)
+  [debug] template matches:
+    ✓ 'Name of Patient' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Date of Birth-' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Name of Patient
+    • rehome -> Patient Information :: Date of Birth-
+    • section_inference -> Dental History :: A Gingivectomy is a procedure where excess gum tissue is removed. The benefit of selective gum removal is for aesthetic improvement or to gain access to a lesion on a tooth for restorative repair. (score=2)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • Section ordering: Reordered 18 fields
+    •   Section distribution: {'Patient Information': 2, 'Dental History': 2, 'Signature': 1, 'General': 6, 'Consent': 7}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 111 -> 113 lines
+  [debug] inline checkbox with text: [ ] No Dental Insurance... -> dental_insurance
+  [debug] gate: yn_with_followup -> '______________________ Have you ever had a serious head/ neck injury?' + explanation field
+  [debug] detect_medical_conditions_grid: Found question pattern at line 45
+  [debug] detect_medical_conditions_grid: Found 14 checkbox lines
+  [debug] Skipping duplicate condition: 'Hypoglycemia'
+  [debug] Skipping duplicate condition: 'Chest Pains'
+  [debug] Skipping duplicate condition: 'Cold Sores/Fever Blisters'
+  [debug] Skipping duplicate condition: 'Congenital Heart Disorder'
+  [debug] Skipping duplicate condition: 'Convulsions'
+  [debug] Skipping duplicate condition: 'Cortisone Medicine'
+  [debug] Skipping duplicate condition: 'Diabetes'
+  [debug] Skipping duplicate condition: 'Drug Addiction'
+  [debug] Skipping duplicate condition: 'Easily Winded'
+  [debug] Skipping duplicate condition: 'Emphysema'
+  [debug] Skipping duplicate condition: 'Epilepsy'
+  [debug] Skipping duplicate condition: 'Seizers'
+  [debug] Skipping duplicate condition: 'Excessive Bleeding'
+  [debug] Skipping duplicate condition: 'Excessive Thirst'
+  [debug] Skipping duplicate condition: 'Fainting/Dizzy Spells'
+  [debug] Skipping duplicate condition: 'Frequent Cough'
+  [debug] Skipping duplicate condition: 'Frequent Diarrhea'
+  [debug] Skipping duplicate condition: 'Frequent Headaches'
+  [debug] Skipping duplicate condition: 'Genital Herpes'
+  [debug] Skipping duplicate condition: 'Glaucoma'
+  [debug] Skipping duplicate condition: 'Hay Fever'
+  [debug] Skipping duplicate condition: 'Heart Attack/Failure'
+  [debug] Skipping duplicate condition: 'Heart Murmur'
+  [debug] Skipping duplicate condition: 'Heart Pacemaker'
+  [debug] Skipping duplicate condition: 'Heart Trouble/Disease'
+  [debug] Skipping duplicate condition: 'Hemophilia'
+  [debug] Skipping duplicate condition: 'Hepatitis A'
+  [debug] Skipping duplicate condition: 'Herpes'
+  [debug] Skipping duplicate condition: 'High Blood Pressure'
+  [debug] Skipping duplicate condition: 'High Cholesterol'
+  [debug] Skipping duplicate condition: 'Hives'
+  [debug] Skipping duplicate condition: 'Rash'
+  [debug] Skipping duplicate condition: 'Hypoglycemia'
+  [debug] Skipping duplicate condition: 'Hypoglycemia'
+  [debug] Skipping duplicate condition: 'Irregular Heartbeat'
+  [debug] Skipping duplicate condition: 'Kidney Problems'
+  [debug] Skipping duplicate condition: 'Leukemia'
+  [debug] Skipping duplicate condition: 'Liver Disease'
+  [debug] Skipping duplicate condition: 'Low Blood Pressure'
+  [debug] Skipping duplicate condition: 'Osteoporosis'
+  [debug] Skipping duplicate condition: 'Stroke'
+  [debug] Skipping duplicate condition: 'Pain in Jaw Joints'
+  [debug] Skipping duplicate condition: 'Parathyroid Disease'
+  [debug] Skipping duplicate condition: 'Tonsillitis'
+  [debug] Skipping duplicate condition: 'Psychiatric Care'
+  [debug] Skipping duplicate condition: 'Radiation Treatments'
+  [debug] Skipping duplicate condition: 'Recent Weight Loss'
+  [debug] Skipping duplicate condition: 'Ulcers'
+  [debug] Skipping duplicate condition: 'Renal Dialyses'
+  [debug] Skipping duplicate condition: 'Rheumatic Fever'
+  [debug] Skipping duplicate condition: 'Rheumatism'
+  [debug] Skipping duplicate condition: 'AIDS/HIV Positive'
+  [debug] Skipping duplicate condition: 'Scarlet Fever'
+  [debug] Skipping duplicate condition: 'Shingles'
+  [debug] Skipping duplicate condition: 'Sickle Cell Disease'
+  [debug] Skipping duplicate condition: 'Sinus Trouble'
+  [debug] Skipping duplicate condition: 'Spina Bifida'
+  [debug] Skipping duplicate condition: 'Stomach/Intestinal Disease'
+  [debug] Skipping duplicate condition: 'Stroke'
+  [debug] Skipping duplicate condition: 'Swelling of Limbs'
+  [debug] Skipping duplicate condition: 'Thyroid Disease'
+  [debug] Skipping duplicate condition: 'Tonsillitis'
+  [debug] Skipping duplicate condition: 'Tuberculosis'
+  [debug] Skipping duplicate condition: 'Tumors'
+  [debug] Skipping duplicate condition: 'Growths'
+  [debug] Skipping duplicate condition: 'Ulcers'
+  [debug] Skipping duplicate condition: 'Venereal Disease'
+  [debug] Skipping duplicate condition: 'Yellow Jaundice'
+  [debug] Skipping duplicate condition: 'Alzheimer’s Disease'
+  [debug] Skipping duplicate condition: 'Anaphylaxis'
+  [debug] Skipping duplicate condition: 'Anemia'
+  [debug] Skipping duplicate condition: 'Angina'
+  [debug] Skipping duplicate condition: 'Arthritis'
+  [debug] Skipping duplicate condition: 'Gout'
+  [debug] detect_medical_conditions_grid: SUCCESS - extracted 80 options
+  [debug]   Title: Do you have, or have you had, any of the following
+  [debug]   Sample options: ['AIDS/HIV Positive', 'Alzheimer’s Disease', 'Anaphylaxis', 'Anemia', 'Angina']
+  [debug] medical_grid -> 'Do you have, or have you had, any of the following' with 80 options
+  [debug] fill-in-blank detected: If yes, please explain:_____________________________________... -> if_yes_please_explain
+  [debug] fill-in-blank detected: Comments:___________________________________________________... -> comments
+  [warn] No dictionary match for field: 'Other' (key: other)
+  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: medical_conditions)
+  [warn] No dictionary match for field: 'Are you under a physician’s care now?' (key: are_you_under_a_physicians_care_now)
+  [warn] No dictionary match for field: '______________________ Have you ever had a serious head/ neck injury?' (key: have_you_ever_had_a_serious_head_neck_injury)
+  [warn] No dictionary match for field: 'Have you ever been hospitalized/ had major surgery?' (key: have_you_ever_been_hospitalized_had_major_surgery)
+  [warn] No dictionary match for field: 'Phen-Fen or Redux? [ ] Yes [ ] No ___________________________________' (key: phenfen_or_redux_yes_no)
+  [warn] No dictionary match for field: 'Do you have, or have you had, any of the following' (key: do_you_have_or_have_you_had_any_of_the_following)
+  [warn] No dictionary match for field: 'Have you had any serious illness not listed above?' (key: have_you_had_any_serious_illness_not_listed_above)
+[✓] Chicago-Dental-Solutions_Form.txt -> Chicago-Dental-Solutions_Form.modento.json (15 items)
+    ↳ reused 7/15 from dictionary (46%)
+  [debug] template matches:
+    ✓ 'First Name' -> first_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Last Name' -> last_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Consent to Email alerts' -> email (alias_contains, score=0.93, cov=1.00)
+    ✓ 'No, Dental Insurance' -> insurance_has (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Primary Insurance (Policy Holder)' -> insurance_holder (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Name of Insurance Company: State: Policy Holder Name: Birth Date#: / / Member ID/ SS#: Group#: Name of Employer: Relationship to Insurance Holder: Self Parent Child Spouse Other: Responsible Party (someone other than self is the Insurance Policy Holder) Name of Insurance Company: State: Policy Holder Name: Birth Date: / / Member ID/ SS#: Group#: Name of Employer: Relationship to Insurance Holder: Self Parent Child Spouse Other' -> date_of_birth (key_base_exact, score=0.98, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_view_my_dentures_in_the)
+  [warn] No dictionary match for field: 'By signing this Consent for final processing. I give Dr. my consent for final processing and acknowledge my approval of the appearance.' (key: by_signing_this_consent_for_final)
+[✓] Consent Final Process Full or Partial Denture.txt -> Consent Final Process Full or Partial Denture.modento.json (5 items)
+    ↳ reused 3/5 from dictionary (60%)
+  [debug] template matches:
+    ✓ 'Patient's Name (Please Print) : Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'or authorized representative: Date.' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Signature': 2, 'General': 2, 'Consent': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_view_my_dentures_in_the)
+  [warn] No dictionary match for field: 'By signing this Consent for final processing, I give Dr. my consent for final processing and acknowledge my approval of the appearance.' (key: by_signing_this_consent_for_final)
+[✓] DentureProcessingConsentFINAL122024.txt -> DentureProcessingConsentFINAL122024.modento.json (5 items)
+    ↳ reused 3/5 from dictionary (60%)
+  [debug] template matches:
+    ✓ 'Patient's Name (Please Print) : Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'or authorized representative: Date' -> todays_date (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Signature': 2, 'General': 2, 'Consent': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping numbered list item: '(1) gum tissues which cannot bear the pressures placed upon '
+  [debug] skipping numbered list item: '(4) excessive gagging reflexes; (5) excessive saliva or exce'
+  [debug] skipping descriptive header: 'Failure of removable partial dentures: Many variables may co'
+  [debug] skipping numbered list item: '(3) tissues supporting the abutment teeth may fail.'
+  [debug] skipping descriptive header: 'It is the patient's responsibility to seek attention when pr'
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_that_the_process_of)
+  [warn] No dictionary match for field: 'Terms' (key: breakage_due_to_the_types_of_materials_which_are_necessary_in)
+  [warn] No dictionary match for field: 'Terms' (key: loose_dentures_complete_dentures_normally_become_less_secure)
+  [warn] No dictionary match for field: 'Terms' (key: failure_of_supporting_teeth_andor_soft_tissues_natural_teeth)
+  [warn] No dictionary match for field: 'administering and prescribing all anesthetics and/or medications.' (key: administering_and_prescribing_all_anesthetics_andor_medications)
+[✓] DentureandPartialConsentFINAL122024.txt -> DentureandPartialConsentFINAL122024.modento.json (6 items)
+    ↳ reused 1/6 from dictionary (16%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • section_inference -> Medical History :: administering and prescribing all anesthetics and/or medications. (strong keyword match)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Medical History': 1, 'Signature': 1, 'Consent': 4}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'Medications'
+  [debug] skipping descriptive header: 'These treatments include no treatment, waiting for more defi'
+  [debug] skipping form metadata: 'Consent'
+  [warn] No dictionary match for field: 'Terms' (key: prescribed_medications_and_drugs_may_cause_drowsiness_and_lack)
+[✓] Endo Consent .txt -> Endo Consent .modento.json (3 items)
+    ↳ reused 2/3 from dictionary (66%)
+  [debug] template matches:
+    ✓ 'Tooth Number: Diagnosis' -> tooth_number (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Section ordering: Reordered 3 fields
+    •   Section distribution: {'Signature': 1, 'Consent': 2}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'Alternative methods of treatment have been explained to me, '
+  [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
+  [debug] skipping descriptive header: 'Nerve injury resulting in temporary or permanent numbness, i'
+  [debug] skipping descriptive header: 'As a result of the injection or use of anesthesia, there may'
+  [warn] No dictionary match for field: 'Terms' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
+  [warn] No dictionary match for field: 'Terms' (key: the_recommended_treatment_works_by_removing_bacteria_from_the)
+  [warn] No dictionary match for field: 'Instrument breakage in the root canal.' (key: instrument_breakage_in_the_root_canal)
+  [warn] No dictionary match for field: 'Inability to negotiate canals due to prior treatment or calcification.' (key: inability_to_negotiate_canals_due_to_prior_treatment_or)
+  [warn] No dictionary match for field: 'Perforation to the outside of the tooth.' (key: perforation_to_the_outside_of_the_tooth)
+  [warn] No dictionary match for field: 'Irreparable damage to the existing crown or restoration.' (key: irreparable_damage_to_the_existing_crown_or_restoration)
+  [warn] No dictionary match for field: 'Cracking or fracturing of the root or crown of the tooth.' (key: cracking_or_fracturing_of_the_root_or_crown_of_the_tooth)
+  [warn] No dictionary match for field: 'Pain, infection and swelling.' (key: pain_infection_and_swelling)
+  [warn] No dictionary match for field: 'Difficulty opening and closing.' (key: difficulty_opening_and_closing)
+[✓] EndoConsentFINAL122024.txt -> EndoConsentFINAL122024.modento.json (12 items)
+    ↳ reused 3/12 from dictionary (25%)
+  [debug] template matches:
+    ✓ 'Temporomandibular Dysfunction resulting in jaw pain.' -> jaw_pain_clicking (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Relationship (If patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • section_inference -> Dental History :: Cracking or fracturing of the root or crown of the tooth. (score=2)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'General': 8, 'Consent': 2}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 40 -> 41 lines
+  [debug] skipping descriptive header: '● Pain, infection, swelling, loss of teeth, and spread of in'
+  [debug] skipping descriptive header: '● Temporary or permanent numbness or tingling of the lip, ch'
+  [debug] is_category_header=True for line 20: '● Sensitivity/pain' (section=Consent)
+  [debug] skipping category header: '● Sensitivity/pain'
+  [debug] detect_medical_conditions_grid: Found question pattern at line 22
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [warn] No dictionary match for field: 'Terms' (key: root_canal_therapy_endodontic_treatment_is_a_procedure_that)
+  [warn] No dictionary match for field: '● Recurrent decay' (key: recurrent_decay)
+  [warn] No dictionary match for field: 'Terms' (key: it_is_imperative_that_you_follow_the_doctors_recommendations)
+  [warn] No dictionary match for field: 'Terms' (key: treatment_to_be_performed_i_understand_the_risks_and_benefits)
+[✓] Endodontic Consent_6.20.2022.txt -> Endodontic Consent_6.20.2022.modento.json (7 items)
+    ↳ reused 3/7 from dictionary (42%)
+  [debug] template matches:
+    ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • Section ordering: Reordered 7 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 4}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 43 -> 44 lines
+  [debug] skipping descriptive header: '● Temporary or permanent numbness or tingling of the lips, c'
+  [debug] detect_medical_conditions_grid: Found question pattern at line 25
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [warn] No dictionary match for field: 'Terms' (key: the_benefits_of_extraction_removal_of_teeth_have_been_explained)
+  [warn] No dictionary match for field: 'Terms' (key: the_doctor_will_make_every_effort_to_avoid_these_complications)
+  [warn] No dictionary match for field: 'Terms' (key: to_be_performed_i_understand_the_risks_and_benefits_of_the)
+[✓] Extraction Consent_6.22.2022.docx.txt -> Extraction Consent_6.22.2022.docx.modento.json (6 items)
+    ↳ reused 3/6 from dictionary (50%)
+  [debug] template matches:
+    ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the surgery' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the surgery
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 3}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
+  [debug] skipping descriptive header: 'Post-operative bleeding, oozing, infection and/or bone infec'
+  [debug] skipping descriptive header: 'Damage to, or fracture of, adjacent teeth or tooth restorati'
+  [debug] skipping descriptive header: 'Possible involvement of the nerves of the lower jaw during t'
+  [debug] skipping descriptive header: 'As a result of the injection or use of anesthesia, there may'
+  [warn] No dictionary match for field: 'Terms' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
+  [warn] No dictionary match for field: 'but I wish to proceed with the Recommended Treatment described above.' (key: but_i_wish_to_proceed_with_the_recommended_treatment_described)
+  [warn] No dictionary match for field: 'Drug reactions and side effects.' (key: drug_reactions_and_side_effects)
+  [warn] No dictionary match for field: 'Bruising and/or swelling, restricted mouth opening for several days or weeks.' (key: bruising_andor_swelling_restricted_mouth_opening_for_several)
+  [warn] No dictionary match for field: 'Loss or removal of bone during tooth extraction.' (key: loss_or_removal_of_bone_during_tooth_extraction)
+  [warn] No dictionary match for field: 'Jaw fracture.' (key: jaw_fracture)
+[✓] ExtractionConsentFINAL122024.txt -> ExtractionConsentFINAL122024.modento.json (9 items)
+    ↳ reused 3/9 from dictionary (33%)
+  [debug] template matches:
+    ✓ '(Patient/Parent/Guardian)	Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Date of Birth
+    • section_inference -> Medical History :: Drug reactions and side effects. (score=2)
+    • Section ordering: Reordered 9 fields
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 2, 'General': 4, 'Consent': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 27 -> 28 lines
+  [debug] detect_medical_conditions_grid: Found question pattern at line 7
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [warn] No dictionary match for field: 'Terms' (key: gingivectomy_is_a_type_of_surgery_that_involves_the_removal_of)
+  [warn] No dictionary match for field: 'Terms' (key: a_gingivectomy_is_performed_to_reduce_pocket_size_to_allow_for)
+  [warn] No dictionary match for field: 'Smoking and poor oral hygiene will significantly interfere with healing and cause disease recurrence. Medical history must be updated & accurate before surgery is performed.' (key: smoking_and_poor_oral_hygiene_will_significantly_interfere_with)
+  [warn] No dictionary match for field: 'Terms' (key: if_no_treatment_is_rendered_or_if_active_treatment_is)
+  [warn] No dictionary match for field: 'Terms' (key: surgery_to_be_performed_i_understand_the_risks_and_benefits_of)
+[✓] Gingivectomy Consent_6.23.2022.txt -> Gingivectomy Consent_6.23.2022.modento.json (8 items)
+    ↳ reused 3/8 from dictionary (37%)
+  [debug] template matches:
+    ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • Section ordering: Reordered 8 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 5}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'Please remove contact lenses and any jewelry, nail polish, r'
+  [warn] No dictionary match for field: 'Do NOT consume alcohol – this can affect the level of consciousness, and the dentist cannot safely sedate you.' (key: do_not_consume_alcohol_this_can_affect_the_level_of)
+  [warn] No dictionary match for field: 'Do NOT take any additional medications – (including non-prescription or supplements) unless you discuss these with the dentist.' (key: do_not_take_any_additional_medications_including)
+  [warn] No dictionary match for field: 'Do NOT eat or drink anything during the 8 hours prior to your procedure – the only exception is drinking water up to 3 hours before your appointment (along with any prescription medication).' (key: do_not_eat_or_drink_anything_during_the_8_hours_prior_to_your)
+  [warn] No dictionary match for field: 'Take any medications as instructed by the dentist prior to your appointment.' (key: take_any_medications_as_instructed_by_the_dentist_prior_to_your)
+  [warn] No dictionary match for field: 'Your escort must accompany you to your appointment and be immediately available until your release.' (key: your_escort_must_accompany_you_to_your_appointment_and_be)
+  [warn] No dictionary match for field: 'Wear short sleeves and loose fitting, comfortable clothing.' (key: wear_short_sleeves_and_loose_fitting_comfortable_clothing)
+  [warn] No dictionary match for field: 'Please arrive 10-15 minutes prior to your appointment time.' (key: please_arrive_1015_minutes_prior_to_your_appointment_time)
+  [warn] No dictionary match for field: 'We reserve the right to cancel/stop the appointment at any time for the safety and comfort of the patient.' (key: we_reserve_the_right_to_cancelstop_the_appointment_at_any_time)
+[✓] IV Sedation Pre-op.txt -> IV Sedation Pre-op.modento.json (10 items)
+    ↳ reused 2/10 from dictionary (20%)
+  [debug] template matches:
+    ✓ 'Please leave any valuables with your escort or at home.' -> home_phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Please leave any valuables with your escort or at home.
+    • section_inference -> Medical History :: Do NOT eat or drink anything during the 8 hours prior to your procedure – the only exception is drinking water up to 3 hours before your appointment (along with any prescription medication). (strong keyword match)
+    • Section ordering: Reordered 10 fields
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 1, 'General': 7}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 48 -> 49 lines
+  [debug] detect_medical_conditions_grid: Found question pattern at line 33
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [warn] No dictionary match for field: 'Terms' (key: smoking_and_alcohol_consumption_will_affect_healing_and_may)
+  [warn] No dictionary match for field: 'Terms' (key: be_performed_i_understand_the_risks_and_benefits_of_the)
+[✓] Implant Consent_6.27.2022.txt -> Implant Consent_6.27.2022.modento.json (5 items)
+    ↳ reused 3/5 from dictionary (60%)
+  [debug] template matches:
+    ✓ 'PATIENT CONSENT: I, (print name) have been fully informed of the surgery to' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date Signed' -> todays_date (alias_contains, score=0.93, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: PATIENT CONSENT: I, (print name) have been fully informed of the surgery to
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • Section ordering: Reordered 5 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'Consent': 2}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'Infection'
+  [debug] skipping form metadata: 'Pain'
+  [debug] gate: parent_routing -> 'Parent/Guardian’s Name' -> parent_name
+  [debug] fill-in-blank detected: Date: __________________... -> date
+  [warn] No dictionary match for field: 'Symptoms and examination of their mouth. We want you to be aware of the commonly known risks and side effects of this procedure.' (key: symptoms_and_examination_of_their_mouth_we_want_you_to_be_aware)
+  [warn] No dictionary match for field: 'Alternative Treatments: The alternative includes using a laser and possible use of local anesthesia and/or sedation. Another alternative is to do no treatment. A third option is to have the procedure performed by a periodontist.' (key: alternative_treatments_the_alternative_includes_using_a_laser)
+  [warn] No dictionary match for field: 'associated with complications. These are some risks/complications, which can include' (key: associated_with_complications_these_are_some_riskscomplications)
+  [warn] No dictionary match for field: 'Bleeding. This may occur either at the time of the procedure or in the first 2 weeks after.' (key: bleeding_this_may_occur_either_at_the_time_of_the_procedure_or)
+  [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
+  [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
+[✓] Informed Consent - Labial Frenectomy.txt -> Informed Consent - Labial Frenectomy.modento.json (10 items)
+    ↳ reused 4/10 from dictionary (40%)
+  [debug] template matches:
+    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
+    • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
+    • Section ordering: Reordered 10 fields
+    •   Section distribution: {'Patient Information': 2, 'Medical History': 1, 'Dental History': 1, 'Signature': 1, 'General': 5}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'upper lip. The tight upper lip can trap food and drink, resu'
+  [debug] skipping form metadata: 'Infection'
+  [debug] skipping form metadata: 'Pain'
+  [debug] gate: parent_routing -> 'Parent/Guardian’s Name' -> parent_name
+  [debug] fill-in-blank detected: Date: __________________... -> date
+  [warn] No dictionary match for field: 'symptoms, examination of their mouth and your choice. We want you to be aware of the commonly known risks and side effects of this procedure.' (key: symptoms_examination_of_their_mouth_and_your_choice_we_want_you)
+  [warn] No dictionary match for field: 'between the teeth) can also occur. In some instances, this can result in speech problems. We' (key: between_the_teeth_can_also_occur_in_some_instances_this_can)
+  [debug] template: skipping conditional field 'recommend_if_there_are_issues_with_speech_to_followup_with_a' to preserve relationship
+  [warn] No dictionary match for field: 'as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in' (key: as_a_cupping_or_heart_shaped_tongue_when_the_tongue_is_elevated)
+  [warn] No dictionary match for field: 'speech problems and/or issues later with transferring food around the mouth for chewing.' (key: speech_problems_andor_issues_later_with_transferring_food)
+  [warn] No dictionary match for field: 'Alternative Treatments: The alternative includes using a laser and possible use of local anesthesia and/or sedation. Another alternative is to do no treatment.' (key: alternative_treatments_the_alternative_includes_using_a_laser)
+  [warn] No dictionary match for field: 'No treatment could result in some or all of the conditions listed under “Lip Tie” and “Tongue Tie” above.' (key: no_treatment_could_result_in_some_or_all_of_the_conditions)
+  [warn] No dictionary match for field: 'associated with complications. These are some risks/complications, which can include' (key: associated_with_complications_these_are_some_riskscomplications)
+  [warn] No dictionary match for field: 'Bleeding. This may occur either at the time of the procedure or in the first 2 weeks after.' (key: bleeding_this_may_occur_either_at_the_time_of_the_procedure_or)
+  [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
+  [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
+[✓] Informed Consent - Lip Tie and Tongue Tie Release.txt -> Informed Consent - Lip Tie and Tongue Tie Release.modento.json (15 items)
+    ↳ reused 4/15 from dictionary (26%)
+  [debug] template matches:
+    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Medical History :: as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in (strong keyword match)
+    • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
+    • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
+    • Section ordering: Reordered 15 fields
+    •   Section distribution: {'Patient Information': 2, 'Medical History': 2, 'Dental History': 1, 'Signature': 1, 'General': 9}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping numbered list item: '(1) gum tissues which cannot bear the pressures placed upon '
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_that_the_process_of)
+  [warn] No dictionary match for field: 'Terms' (key: failure_of_removable_partial_dentures_many_variables_may)
+  [warn] No dictionary match for field: 'Terms' (key: breakage_due_to_the_types_of_materials_which_are_necessary_in)
+  [warn] No dictionary match for field: 'Terms' (key: loose_dentures_complete_dentures_normally_become_less_secure)
+  [warn] No dictionary match for field: 'Terms' (key: failure_of_supporting_teeth_andor_soft_tissues_natural_teeth)
+  [warn] No dictionary match for field: 'Terms' (key: smilekingervdental_com_www_kingervdental_com_9_it_is_the)
+  [warn] No dictionary match for field: 'Terms' (key: informed_consent_i_have_been_given_the_opportunity_to_ask_any)
+  [warn] No dictionary match for field: 'satisfactory. By signing this form, I freely give my consent to allow and authorize Dr.	to' (key: satisfactory_by_signing_this_form_i_freely_give_my_consent_to)
+[✓] Informed Consent Complete Dentures & Partial Dentures.txt -> Informed Consent Complete Dentures & Partial Dentures.modento.json (9 items)
+    ↳ reused 1/9 from dictionary (11%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • Section ordering: Reordered 9 fields
+    •   Section distribution: {'Signature': 1, 'General': 1, 'Consent': 7}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'I understand drat there are risks and complications associat'
+  [debug] skipping descriptive header: '. Necessity for a more extensive restoration, such as a crow'
+  [debug] skipping descriptive header: '. As a result of the injection or use of anesthesia, there m'
+  [debug] skipping descriptive header: 'numbness of the tongue, lips, teeth, jaws and/or facial tiss'
+  [warn] No dictionary match for field: 'procedure(s) on me or my dependent as follows.' (key: procedures_on_me_or_my_dependent_as_follows)
+  [warn] No dictionary match for field: '(‘"Recommended Treatment”) and any such additional procedure(s) as may be considered necessary for' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
+  [warn] No dictionary match for field: 'Terms' (key: my_well_being_based_on_findings_made_during_the_course_of_the)
+  [warn] No dictionary match for field: '. Drug reactions and side effects.' (key: drug_reactions_and_side_effects)
+  [warn] No dictionary match for field: '. Damage to adjacent teeth or tooth restorations.' (key: damage_to_adjacent_teeth_or_tooth_restorations)
+  [warn] No dictionary match for field: '. Necessity for root canal therapy due to injury of pulp tissue.' (key: necessity_for_root_canal_therapy_due_to_injury_of_pulp_tissue)
+  [warn] No dictionary match for field: '. Breakage or dislodgement in buildup failure of restorative material.' (key: breakage_or_dislodgement_in_buildup_failure_of_restorative)
+  [warn] No dictionary match for field: '. tooth structure found during preparation.' (key: tooth_structure_found_during_preparation)
+  [warn] No dictionary match for field: '. Inability to exactly match tooth coloration.' (key: inability_to_exactly_match_tooth_coloration)
+  [warn] No dictionary match for field: '. Changes in the shade of the composite restoration over time as a result of the oral environment.' (key: changes_in_the_shade_of_the_composite_restoration_over_time_as)
+[✓] Informed Consent Composite Restoratio.txt -> Informed Consent Composite Restoratio.modento.json (13 items)
+    ↳ reused 3/13 from dictionary (23%)
+  [debug] template matches:
+    ✓ '. Sensitivity" of teeth following the placement of the restorations, ty pically temporary.' -> sensitivity (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Relationship (If patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • section_inference -> Medical History :: . Drug reactions and side effects. (score=2)
+    • section_inference -> Dental History :: . Damage to adjacent teeth or tooth restorations. (score=2)
+    • Section ordering: Reordered 13 fields
+    •   Section distribution: {'Medical History': 1, 'Dental History': 1, 'Signature': 1, 'General': 7, 'Consent': 3}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
+  [debug] skipping descriptive header: '. Uncomfortable or strange feelings, which is typically temp'
+  [warn] No dictionary match for field: 'procedure(s) on me or my dependent as follows' (key: procedures_on_me_or_my_dependent_as_follows)
+  [warn] No dictionary match for field: 'Terms' (key: recommended_treatment_and_any_such_additional_procedures_as_may)
+  [warn] No dictionary match for field: '. Breakage of temporary or permanent restoration and/or tooth.' (key: breakage_of_temporary_or_permanent_restoration_andor_tooth)
+  [warn] No dictionary match for field: '. Unsatisfactory aesthetics or appearance. You will be given the opportunity to approve the final restoration prior to permanent cementation.' (key: unsatisfactory_aesthetics_or_appearance_you_will_be_given_the)
+  [warn] No dictionary match for field: '. Unsatisfactory longevity of crowns and bridges.' (key: unsatisfactory_longevity_of_crowns_and_bridges)
+  [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_injection_or_use_of_anesthesia_at_times)
+[✓] Informed Consent Crown & Bridge Prosthetic.txt -> Informed Consent Crown & Bridge Prosthetic.modento.json (10 items)
+    ↳ reused 4/10 from dictionary (40%)
+  [debug] template matches:
+    ✓ '. Sensitivity of teeth. If present, usually resolves within weeks or sometimes longer after placement.' -> sensitivity (alias_contains, score=0.93, cov=1.00)
+    ✓ '(Patient/Parent/Guardian) Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Date of Birth
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • Section ordering: Reordered 10 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 2, 'General': 4, 'Consent': 3}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'Alternative methods of treatment have been explained to me, '
+  [debug] skipping descriptive header: 'I understand that there are risks and complications associat'
+  [debug] skipping descriptive header: '. Nerve injury resulting in temporary or permanent numbness,'
+  [warn] No dictionary match for field: 'me or my dependent as follows' (key: me_or_my_dependent_as_follows)
+  [warn] No dictionary match for field: '(“Recommended Treatment”) and any' (key: recommended_treatment_and_any)
+  [warn] No dictionary match for field: 'Terms' (key: such_additional_procedures_as_may_be_considered_necessary_for)
+  [warn] No dictionary match for field: 'Terms' (key: the_recommended_treatment_works_by_removing_bacteria_from_the)
+  [warn] No dictionary match for field: '. Instrument breakage in the root canal.' (key: instrument_breakage_in_the_root_canal)
+  [warn] No dictionary match for field: '. Inability to negotiate canals due to prior treatment or calcification.' (key: inability_to_negotiate_canals_due_to_prior_treatment_or)
+  [warn] No dictionary match for field: '. Perforation to the outside of the tooth.' (key: perforation_to_the_outside_of_the_tooth)
+  [warn] No dictionary match for field: '. Irreparable damage to the existing crown or restoration.' (key: irreparable_damage_to_the_existing_crown_or_restoration)
+  [warn] No dictionary match for field: '. Cracking or fracturing of the root or crown of the tooth.' (key: cracking_or_fracturing_of_the_root_or_crown_of_the_tooth)
+  [warn] No dictionary match for field: '. Pain, infection and swelling.' (key: pain_infection_and_swelling)
+  [warn] No dictionary match for field: '. Difficulty opening and closing.' (key: difficulty_opening_and_closing)
+  [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_injection_or_use_of_anesthesia_there_may_be)
+[✓] Informed Consent Endodonti Procedure.txt -> Informed Consent Endodonti Procedure.modento.json (15 items)
+    ↳ reused 3/15 from dictionary (20%)
+  [debug] template matches:
+    ✓ '. Temporomandibular Dysfunction resulting in jaw pain.' -> jaw_pain_clicking (alias_contains, score=0.93, cov=1.00)
+    ✓ '(Patient/Parent/Guardian)	Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • section_inference -> Dental History :: . Cracking or fracturing of the root or crown of the tooth. (score=2)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • Section ordering: Reordered 15 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 2, 'General': 7, 'Consent': 5}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'I understand that there are risks and potential complication'
+  [debug] skipping descriptive header: 'Post-operative pain, bleeding, oozing, soft tissue infection'
+  [debug] skipping descriptive header: 'Bruising and/or swelling, restricted mouth opening for sever'
+  [debug] skipping descriptive header: 'Non-healing of one or more of the implants, necessitating it'
+  [debug] skipping descriptive header: 'As a result of the Lidocaine injection or use of other local'
+  [debug] skipping descriptive header: 'Pain and/or limited movement of the jaw joint, either of a t'
+  [warn] No dictionary match for field: 'Other alternative implant procedures.' (key: other_alternative_implant_procedures)
+  [warn] No dictionary match for field: 'Placement of a fixed dental bridge which will be supported by adjacent teeth and/or implants.' (key: placement_of_a_fixed_dental_bridge_which_will_be_supported_by)
+  [warn] No dictionary match for field: 'Bone and/or tissue grafting prior to implant placement.' (key: bone_andor_tissue_grafting_prior_to_implant_placement)
+  [warn] No dictionary match for field: 'Sinus lift and/or nerve repositioning procedures.' (key: sinus_lift_andor_nerve_repositioning_procedures)
+  [warn] No dictionary match for field: 'The option of no further treatment.' (key: the_option_of_no_further_treatment)
+  [warn] No dictionary match for field: 'However, I wish to proceed with the treatment described above.' (key: however_i_wish_to_proceed_with_the_treatment_described_above)
+  [warn] No dictionary match for field: 'Drug reactions and side effects.' (key: drug_reactions_and_side_effects)
+  [warn] No dictionary match for field: 'Delayed healing, necessitating post-operative care and treatment.' (key: delayed_healing_necessitating_postoperative_care_and_treatment)
+[✓] Informed Consent Implant Supported Prosthetics.txt -> Informed Consent Implant Supported Prosthetics.modento.json (11 items)
+    ↳ reused 3/11 from dictionary (27%)
+  [debug] template matches:
+    ✓ 'Patient Name (Printed)' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Relationship (if patient is a minor)' -> emergency_relationship (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Name (Printed)
+    • Section ordering: Reordered 11 fields
+    •   Section distribution: {'Patient Information': 1, 'Dental History': 8, 'Signature': 1, 'General': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'Injury'
+  [debug] skipping form metadata: 'Breakage'
+  [debug] skipping form metadata: 'CONSENT'
+  [warn] No dictionary match for field: 'Tooth No.(s): {{tooth_number}} Shade Selection: {{shade_selection}} Type of Inlay/Onlay: {{type_of_crown}}' (key: tooth_nos_tooth_number_shade_selection_shade_selection_type_of)
+  [warn] No dictionary match for field: 'Terms' (key: the_purpose_of_this_document_is_to_provide_written_information)
+  [warn] No dictionary match for field: 'I agree to assume the risks' (key: i_agree_to_assume_the_risks)
+  [warn] No dictionary match for field: 'Terms' (key: during_the_reduction_of_tooth_structure_or_adjustments_done_to)
+  [warn] No dictionary match for field: 'Terms' (key: in_order_to_reduce_tooth_structure_without_causing_undue_pain)
+  [warn] No dictionary match for field: 'Terms' (key: often_after_the_preparation_of_teeth_for_the_reception_of_an)
+  [warn] No dictionary match for field: 'Terms' (key: teeth_after_being_restored_with_an_inlayonlay_may_develop_a)
+  [warn] No dictionary match for field: 'Terms' (key: inlaysonlays_may_possibly_chip_or_break_many_factors_can)
+  [warn] No dictionary match for field: 'Terms' (key: this_may_occur_because_of_the_differences_between_natural_teeth)
+  [warn] No dictionary match for field: 'Terms' (key: in_some_cases_years_of_wear_on_the_teeth_will_create_a)
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_it_is_my_responsibility)
+[✓] Informed Consent Information.txt -> Informed Consent Information.modento.json (13 items)
+    ↳ reused 2/13 from dictionary (15%)
+  [debug] template matches:
+    ✓ 'SSN' -> ssn (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (8)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (9)' (numeric)
+    • Section ordering: Reordered 13 fields
+    •   Section distribution: {'Signature': 1, 'General': 2, 'Consent': 10}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: '. Post-operative pain, bleeding, oozing, soft tissue infecti'
+  [debug] skipping descriptive header: '. Bruising and/or swelling, restricted mouth opening for sev'
+  [debug] skipping descriptive header: '. Depending upon the results of the biopsy, further treatmen'
+  [warn] No dictionary match for field: 'follows' (key: follows)
+  [warn] No dictionary match for field: '(“Recommended Treatment”) and any such' (key: recommended_treatment_and_any_such)
+  [warn] No dictionary match for field: 'Terms' (key: additional_procedures_as_may_be_considered_necessary_for_my)
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_that_there_are_risks_and_potential_complications)
+  [warn] No dictionary match for field: '. Drug reactions and side effects.' (key: drug_reactions_and_side_effects)
+  [warn] No dictionary match for field: '. Delayed healing, necessitating post-operative care.' (key: delayed_healing_necessitating_postoperative_care)
+  [warn] No dictionary match for field: 'Terms' (key: if_you_are_taking_medications_to_make_your_bones_stronger_such)
+  [warn] No dictionary match for field: '. Regrowth of the tissue which was removed in the biopsy.' (key: regrowth_of_the_tissue_which_was_removed_in_the_biopsy)
+  [warn] No dictionary match for field: 'Terms' (key: as_a_result_of_the_lidocaine_injection_or_use_of_other_local)
+[✓] Informed Consent for Biopsy.txt -> Informed Consent for Biopsy.modento.json (12 items)
+    ↳ reused 3/12 from dictionary (25%)
+  [debug] template matches:
+    ✓ '(Patient/Parent/Guardian) Relationship (If patient is a minor)' -> emergency_relationship (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Date of Birth
+    • section_inference -> Medical History :: . Drug reactions and side effects. (score=2)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Patient Information': 1, 'Medical History': 1, 'Signature': 2, 'General': 2, 'Consent': 6}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'Notice to treating office: This form is to be signed by your'
+  [debug] skipping form metadata: 'Inc. (888) 822-5446'
+  [debug] skipping form metadata: 'Invisalign® aligners, developed by Align Technology, Inc. (“'
+  [debug] skipping form metadata: 'Procedure'
+  [debug] skipping numbered list item: '(i) Failure to wear the appliances for the required number o'
+  [debug] skipping numbered list item: '(ii) Dental tenderness may be experienced after switching to'
+  [debug] skipping numbered list item: '(iii) Gums, cheeks and lips may be scratched or irritated;'
+  [debug] skipping numbered list item: '(iv) Teeth may shift position after treatment. Consistent we'
+  [debug] skipping numbered list item: '(v) Tooth decay, periodontal disease, inflammation of the gu'
+  [debug] skipping numbered list item: '(vi) The aligners may temporarily affect speech and may resu'
+  [debug] skipping numbered list item: '(vii) Aligners may cause a temporary increase in salivation '
+  [debug] skipping form metadata: 'Benefits'
+  [debug] skipping numbered list item: '(viii) Attachments may be bonded to one or more teeth during'
+  [debug] skipping numbered list item: '(xix) General medical conditions and use of medications can '
+  [debug] skipping numbered list item: '(xx) Health of the bone and gums which support the teeth may'
+  [debug] skipping numbered list item: '(ix) Attachments may fall off and require replacement.'
+  [debug] skipping numbered list item: '(x) Teeth may require interproximal recontouring or slenderi'
+  [debug] skipping numbered list item: '(xxi) Oral surgery may be necessary to correct crowding or s'
+  [debug] skipping numbered list item: '(xi) The bite may change throughout the course of treatment '
+  [debug] skipping numbered list item: '(xii) In rare instances, slight superficial wear of the alig'
+  [debug] skipping numbered list item: '(xiii) At the end of orthodontic treatment, the bite may req'
+  [debug] skipping numbered list item: '(xiv) Atypically-shaped, erupting, and/or missing teeth may '
+  [debug] skipping numbered list item: '(xv) Treatment of severe open bite, severe overjet, mixed de'
+  [debug] skipping numbered list item: '(xxiv) Short clinical crowns can pose appliance retention is'
+  [debug] skipping numbered list item: '(xxv) The length of the roots of the teeth may be shortened '
+  [debug] skipping numbered list item: '(xxvi) Product breakage is more likely in patients with seve'
+  [debug] skipping numbered list item: '(xvi) Supplemental orthodontic treatment, including the use '
+  [debug] skipping numbered list item: '(xxvii) Orthodontic appliances or parts thereof may be accid'
+  [debug] skipping numbered list item: '(xxviii) In rare instances, problems may also occur in the j'
+  [debug] skipping numbered list item: '(xxix) Allergic reactions may occur; and'
+  [debug] skipping numbered list item: '(xvii) Teeth which have been overlapped for long periods of '
+  [debug] skipping numbered list item: '(xviii) Aligners are not effective in the movement of dental'
+  [debug] skipping numbered list item: '(xxx) Teeth that are not at least partially covered by the a'
+  [debug] skipping numbered list item: '(xxxi) In rare instances patients with hereditary angioedema'
+  [debug] detect_medical_conditions_grid: Found question pattern at line 123
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [debug] skipping descriptive header: 'I authorize my doctor to release my medical records, includi'
+  [debug] detect_medical_conditions_grid: Found question pattern at line 125
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [debug] skipping descriptive header: 'impressions of teeth, or intra-oral scans, prescriptions, di'
+  [debug] skipping form metadata: 'Witness'
+  [debug] skipping form metadata: 'Signature'
+  [debug] skipping form metadata: 'Address'
+  [debug] skipping form metadata: '© 2013 Align Technology, Inc. All rights reserved. | F16015 '
+  [warn] No dictionary match for field: 'Terms' (key: terms_invisalign_aligne)
+  [warn] No dictionary match for field: 'Terms' (key: terms_aligners_are_nearl)
+  [warn] No dictionary match for field: 'Terms' (key: your_doctor_has_recommended_the_invisalign_system_for_your)
+  [warn] No dictionary match for field: 'Terms' (key: terms_treatment_plans_ca)
+  [warn] No dictionary match for field: 'Terms' (key: terms_aligners_allow_for)
+  [warn] No dictionary match for field: 'Terms' (key: terms_aligners_do_not_ha)
+  [warn] No dictionary match for field: 'Terms' (key: terms_the_wearing_of_ali)
+  [warn] No dictionary match for field: 'Terms' (key: examination_including_radiographs_xrays_and_photographs_your)
+  [warn] No dictionary match for field: 'Terms' (key: terms_invisalign_patient)
+  [warn] No dictionary match for field: 'effect;' (key: effect)
+  [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_adequate_time_to_read_and_have_read_the)
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_that_use_of_my)
+  [warn] No dictionary match for field: 'If signatory is under 21, the parent or legal Guardian must also sign to signify agreement.' (key: if_signatory_is_under_21_the_parent_or_legal_guardian_must_also)
+[✓] Invisalign Patient Consent.txt -> Invisalign Patient Consent.modento.json (17 items)
+    ↳ reused 4/17 from dictionary (23%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
+    ✓ 'State' -> state (key_exact, score=1.00, cov=1.00)
+    ✓ 'Zipcode' -> zipcode (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: City
+    • rehome -> Patient Information :: State
+    • rehome -> Patient Information :: Zipcode
+    • rehome -> Patient Information :: If signatory is under 21, the parent or legal Guardian must also sign to signify agreement.
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (8)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (9)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (10)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (11)' (numeric)
+    • Section ordering: Reordered 17 fields
+    •   Section distribution: {'Patient Information': 4, 'Signature': 1, 'General': 1, 'Consent': 11}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'If the cavity is close to the nerve, the doctor will advise '
+  [debug] skipping descriptive header: 'This warranty is null and void if the patient does not maint'
+  [warn] No dictionary match for field: 'Terms' (key: when_a_tooth_has_a_cavity_the_dentist_removes_the_decay_and)
+  [warn] No dictionary match for field: 'Fillings on the incisal edge of anterior teeth (edge of front teeth) are not recommended due to the high fail rate and will not be covered by warranty.' (key: fillings_on_the_incisal_edge_of_anterior_teeth_edge_of_front)
+  [warn] No dictionary match for field: 'Terms' (key: we_will_repair_or_replace_sealants_for_a_period_of_one_1_year)
+  [warn] No dictionary match for field: 'Terms' (key: we_will_warranty_complete_dentures_or_partial_dentures_for_a)
+  [warn] No dictionary match for field: 'Terms' (key: as_popcorn_kernels_ice_bones_or_using_the_teeth_as_tools_as)
+[✓] OHFD Patient Warranty Document (1).txt -> OHFD Patient Warranty Document (1).modento.json (6 items)
+    ↳ reused 1/6 from dictionary (16%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'Consent': 4}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 24 -> 25 lines
+  [warn] No dictionary match for field: 'I hereby give permission to to perform the extraction of tooth/teeth numbers: to be done with local anesthesia.' (key: i_hereby_give_permission_to_to_perform_the_extraction_of)
+[✓] PediatricExtractionFINAL32025.txt -> PediatricExtractionFINAL32025.modento.json (4 items)
+    ↳ reused 3/4 from dictionary (75%)
+  [debug] template matches:
+    ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Name
+    • rehome -> Patient Information :: Date of Birth
+    • section_inference -> Dental History :: I hereby give permission to to perform the extraction of tooth/teeth numbers: to be done with local anesthesia. (score=2)
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_that_it_is_my)
+  [warn] No dictionary match for field: '1. Arrive 10 minutes prior to my appointment to complete the necessary paperwork.' (key: q_1_arrive_10_minutes_prior_to_my_appointment_to_complete_the)
+  [warn] No dictionary match for field: '2. Secure a responsible escort to drive you home from your appointment and monitor you for 6 hours following your appointment. * Not abiding by this will compromise the safety of the procedure and we cannot proceed with your appointment. *' (key: q_2_secure_a_responsible_escort_to_drive_you_home_from_your)
+  [warn] No dictionary match for field: '3. No food or liquids 8 hours prior to my appointment. No water 3 hours prior to my appointment. * Not abiding by this will compromise the safety of the procedure and we cannot proceed with your appointment. *' (key: q_3_no_food_or_liquids_8_hours_prior_to_my_appointment_no_water)
+[✓] Pre Sedation Form.txt -> Pre Sedation Form.modento.json (6 items)
+    ↳ reused 2/6 from dictionary (33%)
+  [debug] template matches:
+    ✓ '| DOB' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: | DOB
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Patient Information': 1, 'Signature': 1, 'General': 3, 'Consent': 1}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [warn] No dictionary match for field: 'Congratulations!' (key: congratulations)
+  [warn] No dictionary match for field: 'But the party isn't over yet. Time to talk about how to keep that beautiful smile for life!' (key: but_the_party_isnt_over_yet_time_to_talk_about_how_to_keep_that)
+  [warn] No dictionary match for field: 'Retainer “1: Wear for 22 of 24 hours per day (including sleeping) for the first 3 months. Same protocol as aligners. Keep teeth and retainers clean.' (key: retainer_1_wear_for_22_of_24_hours_per_day_including_sleeping)
+  [warn] No dictionary match for field: '¢ Retainer #2: At the start of month 3, begin using retainer #2. Night time wear only! Hooray!' (key: retainer_2_at_the_start_of_month_3_begin_using_retainer_2_night)
+  [warn] No dictionary match for field: '¢ Retainer #3: Back-up' (key: retainer_3_backup)
+  [warn] No dictionary match for field: '¢ Retainer #4: Back-up' (key: retainer_4_backup)
+  [warn] No dictionary match for field: 'All 4 retainers are identical. Clean with toothbrush and water every morning before putting into the case. If you do not wear retainers, your teeth will move. This is a required part of the treatment. You got this!' (key: all_4_retainers_are_identical_clean_with_toothbrush_and_water)
+[✓] Scan_20251014 (3).txt -> Scan_20251014 (3).modento.json (8 items)
+    ↳ reused 1/8 from dictionary (12%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • section_inference -> Dental History :: All 4 retainers are identical. Clean with toothbrush and water every morning before putting into the case. If you do not wear retainers, your teeth will move. This is a required part of the treatment. You got this! (score=2)
+    • Section ordering: Reordered 8 fields
+    •   Section distribution: {'Dental History': 1, 'Signature': 1, 'General': 6}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] detect_medical_conditions_grid: Found question pattern at line 18
+  [debug] detect_medical_conditions_grid: Only 0 checkbox lines, need 5+
+  [warn] No dictionary match for field: 'Terms' (key: congratulations_on_your_decision_to_pursue_orthodontic)
+  [warn] No dictionary match for field: 'Terms' (key: failing_to_follow_you_doctors_instructions_may_interfere_with)
+  [warn] No dictionary match for field: 'Terms' (key: inadequate_patient_oral_hygiene_during_treatment_may_result_in)
+  [warn] No dictionary match for field: 'Terms' (key: minor_discomfort_when_switching_aligners_during_treatment_is)
+  [warn] No dictionary match for field: 'Terms' (key: orthodontic_treatment_involves_moving_teeth_and_in_some_cases)
+  [warn] No dictionary match for field: 'Terms' (key: in_some_cases_additional_treatment_appliances_may_be_required)
+  [warn] No dictionary match for field: 'Notify your doctor if you have any medical conditions or are on any medications as they could affect treatment.' (key: notify_your_doctor_if_you_have_any_medical_conditions_or_are_on)
+  [warn] No dictionary match for field: 'Terms' (key: orthodontic_appliances_can_possibly_be_swallowed_or_aspirated)
+  [warn] No dictionary match for field: 'Terms' (key: in_signing_this_document_i_am_indicating_that_i_understand_the)
+  [warn] No dictionary match for field: '(or in case of a minor, parent or legal guardian)' (key: or_in_case_of_a_minor_parent_or_legal_guardian)
+[✓] SureSmileConsent122024.txt -> SureSmileConsent122024.modento.json (12 items)
+    ↳ reused 2/12 from dictionary (16%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Print patient name' -> first_name (alias_contains, score=0.93, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Terms
+    • rehome -> Patient Information :: Print patient name
+    • rehome -> Patient Information :: (or in case of a minor, parent or legal guardian)
+    • section_inference -> Medical History :: Notify your doctor if you have any medical conditions or are on any medications as they could affect treatment. (strong keyword match)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Patient Information': 3, 'Medical History': 1, 'Signature': 1, 'Consent': 7}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 42 -> 43 lines
+  [debug] fill-in-blank detected: Date: _____________... -> date
+  [debug] fill-in-blank detected: Patient Name: ________________________________... -> patient_name
+  [debug] skipping descriptive header: 'NERVE DAMAGE: Damage to the lover jaw nerves could occur aft'
+  [warn] No dictionary match for field: 'Planned Procedure: Diagnosis' (key: planned_procedure_diagnosis)
+  [warn] No dictionary match for field: 'Alternative Treatment' (key: alternative_treatment)
+  [warn] No dictionary match for field: 'The dentist and/or staff have explained to me the proposed treatment. I understand there is the option of no treatment. I understand there are certain potential risks with the procedure. These include the following' (key: the_dentist_andor_staff_have_explained_to_me_the_proposed)
+  [warn] No dictionary match for field: 'SWELLING and/or BRUISING and DISCOMFORT in the surgery area.' (key: swelling_andor_bruising_and_discomfort_in_the_surgery_area)
+  [warn] No dictionary match for field: 'Terms' (key: druganesthesia_reactions_local_anesthetic_will_be_used_for_your)
+  [warn] No dictionary match for field: 'NEARBY TOOTH DAMAGE: Possible damagae to other teeth close to the ones being removed (more often those with large fillings or crowns) or other tissues of the face or mouth might be harmed.' (key: nearby_tooth_damage_possible_damagae_to_other_teeth_close_to)
+  [warn] No dictionary match for field: 'Terms' (key: incomplete_removal_of_tooth_fragment_and_sharp_crestal_bone_to)
+  [warn] No dictionary match for field: 'I have read and understand the above information and have no additional questions. I give consent to surgery.' (key: i_have_read_and_understand_the)
+[✓] TN OS Consent Form.txt -> TN OS Consent Form.modento.json (13 items)
+    ↳ reused 5/13 from dictionary (38%)
+  [debug] template matches:
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'INFECTION: An infection could happen after surgery which may require antibiotics and/or surgical drainage.' -> antibiotics (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Name
+    • rehome -> Patient Information :: Date of Birth
+    • section_inference -> Medical History :: SWELLING and/or BRUISING and DISCOMFORT in the surgery area. (strong keyword match)
+    • section_inference -> Medical History :: INFECTION: An infection could happen after surgery which may require antibiotics and/or surgical drainage. (strong keyword match)
+    • section_inference -> Dental History :: NEARBY TOOTH DAMAGE: Possible damagae to other teeth close to the ones being removed (more often those with large fillings or crowns) or other tissues of the face or mouth might be harmed. (score=4)
+    • section_inference -> Medical History :: I have read and understand the above information and have no additional questions. I give consent to surgery. (strong keyword match)
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • Section ordering: Reordered 13 fields
+    •   Section distribution: {'Patient Information': 2, 'Medical History': 3, 'Dental History': 1, 'Signature': 1, 'General': 4, 'Consent': 2}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'speech problems, challenges with breathing through the nose,'
+  [debug] skipping form metadata: 'Infection'
+  [debug] skipping form metadata: 'Pain'
+  [debug] gate: parent_routing -> 'Parent/Guardian’s Name' -> parent_name
+  [debug] fill-in-blank detected: Date: __________________... -> date
+  [warn] No dictionary match for field: 'symptoms, examination of their mouth and your choice. We want you to be aware of the commonly known risks and side effects of this procedure.' (key: symptoms_examination_of_their_mouth_and_your_choice_we_want_you)
+  [warn] No dictionary match for field: 'as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in' (key: as_a_cupping_or_heart_shaped_tongue_when_the_tongue_is_elevated)
+  [warn] No dictionary match for field: 'Alternative Treatments: Alternatives include using a laser and possible use of sedation. Another alternative is to do no treatment.' (key: alternative_treatments_alternatives_include_using_a_laser_and)
+  [warn] No dictionary match for field: '(benefits) of laser vs. scalpel or scissors include lower probability of reattachment of the tissue, less' (key: benefits_of_laser_vs_scalpel_or_scissors_include_lower)
+  [warn] No dictionary match for field: 'bleeding, no sutures (stitches) or having to remove sutures.' (key: bleeding_no_sutures_stitches_or_having_to_remove_sutures)
+  [warn] No dictionary match for field: 'associated with complications. These are some risks/complications, which can include' (key: associated_with_complications_these_are_some_riskscomplications)
+  [warn] No dictionary match for field: 'Bleeding. This may occur either at the time of the procedure or in the first 2 weeks after.' (key: bleeding_this_may_occur_either_at_the_time_of_the_procedure_or)
+  [warn] No dictionary match for field: 'Damage to the sublingual gland, which sits below the tongue. This may require further surgery.' (key: damage_to_the_sublingual_gland_which_sits_below_the_tongue_this)
+  [warn] No dictionary match for field: 'Injury to the teeth, lip, gums, or tongue.' (key: injury_to_the_teeth_lip_gums_or_tongue)
+  [warn] No dictionary match for field: 'I understand the above statements and have had my questions answered.' (key: i_understand_the_above_statements_and_have_had_my_questions)
+[✓] Tongue Tie Release informed consent.txt -> Tongue Tie Release informed consent.modento.json (14 items)
+    ↳ reused 4/14 from dictionary (28%)
+  [debug] template matches:
+    ✓ 'Patient’s Name: Patient Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent/Guardian’s Name' -> parent_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient’s Name: Patient Date of Birth
+    • rehome -> Patient Information :: Parent/Guardian’s Name
+    • section_inference -> Medical History :: as a cupping or heart shaped tongue when the tongue is elevated. Long term a tongue tie can result in (strong keyword match)
+    • section_inference -> Medical History :: Damage to the sublingual gland, which sits below the tongue. This may require further surgery. (strong keyword match)
+    • section_inference -> Dental History :: Injury to the teeth, lip, gums, or tongue. (score=3)
+    • Section ordering: Reordered 14 fields
+    •   Section distribution: {'Patient Information': 2, 'Medical History': 2, 'Dental History': 1, 'Signature': 1, 'General': 8}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'INTRODUCTION'
+  [debug] skipping form metadata: 'COST'
+  [debug] skipping descriptive header: 'I understand that the results of the Zoom treatment are not '
+  [warn] No dictionary match for field: 'Terms' (key: this_information_has_been_given_to_me_so_that_i_can_make_an)
+  [warn] No dictionary match for field: 'Terms' (key: zoom_inoffice_tooth_whitening_is_a_procedure_designed_to)
+  [warn] No dictionary match for field: 'Terms' (key: and_my_teeth_will_be_exposed_to_the_light_from_the_zoom_lamp)
+  [warn] No dictionary match for field: 'Terms' (key: i_understand_i_may_decide_not)
+  [warn] No dictionary match for field: 'Terms' (key: tooth_sensitivitypain_during_the_first_24_hours_after_zoom)
+  [warn] No dictionary match for field: 'Terms' (key: gumlipcheek_inflammation_whitening_may_cause_inflammation_of)
+  [warn] No dictionary match for field: 'Terms' (key: drychapped_lips_the_zoom_treatment_involves_three_or_four)
+  [warn] No dictionary match for field: 'Terms' (key: cervical_abrasionerosion_these_are_conditions_which_affect_the)
+  [warn] No dictionary match for field: 'Terms' (key: root_resorption_this_is_a_condition_where_the_root_of_the_tooth)
+  [warn] No dictionary match for field: 'Terms' (key: relapse_after_the_zoom_treatment_it_is_natural_for_the_teeth)
+  [warn] No dictionary match for field: 'By signing this document in the space provided I indicate that I have read and understand the entire document and that I give my permission for Zoom treatment to be performed on me.' (key: by_signing_this_document_in_the)
+[✓] ZOOMConsentFINAL122024.txt -> ZOOMConsentFINAL122024.modento.json (12 items)
+    ↳ reused 1/12 from dictionary (8%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (8)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (9)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (10)' (numeric)
+    • Section ordering: Reordered 12 fields
+    •   Section distribution: {'Signature': 1, 'Consent': 11}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping form metadata: 'Forms'
+  [debug] skipping descriptive header: 'Patients will be given the opportunity to observe the appear'
+  [debug] fill-in-blank detected: Dr. ________________________________________________________... -> dr
+  [debug] fill-in-blank detected: Tooth No(s). _______________________________________________... -> tooth_nos
+  [debug] fill-in-blank detected: Date________________________... -> date
+  [warn] No dictionary match for field: '1. Reduction of tooth structure' (key: q_1_reduction_of_tooth_structure)
+  [warn] No dictionary match for field: 'Terms' (key: to_replace_decayed_or_otherwise_traumatized_teeth_it_is)
+  [warn] No dictionary match for field: '2. Numbness following use of anesthesia' (key: q_2_numbness_following_use_of_anesthesia)
+  [warn] No dictionary match for field: 'Terms' (key: in_preparation_of_teeth_for_crowns_or_bridges_anesthetics_are)
+  [warn] No dictionary match for field: 'Terms' (key: often_after_the_preparation_of_teeth_for_the_reception_of)
+  [warn] No dictionary match for field: '4. Crown or bridge abutment teeth may require root canal treatment' (key: q_4_crown_or_bridge_abutment_teeth_may_require_root_canal)
+  [warn] No dictionary match for field: 'Terms' (key: after_being_crowned_teeth_may_develop_a_condition_known_as)
+  [warn] No dictionary match for field: 'Terms' (key: crowns_and_bridges_may_chip_or_break_many_factors_can)
+  [warn] No dictionary match for field: '6. Uncomfortable or strange feeling' (key: q_6_uncomfortable_or_strange_feeling)
+  [warn] No dictionary match for field: 'Terms' (key: crowns_and_bridges_are_artificial_and_therefore_feel_different)
+  [warn] No dictionary match for field: '7. Aesthetics or appearance' (key: q_7_aesthetics_or_appearance)
+  [warn] No dictionary match for field: '8. Longevity of crowns and bridges' (key: q_8_longevity_of_crowns_and_bridges)
+  [warn] No dictionary match for field: 'Terms' (key: it_is_a_patients_responsibility_to_seek_attention_from_the)
+  [warn] No dictionary match for field: 'Terms' (key: i_have_been_given_the_opportunity_to_ask_any_questions)
+  [warn] No dictionary match for field: 'Dr' (key: dr)
+[✓] consent_crown_bridge_prosthetics.txt -> consent_crown_bridge_prosthetics.modento.json (21 items)
+    ↳ reused 6/21 from dictionary (28%)
+  [debug] template matches:
+    ✓ '3. Sensitivity of teeth' -> sensitivity (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Tooth No(s)' -> tooth_number (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (3)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (4)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (5)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (6)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (7)' (numeric)
+    • unique_title -> 'Terms' → 'Terms (8)' (numeric)
+    • Section ordering: Reordered 21 fields
+    •   Section distribution: {'Signature': 2, 'General': 4, 'Consent': 15}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 40 -> 58 lines
+  [debug] fill-in-blank detected: Insurance Company____________________________________... -> insurance_company
+  [debug] fill-in-blank detected: Phone______________________... -> phone
+  [debug] fill-in-blank detected: Address: Street_____________________________... -> address_street
+  [debug] fill-in-blank detected: City_________________________... -> city
+  [debug] skipping form metadata: 'State____'
+  [debug] skipping form metadata: 'Zip________'
+  [debug] fill-in-blank detected: Dental Plan Name_____________________________... -> dental_plan_name
+  [debug] fill-in-blank detected: Plan ______________... -> plan
+  [debug] fill-in-blank detected: ID Number ______________________________... -> id_number
+  [debug] fill-in-blank detected: Insurance Company____________________________________... -> insurance_company
+  [debug] fill-in-blank detected: Phone______________________... -> phone
+  [debug] fill-in-blank detected: Address: Street_____________________________... -> address_street
+  [debug] fill-in-blank detected: City_________________________... -> city
+  [debug] skipping form metadata: 'State____'
+  [debug] skipping form metadata: 'Zip________'
+  [debug] fill-in-blank detected: Dental Plan Name_____________________________... -> dental_plan_name
+  [debug] fill-in-blank detected: Plan ______________... -> plan
+  [debug] fill-in-blank detected: ID Number ______________________________... -> id_number
+  [debug] fill-in-blank detected: Date_________________... -> date
+  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: dental_conditions)
+  [warn] No dictionary match for field: 'I have read the above and agree to the financial and scheduling terms.(initial)' (key: i_have_read_the_above_and_agree_to_the_financial_and_scheduling)
+[✓] npf.txt -> npf.modento.json (7 items)
+    ↳ reused 5/7 from dictionary (71%)
+  [debug] template matches:
+    ✓ 'Today’s Date' -> todays_date (key_exact, score=1.00, cov=1.00)
+    ✓ 'Full-time Student' -> full_time_student (alias_contains, score=0.98, cov=1.00)
+    ✓ 'Name of School' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Date' -> todays_date (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 208 -> 227 lines
+  [debug] fill-in-blank detected: Last Name __________________________... -> last_name
+  [debug] fill-in-blank detected: First Name _________________________... -> first_name
+  [debug] fill-in-blank detected: MI _____... -> mi
+  [debug] gate: inline_text_options -> 'Sex' with 4 options
+  [debug] fill-in-blank detected: Soc. Sec. # ___________________________________________... -> soc_sec
+  [debug] fill-in-blank detected: City ____________________________... -> city
+  [debug] fill-in-blank detected: Email ____________________________________________... -> email
+  [debug] fill-in-blank detected: Occupation _________________________________________________... -> occupation
+  [debug] fill-in-blank detected: DOB ____________________... -> dob
+  [debug] gate: parent_routing -> 'Parent Name' -> parent_name
+  [debug] gate: parent_routing -> 'Parent SSN' -> parent_ssn
+  [debug] fill-in-blank detected: Parent Employer ____________________________________________... -> parent_employer
+  [debug] fill-in-blank detected: Parent Phone (______)_____________________________... -> parent_phone
+  [debug] fill-in-blank detected: Account ______________________________________________... -> account
+  [debug] fill-in-blank detected: Relationship _____________________________... -> relationship
+  [debug] fill-in-blank detected: Phone # (______)____________________... -> phone
+  [debug] fill-in-blank detected: Name _______________________________________________________... -> name
+  [debug] fill-in-blank detected: Relationship _________________________________________... -> relationship
+  [debug] fill-in-blank detected: Reason for today’s visit? __________________________________... -> reason_for_todays_visit
+  [debug] fill-in-blank detected: Who can we thank for your visit? ___________________________... -> who_can_we_thank_for_your_visit
+  [debug] fill-in-blank detected: Insured’s Name _____________________________________________... -> insureds_name
+  [debug] fill-in-blank detected: Insurance Co _____________________________________________... -> insurance_co
+  [debug] fill-in-blank detected: Insurance Co Address ______________________________________... -> insurance_co_address
+  [debug] fill-in-blank detected: Group # ____________________... -> group
+  [debug] fill-in-blank detected: Local # _____________________... -> local
+  [debug] fill-in-blank detected: Why did you leave your previous dentist? ___________________... -> why_did_you_leave_your_previous_dentist
+  [debug] fill-in-blank detected: Name of your previous dentist ______________________________... -> name_of_your_previous_dentist
+  [debug] skipping form metadata: 'Appearance'
+  [debug] skipping form metadata: 'Function'
+  [debug] skipping form metadata: 'Habits'
+  [debug] skipping form metadata: 'Social'
+  [debug] skipping form metadata: 'Tobacco'
+  [debug] skipping form metadata: 'Cancer'
+  [debug] skipping form metadata: 'Respiratory'
+  [debug] fill-in-blank detected: [ ] _____________________________... -> q
+  [debug] gate: inline_text_options -> 'Are you under the care of a physician' with 2 options
+  [debug] gate: inline_text_options -> 'Are you taking or have you recently taken any prescription or over the counter medicine(s)' with 2 options
+  [debug] fill-in-blank detected: If so, please list medications: ____________________________... -> if_so_please_list_medications
+  [debug] fill-in-blank detected: ____________________________________________________________... -> have_you_ever_had_surgery
+  [warn] No dictionary match for field: 'Age' (key: age)
+  [warn] No dictionary match for field: 'Account' (key: account)
+  [warn] No dictionary match for field: 'Your last cleaning / Your last oral cancer screening / Your last complete X-rays / What is the most important thing to you about your future smile and dental health?' (key: your_last_cleaning_your_last_oral_cancer_screening_your_last)
+  [warn] No dictionary match for field: 'What is the most important thing to you about your dental visit today?' (key: what_is_the_most_important_thing_to_you_about_your_dental_visit)
+  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: dental_conditions)
+  [warn] No dictionary match for field: 'Do you have or have you had any of the following medical conditions?' (key: medical_conditions_consolidated)
+  [warn] No dictionary match for field: 'Type' (key: type)
+  [warn] No dictionary match for field: 'Oxycodone' (key: oxycodone)
+  [warn] No dictionary match for field: 'Tylenol 3)' (key: tylenol_3)
+  [warn] No dictionary match for field: 'Do you have or have you had any of the following?' (key: medical_conditions)
+  [warn] No dictionary match for field: 'If yes please explain __________________________' (key: if_yes_please_explain)
+  [warn] No dictionary match for field: 'Are you taking or have you recently taken any prescription or over the counter medicine(s)' (key: are_you_taking_or_have_you_recently_taken_any_prescription_or)
+  [warn] No dictionary match for field: 'Have you ever in the past, or are you now currently taking any medications for Osteopenia/Osteoporosis or Bone Disease?' (key: have_you_ever_in_the_past_or_are_you_now_currently_taking_any)
+  [warn] No dictionary match for field: 'If so, please list medications' (key: if_so_please_list_medications)
+  [warn] No dictionary match for field: 'Have you ever had surgery?' (key: have_you_ever_had_surgery)
+[✓] npf1.txt -> npf1.modento.json (65 items)
+    ↳ reused 57/65 from dictionary (87%)
+  [debug] template matches:
+    ✓ 'Today’s Date' -> todays_date (key_exact, score=1.00, cov=1.00)
+    ✓ 'Last Name' -> last_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'First Name' -> first_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'MI' -> mi (key_exact, score=1.00, cov=1.00)
+    ✓ 'Date of Birth' -> date_of_birth (key_exact, score=1.00, cov=1.00)
+    ✓ 'Sex' -> sex (key_exact, score=1.00, cov=1.00)
+    ✓ 'Soc. Sec. #' -> ssn (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Marital Status' -> marital_status (key_exact, score=1.00, cov=1.00)
+    ✓ 'Address' -> address (key_exact, score=1.00, cov=1.00)
+    ✓ 'City' -> city (key_exact, score=1.00, cov=1.00)
+    ✓ 'State ____' -> state (key_exact, score=1.00, cov=1.00)
+    ✓ 'Zip Code' -> zipcode (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Email' -> email (key_exact, score=1.00, cov=1.00)
+    ✓ 'Home Phone' -> home_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Phone' -> phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Mobile Phone' -> mobile_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Driver's License #' -> drivers_license (key_exact, score=1.00, cov=1.00)
+    ✓ 'Employer' -> employer (key_exact, score=1.00, cov=1.00)
+    ✓ 'Work Phone' -> work_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Occupation' -> occupation (key_exact, score=1.00, cov=1.00)
+    ✓ 'DOB Father’s' -> date_of_birth (alias_contains, score=0.93, cov=1.00)
+    ✓ 'DOB' -> date_of_birth (title_exact, score=0.95, cov=1.00)
+    ✓ 'Parent Name' -> parent_name (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent SSN' -> parent_ssn (key_exact, score=1.00, cov=1.00)
+    ✓ 'SSN' -> ssn (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent Employer' -> parent_employer (key_exact, score=1.00, cov=1.00)
+    ✓ 'Parent Phone (' -> parent_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
+    ✓ 'Phone # (' -> phone (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Name' -> first_name (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Relationship' -> emergency_relationship (title_exact, score=0.95, cov=1.00)
+    ✓ 'Reason for today’s visit?' -> reason_for_visit (title_exact, score=0.95, cov=1.00)
+    ✓ 'Who can we thank for your visit?' -> referred_by (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Insured’s Name' -> insurance_holder (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Insured's Name' -> insurance_holder (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Employer' -> employer (title_exact, score=0.95, cov=1.00)
+    ✓ 'Date of Birth' -> date_of_birth (title_exact, score=0.95, cov=1.00)
+    ✓ 'Insurance Co' -> insurance_company (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Insurance Co Address' -> insurance_address (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Insurance Phone' -> insurance_phone (key_exact, score=1.00, cov=1.00)
+    ✓ 'Phone' -> phone (alias_exact, score=0.96, cov=1.00)
+    ✓ 'Group #' -> insurance_group_number (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Local #' -> insurance_local_number (alias_exact, score=0.86, cov=1.00)
+    ✓ 'Color Bite Chipped Teeth Spaces Crowding Smile Makeover Missing Teeth Whiter Teeth' -> spaces (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Why did you leave your previous dentist?' -> previous_dentist (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Name of your previous dentist' -> first_name (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Discolored teeth Worn teeth Misshaped teeth Crooked teeth Spaces Overbite Flat teeth' -> worn_teeth (alias_contains, score=0.98, cov=1.00)
+    ✓ 'Sensitivity (hot, cold, sweet) Pressure Broken teeth/fillings Worn teeth Dry Mouth' -> worn_teeth (alias_contains, score=0.98, cov=1.00)
+    ✓ 'Grinding/Clenching Headaches Jaw Joint (TMJ) pain Jaw Joint (TMJ) clicking/popping Bad Bite Speech Impediment Mouth Breathing Sore Muscles (neck, shoulders) Difficulty Opening or Closing Difficulty Chewing on either side' -> jaw_pain_clicking (alias_contains, score=0.05, cov=1.00)
+    ✓ 'Irritated gums [ ] Bad breath [ ] Loose tipped' -> bad_breath (alias_contains, score=0.98, cov=1.00)
+    ✓ 'Thumb sucking Nail-biting Cheek/Lip biting Chewing on ice/foreign objects' -> thumb_sucking (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Sleep Apnea Snoring Daytime Drowsiness Bed wetting (for children)' -> sleep_apnea (alias_contains, score=0.00, cov=1.00)
+    ✓ 'Nitrous Oxide Oral Sedation (Pill) IV Sedation' -> sedation_preference (alias_contains, score=0.18, cov=1.00)
+    ✓ 'Antibiotics (Penicillin/Amoxicillin /Clindamycin)' -> antibiotics (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Are you under the care of a physician' -> 1.under_care (fuzzy, score=0.90, cov=0.89)
+    ✓ 'SSN' -> ssn (alias_contains, score=0.93, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Phone # (
+    • rehome -> Patient Information :: Name
+    • rehome -> Insurance :: Insured’s Name
+    • rehome -> Insurance :: Insured's Name
+    • rehome -> Patient Information :: Employer
+    • rehome -> Patient Information :: Date of Birth
+    • rehome -> Insurance :: Insurance Co
+    • rehome -> Insurance :: Insurance Co Address
+    • rehome -> Insurance :: Insurance Phone
+    • rehome -> Patient Information :: Phone
+    • rehome -> Insurance :: Group #
+    • rehome -> Insurance :: Local #
+    • rehome -> Patient Information :: Name of your previous dentist
+    • section_inference -> Dental History :: Your last cleaning / Your last oral cancer screening / Your last complete X-rays / What is the most important thing to you about your future smile and dental health? (score=3)
+    • section_inference -> Medical History :: Are you under the care of a physician (strong keyword match)
+    • section_inference -> Medical History :: Are you taking or have you recently taken any prescription or over the counter medicine(s) (strong keyword match)
+    • section_inference -> Medical History :: Have you ever in the past, or are you now currently taking any medications for Osteopenia/Osteoporosis or Bone Disease? (strong keyword match)
+    • section_inference -> Medical History :: If so, please list medications (strong keyword match)
+    • section_inference -> Medical History :: Have you ever had surgery? (strong keyword match)
+    • duplicate_consolidation -> Removed duplicate date_of_birth_2 from Patient Information
+    • duplicate_consolidation -> Removed duplicate date_of_birth_3 from Patient Information
+    • duplicate_consolidation -> Removed duplicate ssn_2 from Patient Information
+    • duplicate_consolidation -> Removed duplicate phone_2 from Patient Information
+    • duplicate_consolidation -> Removed duplicate date_of_birth_4 from Patient Information
+    • duplicate_consolidation -> Removed duplicate phone_3 from Patient Information
+    • duplicate_consolidation -> Removed ssn_3 from General, kept ssn in Patient Information
+    • malformed_grid_detected -> 'Nitrous Oxide Oral Sedation (Pill) IV Sedation...' with 5 options
+    • unique_title -> 'Employer' → 'Employer #2' (suffix)
+    • unique_title -> 'If yes please explain __________________________' → 'Are you under the care of a physician - Please explain' (context)
+    • Section ordering: Reordered 65 fields
+    •   Section distribution: {'Patient Information': 30, 'Insurance': 7, 'Medical History': 11, 'Dental History': 9, 'Signature': 1, 'General': 3, 'Emergency Contact': 4}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] skipping descriptive header: 'I understand that there are risks associated with any dental'
+  [debug] skipping descriptive header: 'Damage to the nerves during tooth removal resulting in tempo'
+[✓] tooth20removal20consent20form.txt -> tooth20removal20consent20form.modento.json (1 items)
+    ↳ reused 1/1 from dictionary (100%)
+  [debug] template matches:
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+  [debug] preprocess_lines: 21 -> 22 lines
+  [debug] fill-in-blank detected: Patient Name:_______________________________________... -> patient_name
+  [debug] fill-in-blank detected: DOB: ___________________... -> dob
+  [warn] No dictionary match for field: 'Terms' (key: you_have_the_right_and_obligation_to_make_decisions_regarding)
+  [warn] No dictionary match for field: 'I certify that I have read the contents of this form. I understand the possible advantages of proceeding with the recommended treatment and the possible risks and consequences of refusing the recommended treatment.' (key: i_certify_that_i_have_read)
+  [warn] No dictionary match for field: 'Terms' (key: having_been_informed_i_elect_not_to_have_the_necessary_xrays_at)
+[✓] zCONSENT-XRAY REFUSAL.txt -> zCONSENT-XRAY REFUSAL.modento.json (6 items)
+    ↳ reused 3/6 from dictionary (50%)
+  [debug] template matches:
+    ✓ 'Patient Name' -> first_name (alias_exact, score=0.96, cov=1.00)
+    ✓ 'DOB' -> date_of_birth (title_exact, score=0.95, cov=1.00)
+    ✓ 'Signature' -> signature (key_exact, score=1.00, cov=1.00)
+  [debug] gates:
+    • rehome -> Patient Information :: Patient Name
+    • rehome -> Patient Information :: DOB
+    • unique_title -> 'Terms' → 'Terms (2)' (numeric)
+    • Section ordering: Reordered 6 fields
+    •   Section distribution: {'Patient Information': 2, 'Dental History': 1, 'Signature': 1, 'Consent': 2}
+    • Modento compliance validation found 1 issues:
+    •   - No signature field found
+[1/2] Running unstructured_extract.py …
+[2/2] Running text_to_modento.py …
+✅ Done.
