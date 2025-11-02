@@ -115,6 +115,22 @@ from .modules.question_parser import (
     generate_contextual_date_key,  # Improvement 6: Date field disambiguation
     infer_multi_select_from_context,  # NEW Improvement 8: Smart multi-select detection
 )
+# Parity Improvements: Import field detection and consent handling modules
+from .modules.field_detection import (
+    split_colon_delimited_fields,
+    split_multi_subfield_line,
+    should_split_line_into_fields,
+    normalize_checkbox_symbols,
+    infer_field_type_from_label,
+)
+from .modules.consent_handler import (
+    is_consent_paragraph,
+    is_consent_section_header,
+    group_consecutive_consent_paragraphs,
+    is_risk_list_header,
+    group_risk_list_items,
+    normalize_signature_field,
+)
 
 # ---------- Paths
 
@@ -1005,12 +1021,38 @@ def preprocess_lines(lines: List[str]) -> List[str]:
     Preprocess lines before main parsing.
     Currently handles: splitting multi-question lines with enhanced strategies.
     Enhancement: Recursively processes split segments to handle compound fields.
+    
+    Parity Improvements:
+    - Improvement #1: Detect and split colon-delimited multi-field blocks
+    - Improvement #2: Enhanced multi-sub-field label splitting
     """
     processed = []
     for line in lines:
         # Skip empty lines
         if not line.strip():
             processed.append(line)
+            continue
+        
+        # NEW Improvement #1: Try colon-delimited field splitting FIRST
+        # This handles insurance/registration blocks like "Name: State: Holder: Birth Date:"
+        if should_split_line_into_fields(line):
+            colon_split = split_colon_delimited_fields(line)
+            if colon_split:
+                # Successfully split into multiple fields
+                for field_dict in colon_split:
+                    # Convert field dict back to parseable line format
+                    # Format: "Title: ___" so it can be parsed as a fill-in field
+                    field_line = f"{field_dict['title']}: ___"
+                    processed.append(field_line)
+                continue
+        
+        # NEW Improvement #2: Try multi-sub-field splitting
+        # Handles "Phone: Mobile ___ Home ___ Work ___"
+        subfield_split = split_multi_subfield_line(line)
+        if subfield_split:
+            for field_dict in subfield_split:
+                field_line = f"{field_dict['title']}: ___"
+                processed.append(field_line)
             continue
         
         # Archivev12 Fix: Try multiple splitting strategies
@@ -3815,6 +3857,8 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
     """
     Reassign fields from 'General' to more specific sections based on content.
     Uses keyword matching to identify medical and dental questions.
+    
+    Parity Improvement #12: Enhanced section detection with expanded keywords.
     """
     # Strong keywords that alone indicate medical history
     STRONG_MEDICAL_KEYWORDS = [
@@ -3841,6 +3885,29 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
         'bite', 'jaw', 'tmj', 'smile'
     ]
     
+    # Parity Improvement #12: Additional section keywords
+    PATIENT_INFO_KEYWORDS = [
+        'name', 'address', 'phone', 'email', 'birth', 'dob',
+        'ssn', 'social security', 'gender', 'marital', 'employer',
+        'occupation', 'contact', 'nickname', 'preferred name'
+    ]
+    
+    INSURANCE_KEYWORDS = [
+        'insurance', 'policy', 'coverage', 'carrier', 'subscriber',
+        'member id', 'group number', 'plan', 'benefits', 'primary insurance',
+        'secondary insurance', 'insurance company'
+    ]
+    
+    EMERGENCY_KEYWORDS = [
+        'emergency contact', 'emergency', 'notify', 'relationship',
+        'emergency phone', 'in case of emergency'
+    ]
+    
+    CONSENT_KEYWORDS = [
+        'consent', 'acknowledge', 'agree', 'understand', 'authorize',
+        'risks', 'complications', 'terms', 'conditions', 'authorization'
+    ]
+    
     for item in payload:
         if item.get('section') == 'General':
             title_lower = item.get('title', '').lower()
@@ -3850,21 +3917,46 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
             # Check for strong medical keywords (single match is enough)
             has_strong_medical = any(kw in combined for kw in STRONG_MEDICAL_KEYWORDS)
             
-            # Count regular keyword matches
+            # Count keyword matches for all categories
             medical_score = sum(1 for kw in MEDICAL_KEYWORDS if kw in combined)
             dental_score = sum(1 for kw in DENTAL_KEYWORDS if kw in combined)
+            patient_score = sum(1 for kw in PATIENT_INFO_KEYWORDS if kw in combined)
+            insurance_score = sum(1 for kw in INSURANCE_KEYWORDS if kw in combined)
+            emergency_score = sum(1 for kw in EMERGENCY_KEYWORDS if kw in combined)
+            consent_score = sum(1 for kw in CONSENT_KEYWORDS if kw in combined)
             
-            # Reassign based on signals
-            # Strong keyword alone is enough for medical history
-            if has_strong_medical and dental_score == 0:
+            # Reassign based on signals (in order of priority)
+            # Patient Information
+            if patient_score >= 2:
+                if dbg:
+                    dbg.gate(f"section_inference -> Patient Information :: {item.get('title', '')} (score={patient_score})")
+                item['section'] = 'Patient Information'
+            # Insurance
+            elif insurance_score >= 1:
+                if dbg:
+                    dbg.gate(f"section_inference -> Insurance :: {item.get('title', '')} (score={insurance_score})")
+                item['section'] = 'Insurance'
+            # Emergency Contact
+            elif emergency_score >= 1:
+                if dbg:
+                    dbg.gate(f"section_inference -> Emergency Contact :: {item.get('title', '')} (score={emergency_score})")
+                item['section'] = 'Emergency Contact'
+            # Consent/Terms
+            elif consent_score >= 2 or (consent_score >= 1 and len(title_lower) > 100):
+                if dbg:
+                    dbg.gate(f"section_inference -> Consent :: {item.get('title', '')} (score={consent_score})")
+                item['section'] = 'Consent'
+            # Medical History (strong keyword alone is enough)
+            elif has_strong_medical and dental_score == 0:
                 if dbg:
                     dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (strong keyword match)")
                 item['section'] = 'Medical History'
-            # Or 2+ regular keywords
+            # Or 2+ regular medical keywords
             elif medical_score >= 2 and medical_score > dental_score:
                 if dbg:
                     dbg.gate(f"section_inference -> Medical History :: {item.get('title', '')} (score={medical_score})")
                 item['section'] = 'Medical History'
+            # Dental History
             elif dental_score >= 2 and dental_score > medical_score:
                 if dbg:
                     dbg.gate(f"section_inference -> Dental History :: {item.get('title', '')} (score={dental_score})")
@@ -4401,6 +4493,54 @@ def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[D
     
     return payload
 
+
+# ========== Parity Improvement Post-Processing Functions ==========
+
+def postprocess_normalize_signatures(payload: List[dict]) -> List[dict]:
+    """
+    Parity Improvement #11: Ensure signature fields use consistent block_signature type.
+    """
+    for field in payload:
+        field = normalize_signature_field(field)
+    return payload
+
+
+def postprocess_group_consent_fields(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Parity Improvement #9 & #10: Group consecutive consent/terms fields and risk lists.
+    
+    This consolidates:
+    - Multiple "Terms", "Terms (2)", "Terms (3)" fields into fewer consent blocks
+    - Risk/complication list items into single terms blocks
+    """
+    if not payload:
+        return payload
+    
+    # First, group consecutive consent paragraphs
+    grouped = group_consecutive_consent_paragraphs(payload)
+    
+    # Then, identify and group risk list sections
+    final_payload = []
+    i = 0
+    while i < len(grouped):
+        field = grouped[i]
+        title = field.get('title', '')
+        
+        # Check if this starts a risk list
+        if is_risk_list_header(title):
+            # Group following risk items
+            grouped, next_i = group_risk_list_items(grouped, i + 1)
+            i = next_i
+        else:
+            final_payload.append(field)
+            i += 1
+    
+    if dbg and dbg.enabled and len(final_payload) < len(payload):
+        dbg.gate(f"consent_grouping -> Consolidated {len(payload)} fields to {len(final_payload)} fields")
+    
+    return final_payload
+
+
 # ---------- Dictionary application + reporting
 
 @dataclass
@@ -4567,6 +4707,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     # Post-process merges + normalization
     payload = postprocess_merge_hear_about_us(payload)
     payload = postprocess_consolidate_medical_conditions(payload)
+    
+    # Parity Improvement #11: Normalize signature fields
+    payload = postprocess_normalize_signatures(payload)
     payload = postprocess_signature_uniqueness(payload)
 
     # Apply templates + count
@@ -4591,6 +4734,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     
     # Archivev11 Fix 5: Make generic "Please explain" fields unique
     payload = postprocess_make_explain_fields_unique(payload, dbg=dbg)
+    
+    # Parity Improvement #9 & #10: Group consent and risk fields
+    payload = postprocess_group_consent_fields(payload, dbg=dbg)
     
     # Modento Schema Compliance: Order sections according to conventions
     payload = postprocess_order_sections(payload, dbg=dbg)
