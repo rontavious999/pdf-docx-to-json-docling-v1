@@ -1,0 +1,20 @@
++Bone+Grafting+Consent+FINAL+32025.modento.json: 6 items, 50% matched, 3 unmatched
++Dental+Records+Release+Form+FINAL+032025.modento.json: 8 items, 100% matched, 0 unmatched
+CFGingivectomy.modento.json: 18 items, 17% matched, 15 unmatched
+Chicago-Dental-Solutions_Form.modento.json: 15 items, 47% matched, 9 unmatched
+Consent Final Process Full or Partial Denture.modento.json: 5 items, 60% matched, 3 unmatched
+DentureProcessingConsentFINAL122024.modento.json: 5 items, 60% matched, 3 unmatched
+DentureandPartialConsentFINAL122024.modento.json: 6 items, 17% matched, 5 unmatched
+Endo Consent .modento.json: 3 items, 67% matched, 1 unmatched
+EndoConsentFINAL122024.modento.json: 12 items, 25% matched, 9 unmatched
+Endodontic Consent_6.20.2022.modento.json: 7 items, 43% matched, 4 unmatched
+Extraction Consent_6.22.2022.docx.modento.json: 6 items, 50% matched, 3 unmatched
+ExtractionConsentFINAL122024.modento.json: 9 items, 33% matched, 6 unmatched
+Gingivectomy Consent_6.23.2022.modento.json: 8 items, 38% matched, 5 unmatched
+IV Sedation Pre-op.modento.json: 10 items, 20% matched, 8 unmatched
+Implant Consent_6.27.2022.modento.json: 5 items, 60% matched, 2 unmatched
+Informed Consent - Labial Frenectomy.modento.json: 10 items, 40% matched, 6 unmatched
+Informed Consent - Lip Tie and Tongue Tie Release.modento.json: 15 items, 27% matched, 11 unmatched
+Informed Consent Complete Dentures & Partial Dentures.modento.json: 9 items, 11% matched, 8 unmatched
+Informed Consent Composite Restoratio.modento.json: 13 items, 23% matched, 10 unmatched
+Informed Consent Crown & Bridge Prosthetic.modento.json: 10 items, 40% matched, 6 unmatched
