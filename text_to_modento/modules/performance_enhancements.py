@@ -299,7 +299,8 @@ def detect_inline_checkbox_options(line: str) -> Optional[Tuple[str, List[Dict]]
     
     # Pattern 2: Label with checkbox symbols (Unicode)
     # Example: "Marital Status: □ Single □ Married □ Divorced"
-    pattern2 = r'^([^:\□☐\[\]]+?):\s*((?:[\□☐\[\]\s]+\w+\s*)+)$'
+    # Fixed: Made pattern more specific to prevent ReDoS
+    pattern2 = r'^([^:\□☐\[\]]+?):\s*((?:[\□☐\[\]]\s*\w+(?:\s+\w+)?\s*)+)$'
     match2 = re.match(pattern2, line)
     
     if match2:
