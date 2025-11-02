@@ -291,7 +291,7 @@ PHONE_PATTERNS = [
     (r'(?:cell|mobile)\s+phone', 'cell_phone'),
 ]
 
-ALLOWED_TYPES = {"input", "date", "states", "radio", "dropdown", "terms", "signature"}
+ALLOWED_TYPES = {"input", "date", "states", "radio", "dropdown", "checkbox", "terms", "signature", "block_signature"}
 
 PRIMARY_SUFFIX = "__primary"
 SECONDARY_SUFFIX = "__secondary"
@@ -3520,7 +3520,7 @@ def validate_form(questions: List[Question]) -> List[str]:
     if len(sig)!=1 or sig[0].key!="signature":
         errs.append("Signature rule violated (need exactly one with key='signature').")
     for q in questions:
-        if q.type in ("radio","dropdown"):
+        if q.type in ("radio","dropdown","checkbox"):
             for opt in q.control.get("options", []):
                 if opt.get("value") in (None,""):
                     errs.append(f"Empty option value in {q.key}")
