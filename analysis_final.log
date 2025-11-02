@@ -1,0 +1,33 @@
+🔍 Analyzing pipeline performance...
+📂 JSONs directory: /home/runner/work/pdf-docx-to-json-unstructured-v1/pdf-docx-to-json-unstructured-v1/JSONs
+📖 Loading dictionary: /home/runner/work/pdf-docx-to-json-unstructured-v1/pdf-docx-to-json-unstructured-v1/dental_form_dictionary.json
+   ✓ 219 fields in 22 sections
+📊 Found 38 stats files
+✅ Analyzed 38 documents
+
+✅ Spreadsheet created: /home/runner/work/pdf-docx-to-json-unstructured-v1/pdf-docx-to-json-unstructured-v1/performance_analysis.csv
+
+============================================================
+SUMMARY STATISTICS
+============================================================
+
+📖 Dictionary Information:
+   Available Fields: 219
+   Available Sections: 22
+   Unique Keys: 219
+   Dictionary Coverage: 112.33%
+
+📊 Processing Results:
+   Total Documents: 38
+   Total Fields Extracted: 358
+   Matched to Dictionary: 246
+   Unmatched (new/unique): 186
+   Overall Match Rate: 68.72%
+   Average Accuracy per Doc: 70.72%
+
+📈 Performance Metrics:
+   Average Fields per Document: 9.42
+   Average Sections per Document: 2.47
+   Average Document Size: 3.60 KB
+   Processing Efficiency: 3672 chars/doc
+============================================================
