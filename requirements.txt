@@ -1,0 +1,6 @@
+# For application functionality, including PDF and OCR support
+unstructured[all-docs]
+
+# For running the test suite
+pytest
+pytest-cov
