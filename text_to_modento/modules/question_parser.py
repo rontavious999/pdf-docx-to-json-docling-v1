@@ -689,3 +689,229 @@ def infer_multi_select_from_context(title: str, options: list, section: str = ""
     # Default: multi if 5+ options, single otherwise
     # This is a reasonable heuristic: fields with many options typically allow multiple selections
     return len(options) >= 5
+
+
+def recognize_semantic_field_label(label: str, context_hints: Dict = None) -> str:
+    """
+    Improvement #4: Recognize semantic meaning from compound field labels.
+    
+    Transforms poorly parsed labels into semantically correct ones:
+    - "Patient Name - Birth" → "Date of Birth"
+    - "Patient Name - First" → "First Name"
+    - "Patient Name - Street" → "Street Address"
+    - "Phone - Mobile" → "Mobile Phone"
+    
+    Args:
+        label: The field label to analyze
+        context_hints: Optional dict with context like section, previous labels
+        
+    Returns:
+        Semantically corrected label
+    """
+    if not label:
+        return label
+    
+    # Common problematic patterns and their corrections
+    semantic_mappings = {
+        # Pattern: "name" + temporal indicator → Date field
+        (r'.*name.*birth', 'date of birth'),
+        (r'.*name.*dob', 'date of birth'),
+        (r'.*birth.*date', 'date of birth'),
+        
+        # Pattern: "name" + location indicator → Address fields
+        (r'.*name.*street', 'street address'),
+        (r'.*name.*address', 'street address'),
+        (r'.*name.*city', 'city'),
+        (r'.*name.*state', 'state'),
+        (r'.*name.*zip', 'zip code'),
+        (r'.*name.*suite', 'suite number'),
+        (r'.*name.*apt', 'apartment number'),
+        
+        # Pattern: "name" + contact indicator → Contact fields
+        (r'.*name.*phone', 'phone number'),
+        (r'.*name.*mobile', 'mobile phone'),
+        (r'.*name.*cell', 'cell phone'),
+        (r'.*name.*home.*phone', 'home phone'),
+        (r'.*name.*work.*phone', 'work phone'),
+        (r'.*name.*email', 'email address'),
+        (r'.*name.*mail', 'email address'),
+        (r'.*name.*fax', 'fax number'),
+        
+        # Pattern: "name" + employment → Employment fields
+        (r'.*name.*employ', 'employer name'),
+        (r'.*name.*occupation', 'occupation'),
+        (r'.*name.*work', 'employer'),
+        
+        # Pattern: "name" + person parts → Name parts
+        (r'.*name.*first', 'first name'),
+        (r'.*name.*last', 'last name'),
+        (r'.*name.*middle', 'middle name'),
+        (r'.*name.*mi\b', 'middle initial'),
+        (r'.*name.*full', 'full name'),
+        
+        # Pattern: "name" + identification → ID fields
+        (r'.*name.*ssn', 'social security number'),
+        (r'.*name.*social', 'social security number'),
+        (r'.*name.*id', 'id number'),
+        (r'.*name.*member', 'member id'),
+        (r'.*name.*policy', 'policy number'),
+        
+        # Pattern: "phone" + type → Specific phone types
+        (r'^phone.*mobile', 'mobile phone'),
+        (r'^phone.*cell', 'cell phone'),
+        (r'^phone.*home', 'home phone'),
+        (r'^phone.*work', 'work phone'),
+        
+        # Pattern: Date + type → Specific date types
+        (r'^date.*birth', 'date of birth'),
+        (r'^date.*today', "today's date"),
+        (r'^date.*sign', 'signature date'),
+    }
+    
+    label_lower = label.lower().strip()
+    
+    # Try to match semantic patterns
+    for pattern, replacement in semantic_mappings:
+        if re.match(pattern, label_lower):
+            return replacement.title()
+    
+    # If no semantic match, return cleaned original
+    return label
+
+
+def detect_empty_vs_filled_field(value_area: str) -> Dict:
+    """
+    Improvement #14: Detect if a field is empty (needs filling) or pre-filled.
+    
+    Analyzes the value area text to determine:
+    - Is it a blank field (underscores, parentheses)?
+    - Does it have a pre-filled value?
+    - Is it a checkbox/radio (options provided)?
+    
+    Args:
+        value_area: The text after the field label
+        
+    Returns:
+        Dict with keys: is_blank, has_prefill, prefill_value, input_hint
+    """
+    if not value_area:
+        return {'is_blank': True, 'has_prefill': False}
+    
+    value_stripped = value_area.strip()
+    
+    # Pattern 1: Long runs of underscores = blank field
+    if re.match(r'^_{3,}$', value_stripped):
+        return {
+            'is_blank': True,
+            'has_prefill': False,
+            'input_hint': None
+        }
+    
+    # Pattern 2: Parentheses or brackets alone = blank field
+    if re.match(r'^\(+\s*\)+$|^\[+\s*\]+$', value_stripped):
+        return {
+            'is_blank': True,
+            'has_prefill': False,
+            'input_hint': None
+        }
+    
+    # Pattern 3: Mix of underscores and parentheses
+    if re.match(r'^[\(_\)\[\]\s]+$', value_stripped):
+        return {
+            'is_blank': True,
+            'has_prefill': False,
+            'input_hint': None
+        }
+    
+    # Pattern 4: Checkboxes/radio options = option field (not blank, not prefilled)
+    if re.search(r'\[\s*\]|☐|□', value_stripped):
+        return {
+            'is_blank': False,
+            'has_prefill': False,
+            'input_hint': 'Select one or more options'
+        }
+    
+    # Pattern 5: Has actual text content = pre-filled
+    # Exclude very short text that's likely formatting
+    if len(value_stripped) > 3 and not re.match(r'^[\s_\(\)\[\]]+$', value_stripped):
+        # Check if it's a reasonable value (not just form noise)
+        words = value_stripped.split()
+        if len(words) >= 1 and any(len(w) > 2 for w in words):
+            return {
+                'is_blank': False,
+                'has_prefill': True,
+                'prefill_value': value_stripped,
+                'input_hint': None
+            }
+    
+    # Default: treat as blank
+    return {
+        'is_blank': True,
+        'has_prefill': False,
+        'input_hint': None
+    }
+
+
+def infer_field_context_from_section(field_label: str, section: str) -> Dict:
+    """
+    Improvement #12: Use section context for better field disambiguation.
+    
+    When multiple fields have similar labels (e.g., "Name", "Date"),
+    use the section to provide context for better naming.
+    
+    Args:
+        field_label: The field label
+        section: Current section name (e.g., "Patient Information", "Insurance")
+        
+    Returns:
+        Dict with suggested title_prefix and hints
+    """
+    if not section or not field_label:
+        return {}
+    
+    label_lower = field_label.lower()
+    section_lower = section.lower()
+    
+    # Context-based prefixing rules
+    context_rules = {
+        'insurance': {
+            'name': 'Insurance Holder',
+            'date': 'Insurance Date',
+            'phone': 'Insurance Phone',
+            'employer': 'Insurance Company',
+            'id': 'Policy ID',
+            'number': 'Policy Number',
+        },
+        'emergency contact': {
+            'name': 'Emergency Contact Name',
+            'phone': 'Emergency Phone',
+            'relationship': 'Emergency Contact Relationship',
+        },
+        'responsible party': {
+            'name': 'Responsible Party Name',
+            'relationship': 'Relationship to Patient',
+            'phone': 'Responsible Party Phone',
+        },
+        'dental history': {
+            'date': 'Last Visit Date',
+            'dentist': 'Previous Dentist',
+        },
+        'medical history': {
+            'date': 'Diagnosis Date',
+            'condition': 'Medical Condition',
+        },
+    }
+    
+    # Find matching section
+    for section_key, mappings in context_rules.items():
+        if section_key in section_lower:
+            # Check if label matches any mapping
+            for label_key, prefixed_name in mappings.items():
+                if label_key in label_lower:
+                    return {
+                        'contextual_title': prefixed_name,
+                        'section_context': section
+                    }
+    
+    # No specific context found
+    return {}

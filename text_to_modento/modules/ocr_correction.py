@@ -346,3 +346,132 @@ def get_correction_stats(text: str) -> Dict[str, int]:
     stats['char_confusions'] += len(re.findall(r'\d[a-z]|[a-z]\d', text))
     
     return stats
+
+
+def enhance_dental_term_corrections(text: str) -> str:
+    """
+    Improvement #2: Enhanced OCR correction with dental term dictionary.
+    
+    Adds corrections for common dental/medical terms that are often
+    mis-recognized by OCR.
+    
+    Args:
+        text: Text to correct
+        
+    Returns:
+        Corrected text
+    """
+    # Dental-specific term corrections
+    dental_corrections = {
+        # Procedures
+        r'\broot\s+can[a1]l\b': 'root canal',
+        r'\bc[a-z0]rn?\b': 'crown',
+        r'\bfill1ng\b': 'filling',
+        r'\bextr[a4]ction\b': 'extraction',
+        r'\bimp[l1]ant\b': 'implant',
+        r'\bdenture\b': 'denture',
+        r'\borthodontics?\b': 'orthodontics',
+        r'\bperiodont[a4]l\b': 'periodontal',
+        r'\bendodontic\b': 'endodontic',
+        
+        # Anatomical terms
+        r'\bte[e3]th?\b': 'teeth',
+        r'\btooth\b': 'tooth',
+        r'\bgums?\b': 'gums',
+        r'\bj[a4]w\b': 'jaw',
+        r'\bpal[a4]te\b': 'palate',
+        r'\btongue\b': 'tongue',
+        
+        # Conditions
+        r'\bcav[i1]ty\b': 'cavity',
+        r'\bdecay\b': 'decay',
+        r'\bgingivitis\b': 'gingivitis',
+        r'\bplaque\b': 'plaque',
+        r'\btart[a4]r\b': 'tartar',
+        r'\bbled1ng\b': 'bleeding',
+        r'\bs[e3]nsitiv[ei]ty\b': 'sensitivity',
+        r'\bp[a4]in\b': 'pain',
+        
+        # Medical terms
+        r'\ball[e3]rg[yi]c?\b': 'allergic',
+        r'\bm[e3]dicat[i1]ons?\b': 'medications',
+        r'\banesthet1c\b': 'anesthetic',
+        r'\banas?thesia\b': 'anesthesia',
+        r'\bdiab[e3]tes\b': 'diabetes',
+        r'\bhypert[e3]ns[i1]on\b': 'hypertension',
+        r'\bcard[i1]ovasc\w+\b': 'cardiovascular',
+        
+        # Form fields
+        r'\bph[o0]ne\b': 'phone',
+        r'\b[e3]ma[i1]l\b': 'email',
+        r'\baddr[e3]ss\b': 'address',
+        r'\bz[i1]pcode\b': 'zipcode',
+        r'\bs[i1]gnature\b': 'signature',
+        r'\bcons[e3]nt\b': 'consent',
+    }
+    
+    # Apply corrections (case-insensitive)
+    for pattern, replacement in dental_corrections.items():
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+    
+    return text
+
+
+def correct_phone_number_patterns(text: str) -> str:
+    """
+    Improvement #2: Fix OCR errors in phone number patterns.
+    
+    Common OCR errors in phone numbers:
+    - "O" instead of "0"
+    - "I" or "l" instead of "1"
+    - Missing or extra spaces/dashes
+    
+    Args:
+        text: Text with phone numbers
+        
+    Returns:
+        Text with corrected phone numbers
+    """
+    # Pattern: (XXX) XXX-XXXX with potential OCR errors
+    # Fix common character substitutions in phone numbers
+    def fix_phone_chars(match):
+        phone = match.group(0)
+        # Replace O with 0, I/l with 1 in phone context
+        phone = phone.replace('O', '0').replace('o', '0')
+        phone = phone.replace('I', '1').replace('l', '1')
+        return phone
+    
+    # Match phone-like patterns and fix them
+    text = re.sub(r'\(\d{2}[OIl\d]\)\s*\d{2}[OIl\d]-\d{3}[OIl\d]', fix_phone_chars, text)
+    text = re.sub(r'\d{2}[OIl\d]-\d{2}[OIl\d]-\d{3}[OIl\d]', fix_phone_chars, text)
+    
+    return text
+
+
+def correct_date_patterns(text: str) -> str:
+    """
+    Improvement #2: Fix OCR errors in date patterns.
+    
+    Common OCR errors in dates:
+    - "O" instead of "0"
+    - Slash "/" misread as "1" or "I"
+    
+    Args:
+        text: Text with dates
+        
+    Returns:
+        Text with corrected dates
+    """
+    # Fix MM/DD/YYYY patterns with OCR errors
+    def fix_date_chars(match):
+        date = match.group(0)
+        # Replace O with 0 in date context
+        date = date.replace('O', '0').replace('o', '0')
+        # Fix slash confusions
+        date = re.sub(r'[I1]\s*(?=\d{1,2}\s*[I1/]\s*\d)', '/', date)
+        return date
+    
+    # Match date-like patterns
+    text = re.sub(r'\d{1,2}[/I1]\d{1,2}[/I1]\d{2,4}', fix_date_chars, text)
+    
+    return text

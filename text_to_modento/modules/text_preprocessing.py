@@ -644,6 +644,81 @@ def is_numbered_list_item(line: str) -> bool:
     return False
 
 
+def is_instructional_paragraph(line: str) -> bool:
+    """
+    Improvement #7: Detect if line is an instructional paragraph (not a form field).
+    
+    Instructional/consent text has these characteristics:
+    - Long sentences (>50 words or >250 characters)
+    - Multiple sentences (contains 2+ periods)
+    - Starts with consent phrases ("I understand", "I authorize", "I certify")
+    - Contains legal/medical terminology
+    - No fill-in blanks (underscores, parentheses)
+    
+    Args:
+        line: Line to check
+        
+    Returns:
+        True if line appears to be instructional text, not a field
+    """
+    if not line or len(line) < 30:
+        return False
+    
+    line_stripped = line.strip()
+    
+    # Count words
+    word_count = len(line_stripped.split())
+    
+    # Long text is likely instructional (>50 words or >250 chars)
+    if word_count > 50 or len(line_stripped) > 250:
+        return True
+    
+    # Multiple sentences (2+ periods, excluding abbreviations)
+    period_count = line_stripped.count('.')
+    # Exclude common abbreviations
+    abbrev_count = len(re.findall(r'\b(?:Dr|Mr|Mrs|Ms|Inc|Ltd|Jr|Sr|etc)\.\b', line_stripped, re.I))
+    if (period_count - abbrev_count) >= 2:
+        return True
+    
+    # Strong consent/instructional phrase indicators
+    instructional_starts = [
+        r'^i\s+(?:hereby\s+)?(?:understand|certify|acknowledge|consent|agree|authorize|give)',
+        r'^(?:the\s+)?patient\s+(?:understands?|acknowledges?|consents?|agrees?)',
+        r'^by\s+signing',
+        r'^i\s+have\s+(?:read|been\s+(?:informed|given))',
+        r'^(?:this|it)\s+is\s+(?:understood|acknowledged)',
+        r'^we\s+(?:understand|acknowledge)',
+    ]
+    
+    line_lower = line_stripped.lower()
+    for pattern in instructional_starts:
+        if re.match(pattern, line_lower):
+            # If it starts with these AND is reasonably long, it's instructional
+            if word_count > 15:
+                return True
+    
+    # Legal/risk terminology in longer sentences
+    if word_count > 20:
+        risk_terms = [
+            'may include', 'may result in', 'possible risks', 'complications',
+            'not limited to', 'include but', 'such as', 'alternative treatment',
+            'necessitating', 'have been explained', 'I was able to'
+        ]
+        if any(term in line_lower for term in risk_terms):
+            return True
+    
+    # Explanatory phrases
+    if word_count > 25:
+        explanatory = [
+            'this means that', 'it is important to', 'you should', 'please note',
+            'be aware that', 'keep in mind', 'it is your responsibility'
+        ]
+        if any(phrase in line_lower for phrase in explanatory):
+            return True
+    
+    return False
+
+
 def is_form_metadata(line: str) -> bool:
     """
     NEW Improvement 6: Detect if line is form metadata that should be filtered out.
@@ -770,3 +845,123 @@ def is_practice_location_text(line: str, context: list = None) -> bool:
         return True
     
     return False
+
+
+def separate_field_label_from_blanks(line: str) -> str:
+    """
+    Improvement #1: Separate field labels from underscore/blank patterns.
+    
+    Transforms patterns like "Label____" into "Label: ___" for better parsing.
+    This helps the parser distinguish the label from the fill-in area.
+    
+    Patterns handled:
+    - "Label____" → "Label: ___"
+    - "Label:____" → "Label: ___" (normalize)
+    - "Label (___)" → "Label: ___"
+    - "Label [___]" → "Label: ___"
+    
+    Args:
+        line: Input line with potential label+blank patterns
+        
+    Returns:
+        Normalized line with separated labels and blanks
+    """
+    if not line or '___' not in line:
+        return line
+    
+    # Pattern 1: Label immediately followed by underscores (no colon)
+    # "Name____" → "Name: ___"
+    line = re.sub(r'([A-Za-z][A-Za-z\s]{1,30})_{3,}', r'\1: ___', line)
+    
+    # Pattern 2: Label with colon immediately followed by underscores (no space)
+    # "Name:____" → "Name: ___"
+    line = re.sub(r'([A-Za-z][A-Za-z\s]{1,30}):_{3,}', r'\1: ___', line)
+    
+    # Pattern 3: Label with parentheses/brackets around blanks
+    # "Name (___)" → "Name: ___"
+    line = re.sub(r'([A-Za-z][A-Za-z\s]{1,30})\s*[\(\[]_{3,}[\)\]]', r'\1: ___', line)
+    
+    # Pattern 4: Multiple consecutive blank areas - normalize spacing
+    # "___  ___  ___" → "___"
+    line = re.sub(r'_{3,}\s*_{3,}\s*_{3,}', '___', line)
+    
+    # Pattern 5: Clean up any double colons created
+    line = re.sub(r'::\s*', ': ', line)
+    
+    return line
+
+
+def normalize_compound_field_line(line: str) -> List[str]:
+    """
+    Improvement #5: Split compound field lines into separate field labels.
+    
+    Handles patterns like:
+    - "First Name: ___ MI: ___ Last Name: ___"
+    - "Phone: Mobile ___ Home ___ Work ___"
+    - "City: ___ State: ___ ZIP: ___"
+    
+    Returns a list of separate field lines if splitting is appropriate,
+    otherwise returns a single-item list with the original line.
+    
+    Args:
+        line: Input line that may contain multiple fields
+        
+    Returns:
+        List of field strings (split or original)
+    """
+    if not line or line.count(':') < 2:
+        return [line]
+    
+    # First, separate labels from blanks if needed
+    line = separate_field_label_from_blanks(line)
+    
+    # Pattern: Label: blank_area Label: blank_area
+    # Match labels that are followed by colon and then optional blanks/content
+    pattern = r'([A-Z][A-Za-z\s]{1,30}):\s*([_\(\)\[\]]*)'
+    
+    matches = list(re.finditer(pattern, line))
+    
+    # Need at least 2 matches to split
+    if len(matches) < 2:
+        return [line]
+    
+    # Don't split if line looks like a question (has '?')
+    if '?' in line:
+        return [line]
+    
+    # Don't split if total length is very short (likely not compound fields)
+    if len(line) < 30:
+        return [line]
+    
+    fields = []
+    for i, match in enumerate(matches):
+        label = match.group(1).strip()
+        blank_area = match.group(2).strip()
+        
+        # Skip very short labels
+        if len(label) < 2:
+            continue
+        
+        # Extract content between this match and next (or to end)
+        start_pos = match.end()
+        if i < len(matches) - 1:
+            end_pos = matches[i + 1].start()
+        else:
+            end_pos = len(line)
+        
+        # Get any text/content after the blank
+        between_content = line[start_pos:end_pos].strip()
+        
+        # Build field string
+        if blank_area:
+            field_str = f"{label}: {blank_area}"
+        elif between_content and not re.match(pattern, between_content):
+            # Content after label but before next label
+            field_str = f"{label}: {between_content}"
+        else:
+            field_str = f"{label}: ___"
+        
+        fields.append(field_str.strip())
+    
+    # Only return split fields if we got at least 2 meaningful ones
+    return fields if len(fields) >= 2 else [line]

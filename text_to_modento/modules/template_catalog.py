@@ -364,3 +364,157 @@ def _dedupe_keys_dicts(items: List[dict]) -> List[dict]:
         out.append(q)
     return out
 
+
+def smart_alias_match(parsed_label: str, template_key: str, template_data: Dict, context: Dict = None) -> Tuple[bool, float, str]:
+    """
+    Improvement #9: Smart alias matching with context awareness and negative patterns.
+    
+    Prevents incorrect matches like "Name of Employer" → "first_name" by:
+    1. Using context (section, nearby fields)
+    2. Applying negative patterns (what shouldn't match)
+    3. Weighing key-based matches higher than alias matches
+    4. Semantic coherence checking
+    
+    Args:
+        parsed_label: The label from parsed form
+        template_key: Candidate template key to match
+        template_data: The template dictionary entry
+        context: Optional context dict (section, prev_fields, etc.)
+        
+    Returns:
+        Tuple of (is_match, confidence_score, reason)
+    """
+    context = context or {}
+    parsed_lower = _norm_text(parsed_label)
+    template_title = template_data.get('title', '')
+    template_title_lower = _norm_text(template_title)
+    
+    # Negative patterns: combinations that should NOT match
+    negative_patterns = [
+        # "Name of X" should not match "first_name" or "last_name"
+        (r'name.*of\s+(employer|insurance|company|practice)', ['first_name', 'last_name', 'middle_name']),
+        
+        # "Employer" or "Company" should not match personal name fields
+        (r'employer|company|practice|business', ['first_name', 'last_name', 'patient_name']),
+        
+        # "Relationship" fields should not match "name" fields
+        (r'relationship', ['first_name', 'last_name', 'full_name']),
+        
+        # "Group" or "Policy" numbers should not match SSN or personal IDs
+        (r'group|policy|plan.*number', ['ssn', 'patient_id']),
+        
+        # "Phone" specifics shouldn't cross-match
+        (r'mobile|cell', ['home_phone', 'work_phone', 'fax']),
+        (r'home.*phone', ['mobile_phone', 'work_phone', 'cell_phone']),
+        (r'work.*phone', ['mobile_phone', 'home_phone', 'cell_phone']),
+    ]
+    
+    # Check negative patterns
+    for pattern, forbidden_keys in negative_patterns:
+        if re.search(pattern, parsed_lower) and template_key in forbidden_keys:
+            return (False, 0.0, f"negative_pattern: {pattern} -> {template_key}")
+    
+    # Positive matching with context weighting
+    base_score = 0.0
+    match_reason = "no_match"
+    
+    # 1. Exact key match (highest confidence)
+    if _slug_key_norm(parsed_label) == template_key:
+        base_score = 1.0
+        match_reason = "key_exact"
+    
+    # 2. Title exact match
+    elif parsed_lower == template_title_lower:
+        base_score = 0.95
+        match_reason = "title_exact"
+    
+    # 3. Alias match (check EXTRA_ALIASES)
+    elif parsed_lower in EXTRA_ALIASES and EXTRA_ALIASES[parsed_lower] == template_key:
+        base_score = 0.9
+        match_reason = "alias_exact"
+    
+    # 4. Token set similarity (fuzzy match)
+    else:
+        token_score = _token_set_ratio(parsed_label, template_title)
+        if token_score >= 0.7:
+            base_score = 0.7 + (token_score - 0.7) * 0.5  # 0.7 to 0.85
+            match_reason = f"token_fuzzy_{token_score:.2f}"
+    
+    # Context-based adjustments
+    if context and base_score > 0:
+        section = context.get('section', '').lower()
+        
+        # Boost score if field makes sense in section
+        section_boosts = {
+            'insurance': ['insurance', 'policy', 'group', 'member', 'subscriber'],
+            'emergency': ['emergency', 'contact', 'notify'],
+            'patient': ['patient', 'name', 'birth', 'address'],
+        }
+        
+        for section_key, boost_words in section_boosts.items():
+            if section_key in section:
+                if any(word in template_key for word in boost_words):
+                    base_score = min(1.0, base_score + 0.05)
+                    match_reason += "+context_boost"
+                    break
+    
+    # Return match if score is above threshold
+    is_match = base_score >= 0.7
+    return (is_match, base_score, match_reason)
+
+
+def apply_context_aware_matching(parsed_fields: List[Dict], templates: Dict, debug: bool = False) -> List[Dict]:
+    """
+    Apply smart alias matching to all parsed fields.
+    
+    Args:
+        parsed_fields: List of parsed field dicts
+        templates: Template dictionary
+        debug: Print debug info
+        
+    Returns:
+        List of fields with improved template matches
+    """
+    context = {'prev_fields': []}
+    
+    for i, field in enumerate(parsed_fields):
+        parsed_label = field.get('title', '')
+        section = field.get('section', '')
+        
+        # Update context
+        context['section'] = section
+        context['field_index'] = i
+        
+        # Find best template match using smart matching
+        best_match_key = None
+        best_score = 0.0
+        best_reason = None
+        
+        for template_key, template_data in templates.items():
+            is_match, score, reason = smart_alias_match(
+                parsed_label, 
+                template_key, 
+                template_data, 
+                context
+            )
+            
+            if is_match and score > best_score:
+                best_score = score
+                best_match_key = template_key
+                best_reason = reason
+        
+        # Apply best match if found
+        if best_match_key and best_score >= 0.7:
+            if debug:
+                print(f"[smart_match] '{parsed_label}' -> {best_match_key} (score={best_score:.2f}, reason={best_reason})")
+            field['template_match'] = {
+                'key': best_match_key,
+                'score': best_score,
+                'reason': best_reason
+            }
+        
+        # Add to context for next iteration
+        context['prev_fields'].append(field)
+    
+    return parsed_fields
+
