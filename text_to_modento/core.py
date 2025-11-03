@@ -1078,10 +1078,31 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             colon_split = split_colon_delimited_fields(line)
             if colon_split:
                 # Successfully split into multiple fields
+                # For each field, check if the value area contains sub-fields to extract
                 for field_dict in colon_split:
-                    # Convert field dict back to parseable line format
-                    # Format: "Title: ___" so it can be parsed as a fill-in field
-                    field_line = f"{field_dict['title']}: ___"
+                    title = field_dict['title']
+                    value_area = field_dict.get('value_area', '')
+                    
+                    # Try to detect sub-fields in the value area
+                    # After separate_field_label_from_blanks, format is "First: ___ MI: ___ Last: ___"
+                    # So check for multiple "Label: ___" patterns in the value area
+                    if value_area and len(value_area) > 10:
+                        # Check for colon-delimited sub-fields in value area
+                        # Pattern: "Label: ___" appearing multiple times
+                        subfield_pattern = r'\b([A-Z][A-Za-z\s]{1,20}):\s*___'
+                        subfield_matches = list(re.finditer(subfield_pattern, value_area))
+                        
+                        if len(subfield_matches) >= 2:
+                            # Extract each sub-field
+                            for match in subfield_matches:
+                                subfield_label = match.group(1).strip()
+                                # Create compound title: "Patient Name - First"
+                                compound_title = f"{title} - {subfield_label}"
+                                processed.append(f"{compound_title}: ___")
+                            continue
+                    
+                    # No sub-fields found, create simple field
+                    field_line = f"{title}: ___"
                     processed.append(field_line)
                 continue
         

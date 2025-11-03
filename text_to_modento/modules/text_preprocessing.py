@@ -669,7 +669,18 @@ def is_instructional_paragraph(line: str) -> bool:
     # Count words
     word_count = len(line_stripped.split())
     
+    # CRITICAL FIX: Before classifying long lines as instructional, check for form field indicators
+    # Long lines with many underscores or multiple colons are likely concatenated form fields
+    underscore_count = line_stripped.count('_')
+    colon_count = line_stripped.count(':')
+    
+    # If line has many underscores (3+ sets of 3+ underscores) or many colons (5+), it's likely form fields
+    underscore_sequences = len(re.findall(r'_{3,}', line_stripped))
+    if underscore_sequences >= 3 or colon_count >= 5:
+        return False  # This is likely a form field line, not instructional text
+    
     # Long text is likely instructional (>50 words or >250 chars)
+    # BUT only if it doesn't have form field indicators (checked above)
     if word_count > 50 or len(line_stripped) > 250:
         return True
     
