@@ -30,6 +30,8 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
     Improvement #1: Handles insurance/registration blocks like:
     "Name of Insurance Company: State: Policy Holder Name: Birth Date#: / /"
     
+    Enhanced to handle long concatenated form lines with many fields.
+    
     Args:
         line: Input line with multiple colon-separated labels
         
@@ -41,9 +43,15 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
     if line.count(':') < 2 or len(line) < 40:
         return []
     
-    # Pattern: Capitalized words (possibly multi-word) followed by colon
-    # Matches: "Name:", "Birth Date:", "Member ID/", "SS#:"
-    pattern = r'([A-Z][^:]{2,50}?):\s*'
+    # Avoid splitting if line starts as a question or statement
+    if re.match(r'^(I|You|We|The)\s', line):
+        return []
+    
+    # Improved pattern: Capitalized words (possibly multi-word) followed by colon
+    # This pattern better handles underscores and blanks between labels
+    # Matches: "Name:", "Birth Date:", "Member ID:", "SS#:"
+    # Uses non-greedy matching and excludes long underscore sequences
+    pattern = r'([A-Z][A-Za-z\s/#\.\-]{1,45}?):\s*'
     
     matches = list(re.finditer(pattern, line))
     
@@ -51,13 +59,13 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
     if len(matches) < 2:
         return []
     
-    # Avoid splitting if the line looks like a question or single statement
-    if '?' in line or re.match(r'^(I|You|We|The)\s', line):
-        return []
-    
     fields = []
     for i, match in enumerate(matches):
-        label = match.group(1).strip()
+        label_raw = match.group(1).strip()
+        
+        # Clean up label: remove trailing underscores and excess whitespace
+        # "Nickname_____________" -> "Nickname"
+        label = re.sub(r'[_\s]+$', '', label_raw).strip()
         
         # Skip very short labels (likely not field labels)
         if len(label) < 2:
@@ -76,6 +84,11 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
         label_lower = label.lower()
         skip_words = ['or', 'and', 'if', 'of the', 'to', 'for', 'from', 'with', 'by']
         if label_lower in skip_words:
+            continue
+        
+        # Skip labels that are likely part of questions rather than field labels
+        # e.g., "What is your preferred method of contact?"
+        if '?' in label or label_lower.startswith(('what', 'who', 'when', 'where', 'why', 'how')):
             continue
         
         # Create field with inferred type
@@ -119,6 +132,7 @@ def create_field_from_label(label: str, value_hint: str = "") -> Optional[Dict]:
         "title": clean_label,
         "section": "General",  # Will be updated during section inference
         "optional": False,
+        "value_area": value_hint,  # Store value area for potential sub-field extraction
     }
     
     if control:
@@ -379,7 +393,11 @@ def should_split_line_into_fields(line: str) -> bool:
     # Check for multiple colon patterns
     if line.count(':') >= 2:
         # Verify they look like field labels, not sentences
-        if not any(q in line for q in ['?', 'I ', 'You ', 'We ', 'The ']):
+        # Don't reject based on '?' if there are many colons (>= 5) - likely a form line with a question embedded
+        if line.count(':') >= 5:
+            return True
+        # For fewer colons, check if it starts like a question/statement
+        if not re.match(r'^(I|You|We|The)\s', line):
             return True
     
     # Check for multi-subfield patterns
