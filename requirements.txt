@@ -1,6 +1,13 @@
 # For application functionality, including PDF and OCR support
 unstructured[all-docs]
 
+# System dependencies (install via system package manager)
+# On Ubuntu/Debian: sudo apt-get install poppler-utils tesseract-ocr
+# On macOS: brew install poppler tesseract
+# These are required for:
+# - poppler-utils: PDF processing and extraction
+# - tesseract-ocr: OCR capabilities for scanned documents
+
 # For running the test suite
 pytest
 pytest-cov
