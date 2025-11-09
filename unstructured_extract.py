@@ -35,8 +35,34 @@ def validate_file(file_path):
     return file_path.lower().endswith(('.pdf', '.docx'))
 
 def element_to_text(e):
-    """Safely get text from Unstructured elements or fallback to str(e)."""
+    """Safely get text from Unstructured elements.
+    
+    For tables, try to preserve row structure by parsing HTML if available.
+    This helps maintain field separation in multi-column layouts.
+    """
+    import re
+    
     try:
+        # For table elements, try to use HTML to preserve row structure
+        if type(e).__name__ == 'Table':
+            # Try to get HTML representation
+            if hasattr(e, 'metadata') and hasattr(e.metadata, 'text_as_html') and e.metadata.text_as_html:
+                html = e.metadata.text_as_html
+                # Split by table rows
+                rows = html.split('</tr>')
+                row_texts = []
+                for row in rows:
+                    # Remove HTML tags and clean up
+                    row_text = re.sub(r'<[^>]+>', ' ', row).strip()
+                    if row_text:
+                        # Normalize whitespace
+                        row_text = re.sub(r'\s+', ' ', row_text)
+                        row_texts.append(row_text)
+                # Join rows with double newline to preserve separation
+                if row_texts:
+                    return '\n\n'.join(row_texts)
+        
+        # Default: get text attribute or fallback to str()
         t = getattr(e, "text", None)
         if t is None and hasattr(e, "get"):
             t = e.get("text")
@@ -97,6 +123,70 @@ def extract_text(file_path,
     except Exception as e:
         print(f"❌ Extraction failed for {file_path}: {str(e)}")
         return ""
+
+def process_one(file_path,
+                out_dir,
+                strategy="hi_res",
+                use_ocr=False,
+                auto_ocr=True,
+                languages="eng",
+                infer_table_structure=True,
+                include_page_breaks=False,
+                hi_res_model_name=None):
+    """Process a single file and save extracted text to output directory.
+    
+    Args:
+        file_path: Path to the file to process
+        out_dir: Output directory for the extracted text
+        strategy: Extraction strategy ('hi_res', 'fast', 'auto', 'ocr_only')
+        use_ocr: Force OCR for all pages (deprecated, use strategy='ocr_only')
+        auto_ocr: Automatically detect and use OCR for scanned PDFs
+        languages: Language codes for OCR
+        infer_table_structure: Preserve table structures
+        include_page_breaks: Include page break markers
+        hi_res_model_name: Specific model for hi_res strategy
+    
+    Returns:
+        Path to the output text file, or None if extraction failed
+    """
+    from pathlib import Path
+    
+    file_path = Path(file_path)
+    out_dir = Path(out_dir)
+    
+    if not validate_file(str(file_path)):
+        print(f"⚠️ File not supported: {file_path}")
+        return None
+    
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_name = f"{file_path.stem}.txt"
+    out_path = out_dir / out_name
+    
+    try:
+        # Handle deprecated use_ocr parameter
+        if use_ocr and strategy != "ocr_only":
+            strategy = "ocr_only"
+        
+        text = extract_text(file_path,
+                           strategy=strategy,
+                           languages=languages,
+                           infer_table_structure=infer_table_structure,
+                           include_page_breaks=include_page_breaks,
+                           hi_res_model_name=hi_res_model_name)
+        
+        with open(out_path, 'w', encoding='utf-8') as f:
+            f.write(text or "")
+        
+        print(f"✅ Processed: {file_path}")
+        return out_path
+        
+    except Exception as e:
+        print(f"❌ Error processing {file_path}: {str(e)}")
+        # Write error message to file for debugging
+        with open(out_path, 'w', encoding='utf-8') as f:
+            f.write(f"Extraction error: {str(e)}")
+        return None
+
 
 def process_folder(input_dir,
                    output_dir,
