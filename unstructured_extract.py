@@ -35,8 +35,34 @@ def validate_file(file_path):
     return file_path.lower().endswith(('.pdf', '.docx'))
 
 def element_to_text(e):
-    """Safely get text from Unstructured elements or fallback to str(e)."""
+    """Safely get text from Unstructured elements.
+    
+    For tables, try to preserve row structure by parsing HTML if available.
+    This helps maintain field separation in multi-column layouts.
+    """
+    import re
+    
     try:
+        # For table elements, try to use HTML to preserve row structure
+        if type(e).__name__ == 'Table':
+            # Try to get HTML representation
+            if hasattr(e, 'metadata') and hasattr(e.metadata, 'text_as_html') and e.metadata.text_as_html:
+                html = e.metadata.text_as_html
+                # Split by table rows
+                rows = html.split('</tr>')
+                row_texts = []
+                for row in rows:
+                    # Remove HTML tags and clean up
+                    row_text = re.sub(r'<[^>]+>', ' ', row).strip()
+                    if row_text:
+                        # Normalize whitespace
+                        row_text = re.sub(r'\s+', ' ', row_text)
+                        row_texts.append(row_text)
+                # Join rows with double newline to preserve separation
+                if row_texts:
+                    return '\n\n'.join(row_texts)
+        
+        # Default: get text attribute or fallback to str()
         t = getattr(e, "text", None)
         if t is None and hasattr(e, "get"):
             t = e.get("text")
