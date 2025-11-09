@@ -39,8 +39,8 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
         List of field dictionaries, or empty list if not applicable
     """
     # Only process lines that look like they have multiple fields
-    # Need at least 2 colons and reasonable length
-    if line.count(':') < 2 or len(line) < 40:
+    # Need at least 2 colons and reasonable length (lowered to 20 to catch "Preferred Name: Birth Date:")
+    if line.count(':') < 2 or len(line) < 20:
         return []
     
     # Avoid splitting if line starts as a question or statement
@@ -390,6 +390,16 @@ def should_split_line_into_fields(line: str) -> bool:
     
     Returns True if the line contains multiple field indicators.
     """
+    # Don't split if line contains checkbox/radio options (indicated by patterns like "Male Female" or "[ ]")
+    # These should be parsed as single checkbox/radio questions instead
+    # Check for checkbox symbols: [ ], !, or patterns like _] or L_]
+    if re.search(r'\[\s*\]|[!\u2610-\u2612]|_\]|L_\]', line):  # Has checkbox symbols
+        # Count potential options (capitalized words that could be options)
+        options_pattern = r'\b(Male|Female|Married|Single|Yes|No|Other)\b'
+        option_count = len(re.findall(options_pattern, line, re.IGNORECASE))
+        if option_count >= 2:  # Multiple options found - likely a checkbox/radio question
+            return False
+    
     # Check for multiple colon patterns
     if line.count(':') >= 2:
         # Verify they look like field labels, not sentences
