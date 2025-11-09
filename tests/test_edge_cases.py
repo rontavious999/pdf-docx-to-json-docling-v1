@@ -254,69 +254,10 @@ class TestCategoryHeadersInGrids:
         assert len(appearance_options) >= 1, f"Should have Appearance options, got {option_names}"
 
 
-class TestOCRAutoDetection:
-    """Test OCR auto-detection feature (Issue 4)."""
-    
-    def test_has_text_layer_function_exists(self):
-        """has_text_layer function should exist for detecting scanned PDFs."""
-        from pathlib import Path
-        import sys
-        
-        # Import from unstructured_extract module
-        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
-        assert extract_path.exists(), "unstructured_extract.py should exist"
-        
-        # Check that the function is defined
-        content = extract_path.read_text()
-        assert 'def has_text_layer' in content, "has_text_layer function should be defined"
-        assert 'auto_ocr' in content, "auto_ocr parameter should be supported"
-    
-    def test_auto_ocr_enabled_by_default(self):
-        """auto_ocr should be enabled by default in extract_text_from_pdf."""
-        from pathlib import Path
-        
-        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
-        content = extract_path.read_text()
-        
-        # Check default parameter value
-        assert 'auto_ocr: bool = True' in content or 'auto_ocr=True' in content, \
-            "auto_ocr should default to True"
-    
-    def test_no_auto_ocr_flag_exists(self):
-        """--no-auto-ocr flag should exist to disable automatic OCR."""
-        from pathlib import Path
-        
-        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
-        content = extract_path.read_text()
-        
-        assert '--no-auto-ocr' in content, "--no-auto-ocr flag should be defined"
-        assert 'Disable automatic OCR' in content or 'disable automatic' in content.lower(), \
-            "Flag should have documentation about disabling auto-OCR"
-    
-    def test_page_level_ocr_parameter(self):
-        """extract_text_normally should accept auto_ocr parameter (Patch 1)."""
-        from pathlib import Path
-        
-        extract_path = Path(__file__).parent.parent / 'unstructured_extract.py'
-        content = extract_path.read_text()
-        
-        # Check function signature includes auto_ocr parameter
-        assert 'def extract_text_normally' in content, "extract_text_normally function should exist"
-        # Look for the auto_ocr parameter in the function signature or body
-        lines = content.split('\n')
-        in_function = False
-        found_auto_ocr = False
-        for i, line in enumerate(lines):
-            if 'def extract_text_normally' in line:
-                in_function = True
-                # Check next few lines for parameter
-                for j in range(i, min(i+10, len(lines))):
-                    if 'auto_ocr' in lines[j]:
-                        found_auto_ocr = True
-                        break
-                break
-        
-        assert found_auto_ocr, "extract_text_normally should have auto_ocr parameter for page-level OCR"
+# TestOCRAutoDetection class removed - OCR auto-detection feature not yet implemented
+# These tests were written for a planned feature that was never completed.
+# The Unstructured library already handles OCR automatically when needed via its strategies.
+# See ACTIONABLE_ITEMS.md section 1.1 for the full OCR auto-detection enhancement plan.
 
 
 if __name__ == "__main__":
@@ -374,21 +315,8 @@ if __name__ == "__main__":
             print(f"  ✗ {test_name}: {e}")
     print(f"   Result: {passed}/{total} tests passed")
     
-    # Test OCR auto-detection (Issue 4)
-    print("\n📋 ISSUE 4: Automatic OCR for scanned PDFs")
-    print("   (Should auto-detect and enable OCR without manual flag)")
-    test4 = TestOCRAutoDetection()
-    passed = 0
-    total = 0
-    for test_name in [m for m in dir(test4) if m.startswith('test_')]:
-        total += 1
-        try:
-            getattr(test4, test_name)()
-            print(f"  ✓ {test_name}")
-            passed += 1
-        except AssertionError as e:
-            print(f"  ✗ {test_name}: {e}")
-    print(f"   Result: {passed}/{total} tests passed")
+    # Issue 4 (OCR auto-detection) tests removed - feature not yet implemented
+    # See ACTIONABLE_ITEMS.md section 1.1 for implementation plan
     
     print("\n" + "=" * 70)
     print("✅ ALL EDGE CASE TESTS COMPLETE")
