@@ -1983,6 +1983,86 @@ def detect_inline_checkbox_with_text(line: str) -> Optional[Tuple[str, str, str]
     return (key, title, field_type)
 
 
+def detect_multiple_label_colon_line(line: str) -> Optional[List[Tuple[str, str]]]:
+    """
+    Detect lines with multiple "Label:" patterns that should be split into separate fields.
+    
+    Examples:
+        "Address: Apt# State: Zip:" -> [("address", "Address"), ("apt", "Apt#"), ("state", "State"), ("zip", "Zip")]
+        "Name: DOB: SSN:" -> [("name", "Name"), ("dob", "DOB"), ("ssn", "SSN")]
+        "Name of Insurance Company: Policy Holder Name: Member ID/SS#:" -> separate fields for each label with colon
+    
+    This handles cases where multiple form fields are on the same line, each with a colon.
+    Also handles "Label: Field Label:" patterns where Field is between colons.
+    """
+    # Count colons in the line
+    colon_count = line.count(':')
+    
+    # Need at least 2 colons to be a multi-label line
+    if colon_count < 2:
+        return None
+    
+    # Strategy: Split by colons and identify labels
+    # Between colons, there might be multiple field labels
+    # We identify these by looking for very short words or words with # that are clearly separate labels
+    # But we keep multi-word phrases together (like "Policy Holder Name" or "Member ID")
+    
+    fields = []
+    parts = line.split(':')
+    
+    for i in range(len(parts) - 1):  # -1 because last part after final colon has no field
+        label = parts[i].strip()
+        
+        if i == 0:
+            # First label - use it directly
+            label = re.sub(r'[_/]+$', '', label).strip()
+            if label and len(label) >= 2:
+                field_key = slugify(label)
+                fields.append((field_key, label))
+        else:
+            # Check if this part contains multiple CLEARLY SEPARATE field labels
+            # Only split if we have obvious separate fields like "Apt# State" or "DOB SSN"
+            
+            # Split into tokens
+            tokens = label.split()
+            
+            # Heuristic: Only split if:
+            # 1. We have exactly 2 tokens AND both are short (<=5 chars) OR one has #
+            # 2. We have multiple all-caps abbreviations
+            should_split = False
+            
+            if len(tokens) == 2:
+                # Two tokens - check if they look like separate fields
+                has_special = any(re.search(r'#', t) for t in tokens)
+                both_short = all(len(t) <= 5 for t in tokens)
+                both_caps = all(t.isupper() and len(t) >= 2 for t in tokens)
+                
+                if (both_short and has_special) or both_caps:
+                    should_split = True
+            
+            if should_split:
+                # Split into separate fields
+                for token in tokens:
+                    token = token.strip()
+                    if token and len(token) >= 2:
+                        token = re.sub(r'[_/]+$', '', token).strip()
+                        if token:
+                            field_key = slugify(token)
+                            fields.append((field_key, token))
+            else:
+                # Keep as single label (this preserves "Policy Holder Name", "Member ID/ SS#")
+                label = re.sub(r'[_/]+$', '', label).strip()
+                if label and len(label) >= 2:
+                    field_key = slugify(label)
+                    fields.append((field_key, label))
+    
+    # Return only if we found at least 2 valid fields
+    if len(fields) >= 2:
+        return fields
+    
+    return None
+
+
 def detect_multi_field_line(line: str, section: str = "", prev_context: List[str] = None) -> Optional[List[Tuple[str, str]]]:
     """
     Improvement 3: Detect lines with a single label followed by multiple blank fields,
@@ -3046,6 +3126,40 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 k += 1; extra_lines += 1
             j = max(j, k)
 
+        # Check for multiple "Label:" patterns on the same line first
+        # This handles cases like "Address: Apt# State: Zip:" or "Name: DOB: SSN:"
+        multiple_label_fields = detect_multiple_label_colon_line(line)
+        if multiple_label_fields:
+            if debug:
+                print(f"  [debug] multiple-label-colon detected: {line[:60]}... -> {len(multiple_label_fields)} fields")
+                print(f"  [debug]   Keys: {[k for k, _ in multiple_label_fields]}")
+            for field_key, field_title in multiple_label_fields:
+                # Determine input type based on field name
+                input_type = "text"
+                if "phone" in field_key.lower():
+                    input_type = "phone"
+                elif "email" in field_key.lower():
+                    input_type = "email"
+                elif "zip" in field_key.lower() or field_key.lower() == "zip":
+                    input_type = "zip"
+                elif "ssn" in field_key.lower() or field_key.lower() in ["ss", "social_security"]:
+                    input_type = "ssn"
+                elif field_key.lower() in ["state", "st"]:
+                    # Create a states field instead
+                    questions.append(Question(field_key, field_title, cur_section, "states",
+                                            control={"hint": "Select state..."}))
+                    continue
+                elif "date" in field_key.lower() or "dob" in field_key.lower() or field_key.lower() == "birth":
+                    # Create a date field
+                    questions.append(Question(field_key, field_title, cur_section, "date",
+                                            control={"input_type": "past"}))
+                    continue
+                
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                          control={"input_type": input_type}))
+            i += 1
+            continue
+        
         # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
         # Improvement 3: Pass section and context for enhanced field naming
         prev_context = lines[max(0, i-3):i] if i > 0 else []
