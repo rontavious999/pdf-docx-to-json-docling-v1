@@ -2514,7 +2514,7 @@
   ],
   "health_history": [
     {
-      "key": "q_1_under_care",
+      "key": "1.under_care",
       "type": "radio",
       "title": "Are you currently under the care of a physician?",
       "control": {
@@ -2540,11 +2540,11 @@
     {
       "if": [
         {
-          "key": "q_1_under_care",
+          "key": "1.under_care",
           "value": true
         }
       ],
-      "key": "q_1_under_care_phone",
+      "key": "1.under_care_phone",
       "type": "input",
       "title": "Physician phone number",
       "control": {
@@ -2566,7 +2566,7 @@
       "optional": true
     },
     {
-      "key": "q_2_injury_or_illnes",
+      "key": "2.injury_or_illnes",
       "type": "radio",
       "title": "Are you presently being treated for any injury or illness?",
       "control": {
@@ -2590,7 +2590,7 @@
       "section": "General Health Information"
     },
     {
-      "key": "q_3_hospitalized",
+      "key": "3.hospitalized",
       "type": "radio",
       "title": "Have you ever been hospitalized for an injury or illness?",
       "control": {
@@ -2621,7 +2621,7 @@
           "value": "male"
         }
       ],
-      "key": "q_6_pregnant",
+      "key": "6.pregnant",
       "meta": {
         "problem": "Pregnant/planning"
       },
@@ -2656,7 +2656,7 @@
           "value": "male"
         }
       ],
-      "key": "q_6_breastfeeding",
+      "key": "6.breastfeeding",
       "meta": {
         "problem": "Nursing"
       },
@@ -2684,7 +2684,7 @@
       "section": "General Health Information"
     },
     {
-      "key": "q_6_antibiotics",
+      "key": "6.antibiotics",
       "meta": {
         "problem": "Pre-med with Antibiotics"
       },
@@ -2712,7 +2712,7 @@
       "section": "General Health Information"
     },
     {
-      "key": "q_6_alcohol",
+      "key": "6.alcohol",
       "meta": {
         "problem": "Alcohol use"
       },
@@ -2740,7 +2740,7 @@
       "section": "General Health Information"
     },
     {
-      "key": "q_6_tobacco",
+      "key": "6.tobacco",
       "meta": {
         "problem": "Tobacco use"
       },
@@ -2768,7 +2768,7 @@
       "section": "General Health Information"
     },
     {
-      "key": "q_4_allergy",
+      "key": "4.allergy",
       "type": "radio",
       "title": "Have you ever had an allergic reaction?",
       "control": {
@@ -2861,7 +2861,7 @@
       "control": {
         "questions": [
           {
-            "key": "q_6_digestive_conditions",
+            "key": "6.digestive_conditions",
             "type": "radio",
             "title": "Do you have a history or are currently being treated for any Digestive conditions?",
             "control": {
@@ -2925,7 +2925,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_heart_conditions",
+            "key": "6.heart_conditions",
             "type": "radio",
             "title": "Do you have a history or are currently being treated for any Heart or Circulatory conditions?",
             "control": {
@@ -3009,7 +3009,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_neurological_conditions",
+            "key": "6.neurological_conditions",
             "type": "radio",
             "title": "Do you have a history or are currently being treated for any Neurological conditions?",
             "control": {
@@ -3081,7 +3081,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_lung_conditions",
+            "key": "6.lung_conditions",
             "type": "radio",
             "title": "Do you have a history or are currently being treated for any Lung or Breathing conditions?",
             "control": {
@@ -3149,7 +3149,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_autoimmune_conditions",
+            "key": "6.autoimmune_conditions",
             "type": "radio",
             "title": "Do you have a history or are currently being treated for any Autoimmune conditions?",
             "control": {
@@ -3217,7 +3217,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_head_or_neck_injuries",
+            "key": "6.head_or_neck_injuries",
             "meta": [],
             "type": "radio",
             "title": "Head or neck injuries?",
@@ -3243,7 +3243,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_artificial_joint",
+            "key": "6.artificial_joint",
             "meta": [],
             "type": "radio",
             "title": "Artificial Joint?",
@@ -3269,7 +3269,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_high_cholesterol",
+            "key": "6.high_cholesterol",
             "meta": [],
             "type": "radio",
             "title": "High cholesterol?",
@@ -3295,7 +3295,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_cancer",
+            "key": "6.cancer",
             "meta": {
               "problem": "Cancer"
             },
@@ -3323,7 +3323,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_tumor_or_abnormal_growth",
+            "key": "6.tumor_or_abnormal_growth",
             "meta": [],
             "type": "radio",
             "title": "Tumor or abnormal growth?",
@@ -3349,7 +3349,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_radiation",
+            "key": "6.radiation",
             "meta": [],
             "type": "radio",
             "title": "Radiation therapy?",
@@ -3375,7 +3375,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_chemotherapy",
+            "key": "6.chemotherapy",
             "meta": [],
             "type": "radio",
             "title": "Chemotherapy?",
@@ -3401,7 +3401,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_hiv",
+            "key": "6.hiv",
             "meta": [],
             "type": "radio",
             "title": "HIV / AIDS?",
@@ -3427,7 +3427,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_osteoporosis",
+            "key": "6.osteoporosis",
             "meta": [],
             "type": "radio",
             "title": "Osteoporosis / osteopenia?",
@@ -3453,7 +3453,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_diabetes",
+            "key": "6.diabetes",
             "meta": {
               "problem": "Diabetes"
             },
@@ -3481,7 +3481,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_anemia",
+            "key": "6.anemia",
             "meta": [],
             "type": "radio",
             "title": "Anemia?",
@@ -3507,7 +3507,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_kidney_disease",
+            "key": "6.kidney_disease",
             "meta": [],
             "type": "radio",
             "title": "Kidney disease?",
@@ -3533,7 +3533,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_liver_disease",
+            "key": "6.liver_disease",
             "meta": [],
             "type": "radio",
             "title": "Liver disease?",
@@ -3559,7 +3559,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_thyroid_disease",
+            "key": "6.thyroid_disease",
             "meta": [],
             "type": "radio",
             "title": "Thyroid disease?",
@@ -3585,7 +3585,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_tuberculosis_measles_chicken_pox",
+            "key": "6.tuberculosis_measles_chicken_pox",
             "meta": [],
             "type": "radio",
             "title": "Tuberculosis / measles / chicken pox?",
@@ -3611,7 +3611,7 @@
             "section": "Medical Conditions"
           },
           {
-            "key": "q_6_other_conditions",
+            "key": "6.other_conditions",
             "type": "radio",
             "title": "Any other medical condition we should know of?",
             "control": {
@@ -3855,7 +3855,7 @@
       "control": {
         "questions": [
           {
-            "key": "q_5_pain_medications",
+            "key": "5.pain_medications",
             "type": "radio",
             "title": "Are you taking any pain medications?",
             "control": {
@@ -3915,7 +3915,7 @@
             "section": "Medications"
           },
           {
-            "key": "q_5_anxiety_medications",
+            "key": "5.anxiety_medications",
             "type": "radio",
             "title": "Are you taking any Antidepressants or Anxiety medications?",
             "control": {
@@ -3991,7 +3991,7 @@
             "section": "Medications"
           },
           {
-            "key": "q_5_blood_medications",
+            "key": "5.blood_medications",
             "type": "radio",
             "title": "Are you taking any Diabetes, Cholesterol, or Blood Pressure medications?",
             "control": {
@@ -4099,7 +4099,7 @@
             "section": "Medications"
           },
           {
-            "key": "q_5_allergy_medications",
+            "key": "5.allergy_medications",
             "type": "radio",
             "title": "Are you taking any Allergy or Asthma medications?",
             "control": {
@@ -4167,7 +4167,7 @@
             "section": "Medications"
           },
           {
-            "key": "q_5_antibiotic_medications",
+            "key": "5.antibiotic_medications",
             "type": "radio",
             "title": "Are you taking any Antibiotics?",
             "control": {
@@ -4231,7 +4231,7 @@
             "section": "Medications"
           },
           {
-            "key": "q_5_other_medications",
+            "key": "5.other_medications",
             "meta": [],
             "type": "radio",
             "title": "Are you currently taking any other medications or dietary supplements?",
@@ -4500,9 +4500,9 @@
     "currently pregnant": "pregnant",
     "bed wetting (for children)": "bed_wetting",
     "chewing on ice/foreign objects": "chewing_ice",
-    "are_you_under_a_physicians_care_now": "q_1_under_care",
-    "are_you_under_physician_care": "q_1_under_care",
-    "under_doctors_care": "q_1_under_care",
+    "are_you_under_a_physicians_care_now": "1.under_care",
+    "are_you_under_physician_care": "1.under_care",
+    "under_doctors_care": "1.under_care",
     "have_you_ever_been_hospitalized": "hospitalized",
     "have_you_had_surgery": "hospitalized",
     "have_you_ever_had_major_surgery": "hospitalized",
