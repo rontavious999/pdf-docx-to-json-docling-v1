@@ -702,13 +702,23 @@ def is_instructional_paragraph(line: str) -> bool:
         r'^i\s+have\s+(?:read|been\s+(?:informed|given))',
         r'^(?:this|it)\s+is\s+(?:understood|acknowledged)',
         r'^we\s+(?:understand|acknowledge)',
+        # Add imperative instruction patterns
+        r'^do\s+not\s+(?:consume|take|eat|drink|smoke)',
+        r'^please\s+(?:arrive|bring|remove|wear|leave)',
+        r'^ensure\s+(?:you|that)',
+        r'^your\s+escort\s+must',
+        r'^we\s+reserve\s+the\s+right',
+        r'^if\s+you\s+do\s+not',
+        # General imperative patterns (verb at start followed by object)
+        r'^(?:take|wear|remove|bring|arrive)\s+(?:any|your|all|the|short)',
     ]
     
     line_lower = line_stripped.lower()
     for pattern in instructional_starts:
         if re.match(pattern, line_lower):
             # If it starts with these AND is reasonably long, it's instructional
-            if word_count > 15:
+            # Lower threshold for imperative instructions (6+ words)
+            if word_count > 6:
                 return True
     
     # Legal/risk terminology in longer sentences

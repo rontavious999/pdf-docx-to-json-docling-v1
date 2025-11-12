@@ -23,6 +23,67 @@ from .question_parser import slugify, classify_input_type, clean_field_title
 
 # ========== Improvement #1: Parse Combined Registration/Insurance Blocks ==========
 
+def _split_compound_label(label: str) -> List[str]:
+    """
+    Split compound labels that contain multiple distinct field names.
+    
+    Examples:
+        "Apt# State" -> ["Apt#", "State"]
+        "City State" -> ["City", "State"]
+        "First Name" -> ["First Name"]  (not split - these are related words)
+    
+    Args:
+        label: The label to potentially split
+        
+    Returns:
+        List of sublabels (single item if no split needed)
+    """
+    # Common address-related field names that should be separate
+    field_keywords = [
+        'apt', 'apartment', 'unit', 'suite', 'city', 'state', 'zip', 'zipcode',
+        'postal', 'country', 'address', 'street', 'ext', 'extension'
+    ]
+    
+    # Don't split if label is a recognized multi-word field name
+    label_lower = label.lower()
+    multi_word_fields = [
+        'first name', 'last name', 'middle initial', 'middle name', 'birth date',
+        'date of birth', 'phone number', 'email address', 'social security',
+        'zip code', 'postal code', 'area code', 'insurance company', 'policy holder',
+        'member id', 'group number', 'emergency contact', 'marital status'
+    ]
+    
+    if any(mwf in label_lower for mwf in multi_word_fields):
+        return [label]  # Don't split recognized multi-word fields
+    
+    # Look for patterns like "Apt# State" or "City Zip"
+    # These are two distinct capitalized words where each is a field keyword
+    words = label.split()
+    
+    if len(words) == 2:
+        word1_lower = words[0].rstrip('#').lower()
+        word2_lower = words[1].rstrip('#').lower()
+        
+        # Check if both words are field keywords
+        if word1_lower in field_keywords and word2_lower in field_keywords:
+            return words
+    
+    # Check for patterns like "Apt#State" (no space between)
+    # Match patterns like: "Apt#" followed by a capitalized word
+    no_space_pattern = r'^([A-Z][a-z]+#?)([A-Z][a-z]+.*)$'
+    match = re.match(no_space_pattern, label)
+    if match:
+        part1 = match.group(1)
+        part2 = match.group(2)
+        part1_lower = part1.rstrip('#').lower()
+        part2_lower = part2.rstrip('#').lower()
+        
+        if part1_lower in field_keywords and part2_lower in field_keywords:
+            return [part1, part2]
+    
+    return [label]
+
+
 def split_colon_delimited_fields(line: str) -> List[Dict]:
     """
     Split lines with multiple 'Label:' patterns into separate fields.
@@ -39,8 +100,8 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
         List of field dictionaries, or empty list if not applicable
     """
     # Only process lines that look like they have multiple fields
-    # Need at least 2 colons and reasonable length (lowered to 20 to catch "Preferred Name: Birth Date:")
-    if line.count(':') < 2 or len(line) < 20:
+    # Need at least 2 colons and reasonable length (lowered to 15 to catch short multi-field lines like "City: State: Zip:")
+    if line.count(':') < 2 or len(line) < 15:
         return []
     
     # Avoid splitting if line starts as a question or statement
@@ -91,10 +152,20 @@ def split_colon_delimited_fields(line: str) -> List[Dict]:
         if '?' in label or label_lower.startswith(('what', 'who', 'when', 'where', 'why', 'how')):
             continue
         
-        # Create field with inferred type
-        field = create_field_from_label(label, value_area)
-        if field:
-            fields.append(field)
+        # Check if label contains multiple distinct field names
+        # e.g., "Apt# State" should be split into "Apt#" and "State"
+        split_labels = _split_compound_label(label)
+        if len(split_labels) > 1:
+            # Create separate fields for each sublabel
+            for sublabel in split_labels:
+                field = create_field_from_label(sublabel, "")
+                if field:
+                    fields.append(field)
+        else:
+            # Create field with inferred type
+            field = create_field_from_label(label, value_area)
+            if field:
+                fields.append(field)
     
     return fields if len(fields) >= 2 else []
 
