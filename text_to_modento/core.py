@@ -3411,6 +3411,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # These should have been filtered by scrub_headers_footers but some slip through
         # Examples: "3138 N Lincoln Ave Chicago, IL", "60657", "Chicago, IL 60632"
         # Archivev22 Enhancement: Also skip document titles and section headers that slipped through
+        # Archivev23 Enhancement: Skip sentence fragments, noise, and non-field questions
         skip_patterns = [
             r'^\d{5}$',  # Just a zip code
             r'^\d+\s+[NS]?\s*\w+\s+(Ave|Avenue|Rd|Road|St|Street|Blvd|Boulevard)\b',  # Street address
@@ -3423,8 +3424,47 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             r'\(pg\.\s*\d+\)',  # Page number reference
             r'^please\s+(ensure|note|read|remember)',  # Instructions
             r'^[*]+',  # Lines starting with asterisks (often instructions)
+            r'^[=|]+\s*\w{1,3}\s*[=|]+$',  # Symbol noise like "= ie |"
+            r'^\([A-Z]{2,}\s+[A-Za-z\s]+\)$',  # Parenthetical codes like "(CF Gingivectomy)"
+            r'^within\s+[-\d]+\s+(days?|hours?|weeks?)',  # Time references like "within -5 days"
         ]
         should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
+        
+        # Archivev23 Enhancement: Skip sentence fragments that end with a period but aren't questions
+        # (e.g., "healthy gums tissue.", "It is carried out to provide...")
+        # Field labels typically DON'T end with periods unless they're questions or abbreviations
+        if not should_skip and title.endswith('.'):
+            # Check if this is NOT a question and NOT an abbreviation
+            is_question = '?' in title
+            is_abbreviation = len(title) <= 10 and title.count('.') == 1
+            # Known field-like patterns that can end with period
+            is_field_pattern = any(pattern in title.lower() for pattern in ['dr.', 'mr.', 'mrs.', 'ms.', 'inc.', 'ltd.'])
+            
+            if not is_question and not is_abbreviation and not is_field_pattern:
+                # This looks like a sentence fragment or complete sentence, not a field label
+                word_count = len(title.split())
+                # Sentence fragments are typically 3+ words ending with period
+                if word_count >= 3:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping sentence fragment: '{title[:60]}'")
+        
+        # Archivev23 Enhancement: Skip questions that are clearly section headings, not fields
+        # (e.g., "What are the risks?" vs "Are you pregnant?" which IS a field)
+        # Section heading questions typically ask about topics, not patient status
+        if not should_skip and '?' in title:
+            # Common section heading question patterns
+            heading_question_patterns = [
+                r'^what\s+(are|is)\s+the\s+(risks?|benefits?|alternatives?|procedures?|options?)',
+                r'^how\s+(does|do|will|can)\s+(the|this|it)',
+                r'^why\s+(is|do|does|would)',
+                r'^when\s+(should|will|can)',
+                r'^who\s+(should|will|can|is)',
+            ]
+            is_heading_question = any(re.match(pattern, title.lower()) for pattern in heading_question_patterns)
+            
+            if is_heading_question:
+                should_skip = True
+                if debug: print(f"  [debug] skipping section heading question: '{title[:60]}'")
         
         # Archivev22 Enhancement: Skip document titles that look like form headers
         # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
