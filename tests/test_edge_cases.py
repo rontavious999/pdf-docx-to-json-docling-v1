@@ -78,6 +78,34 @@ class TestMultiFieldLabels:
         
         assert result is not None, "Should detect multi-field address pattern"
         assert len(result) >= 2, "Should detect at least 2 fields"
+
+
+class TestMultiFieldSplitting:
+    """Test multi-field splitting without underscores (period-separated patterns)."""
+    
+    def test_phone_with_periods(self):
+        """Phone with periods between subfields should split (parity fix)."""
+        from text_to_modento.core import split_label_with_subfields
+        
+        line = "Phone: Mobile Home. Work"
+        result = split_label_with_subfields(line)
+        
+        assert len(result) >= 3, f"Should detect 3 fields (Mobile, Home, Work), got {len(result)}: {result}"
+        assert "Mobile Phone" in result, f"Should have 'Mobile Phone', got {result}"
+        assert "Home Phone" in result, f"Should have 'Home Phone', got {result}"
+        assert "Work Phone" in result, f"Should have 'Work Phone', got {result}"
+    
+    def test_phone_with_only_spaces(self):
+        """Phone with space-separated subfields should split."""
+        from text_to_modento.core import split_label_with_subfields
+        
+        line = "Phone: Mobile Home Work"
+        result = split_label_with_subfields(line)
+        
+        assert len(result) >= 3, f"Should detect 3 fields, got {len(result)}: {result}"
+        assert "Mobile Phone" in result
+        assert "Home Phone" in result
+        assert "Work Phone" in result
     
     def test_day_evening_phone_fields(self):
         """Phone with Day/Evening should split into separate fields (Patch 2)."""
