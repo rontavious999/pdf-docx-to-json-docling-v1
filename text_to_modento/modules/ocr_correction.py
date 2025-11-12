@@ -315,6 +315,61 @@ def preprocess_field_label(label: str, known_labels: Optional[Set[str]] = None) 
     return label
 
 
+def clean_checkbox_ocr_artifacts(text: str) -> str:
+    """
+    Clean OCR artifacts commonly found in checkbox patterns.
+    
+    Handles patterns like:
+    - "OyYes]" → "[ ] Yes"
+    - "ClYesLNo" → "[ ] Yes [ ] No"
+    - "Yes[JNo" → "[ ] Yes [ ] No"
+    - "Yes[[JNo" → "[ ] Yes [ ] No"
+    - "[Yes CINo" → "[ ] Yes [ ] No"
+    - "Yes[-] No" → "[ ] Yes [ ] No"
+    - "YesLNo" → "[ ] Yes [ ] No"
+    
+    Args:
+        text: Text with potential checkbox OCR artifacts
+        
+    Returns:
+        Cleaned text with normalized checkboxes
+    """
+    if not text:
+        return text
+    
+    # Pattern 1: Fix specific mangled checkbox markers before Yes
+    # "OyYes]" or "[JYes" or "ClYes" → "[ ] Yes"
+    text = re.sub(r'\b[OCo][yj](?=Yes)', '[ ] ', text, flags=re.IGNORECASE)
+    text = re.sub(r'\[[JjCcLl](?=Yes)', '[ ] ', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b[Cc][lI](?=Yes)', '[ ] ', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b[Dd]1(?=Yes)', '[ ] ', text, flags=re.IGNORECASE)
+    
+    # Pattern 2: Fix mangled No markers (between Yes and No)
+    # "Yes]No" or "YesLNo" or "Yes[-]No" → "Yes [ ] No"
+    text = re.sub(r'(Yes)\s*[\]\[JLlCc\-]+\s*(?=No)', r'\1 [ ] ', text, flags=re.IGNORECASE)
+    
+    # Pattern 3: Fix double brackets
+    # "Yes[[" → "[ ] Yes"
+    text = re.sub(r'\[\[+', '[ ]', text)
+    
+    # Pattern 4: Fix orphaned '[' before Yes/No (but only if immediately adjacent)
+    # "[Yes" → "[ ] Yes" but NOT "Child Yes"
+    text = re.sub(r'\[(?=(?:Yes|No)\b)', '[ ] ', text, flags=re.IGNORECASE)
+    
+    # Pattern 5: Clean up any remaining malformed bracket patterns
+    # Multiple brackets or brackets with letters (like [J] or [C])
+    text = re.sub(r'\[\s*[A-Za-z]{1,2}\s*\]', '[ ]', text)
+    
+    # Pattern 6: Normalize spacing around cleaned checkboxes (but preserve newlines)
+    # Only replace space-bracket-space patterns that don't have newlines
+    text = re.sub(r'(?<!\n)\s*\[\s*\]\s*(?!\n)', ' [ ] ', text)
+    
+    # Final cleanup: remove extra spaces but preserve newlines
+    text = re.sub(r'[ \t]{2,}', ' ', text)
+    
+    return text
+
+
 def get_correction_stats(text: str) -> Dict[str, int]:
     """
     Get statistics about potential OCR corrections in text.

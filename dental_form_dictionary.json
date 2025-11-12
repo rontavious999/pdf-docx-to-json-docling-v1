@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "dental_form_dictionary",
-    "version": "1.3.0",
+    "version": "1.3.1",
     "created_utc": "2025-09-28T22:36:26.858983Z",
     "source_files": [
       "new_patient (2).json",
@@ -10,7 +10,7 @@
       "health_history (2).json",
       "contact (1).json"
     ],
-    "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized. v1.1.0 adds 65 fields from dental_forms_20251003 analysis. v1.2.0 adds 45 field definitions for previously aliased-only keys. v1.3.0 adds medical_conditions template and common field aliases (Parity Improvements #4 & #6)."
+    "notes": "Commonly reused Modento form objects for dental practices. Objects are intended to be copied as-is and/or lightly customized. v1.1.0 adds 65 fields from dental_forms_20251003 analysis. v1.2.0 adds 45 field definitions for previously aliased-only keys. v1.3.0 adds medical_conditions template and common field aliases (Parity Improvements #4 & #6). v1.3.1 adds age, cell_phone, guardian, and common medical history questions for improved parity."
   },
   "basic_information": [
     {
@@ -172,6 +172,37 @@
       },
       "section": "Basic Information",
       "optional": true
+    },
+    {
+      "key": "age",
+      "type": "input",
+      "title": "Age",
+      "control": {
+        "hint": null,
+        "input_type": "number"
+      },
+      "section": "Patient Information",
+      "optional": true
+    },
+    {
+      "key": "cell_phone",
+      "type": "input",
+      "title": "Cell Phone",
+      "control": {
+        "hint": "(xxx) xxx-xxxx",
+        "input_type": "phone"
+      },
+      "section": "Patient Information"
+    },
+    {
+      "key": "cellphone",
+      "type": "input",
+      "title": "CellPhone",
+      "control": {
+        "hint": "(xxx) xxx-xxxx",
+        "input_type": "phone"
+      },
+      "section": "Patient Information"
     }
   ],
   "referral": [
@@ -658,7 +689,7 @@
       ],
       "key": "insurance_relationship",
       "type": "radio",
-      "title": "Patient’s relationship to the Insurance Holder",
+      "title": "Patient\u2019s relationship to the Insurance Holder",
       "control": {
         "options": [
           {
@@ -700,7 +731,7 @@
       ],
       "key": "insurance_holder",
       "type": "input",
-      "title": "Policy Holder’s Name",
+      "title": "Policy Holder\u2019s Name",
       "control": {
         "hint": "Full name of an insurance subscriber",
         "input_type": "name"
@@ -726,7 +757,7 @@
       ],
       "key": "insurance_dob",
       "type": "date",
-      "title": "Policy Holder’s Date of Birth",
+      "title": "Policy Holder\u2019s Date of Birth",
       "control": {
         "input_type": "past"
       },
@@ -751,7 +782,7 @@
       ],
       "key": "insurance_ssn",
       "type": "input",
-      "title": "Policy Holder’s SSN",
+      "title": "Policy Holder\u2019s SSN",
       "control": {
         "input_type": "ssn"
       },
@@ -776,7 +807,7 @@
       ],
       "key": "insurance_address",
       "type": "input",
-      "title": "Policy Holder’s Address",
+      "title": "Policy Holder\u2019s Address",
       "control": {
         "hint": "Street Address, Apt#",
         "input_type": "name"
@@ -802,7 +833,7 @@
       ],
       "key": "insurance_city",
       "type": "input",
-      "title": "Policy Holder’s City",
+      "title": "Policy Holder\u2019s City",
       "control": {
         "hint": null,
         "input_type": "name"
@@ -828,7 +859,7 @@
       ],
       "key": "insurance_state",
       "type": "states",
-      "title": "Policy Holder’s State",
+      "title": "Policy Holder\u2019s State",
       "control": {
         "hint": "Select state..."
       },
@@ -853,7 +884,7 @@
       ],
       "key": "insurance_zipcode",
       "type": "input",
-      "title": "Policy Holder’s ZIP",
+      "title": "Policy Holder\u2019s ZIP",
       "control": {
         "hint": null,
         "input_type": "zip"
@@ -879,7 +910,7 @@
       ],
       "key": "insurance_phone",
       "type": "input",
-      "title": "Policy Holder’s Phone Number",
+      "title": "Policy Holder\u2019s Phone Number",
       "control": {
         "hint": null,
         "input_type": "phone"
@@ -905,7 +936,7 @@
       ],
       "key": "insurance_employer",
       "type": "input",
-      "title": "Policy Holder’s Employer",
+      "title": "Policy Holder\u2019s Employer",
       "control": {
         "hint": null,
         "input_type": "name"
@@ -1190,7 +1221,7 @@
       ],
       "key": "sec_insurance_relationship",
       "type": "radio",
-      "title": "Patient’s relationship to the Insurance Holder",
+      "title": "Patient\u2019s relationship to the Insurance Holder",
       "control": {
         "options": [
           {
@@ -1236,7 +1267,7 @@
       ],
       "key": "sec_insurance_holder",
       "type": "input",
-      "title": "Policy Holder’s Name",
+      "title": "Policy Holder\u2019s Name",
       "control": {
         "hint": "Full name of an insurance subscriber",
         "input_type": "name"
@@ -1266,7 +1297,7 @@
       ],
       "key": "sec_insurance_dob",
       "type": "date",
-      "title": "Policy Holder’s Date of Birth",
+      "title": "Policy Holder\u2019s Date of Birth",
       "control": {
         "input_type": "past"
       },
@@ -1295,7 +1326,7 @@
       ],
       "key": "sec_insurance_ssn",
       "type": "input",
-      "title": "Policy Holder’s SSN",
+      "title": "Policy Holder\u2019s SSN",
       "control": {
         "input_type": "ssn"
       },
@@ -1324,7 +1355,7 @@
       ],
       "key": "sec_insurance_address",
       "type": "input",
-      "title": "Policy Holder’s Address",
+      "title": "Policy Holder\u2019s Address",
       "control": {
         "hint": "Street Address, Apt#",
         "input_type": "name"
@@ -1354,7 +1385,7 @@
       ],
       "key": "sec_insurance_city",
       "type": "input",
-      "title": "Policy Holder’s City",
+      "title": "Policy Holder\u2019s City",
       "control": {
         "hint": null,
         "input_type": "name"
@@ -1384,7 +1415,7 @@
       ],
       "key": "sec_insurance_state",
       "type": "states",
-      "title": "Policy Holder’s State",
+      "title": "Policy Holder\u2019s State",
       "control": {
         "hint": "Select state..."
       },
@@ -1413,7 +1444,7 @@
       ],
       "key": "sec_insurance_zipcode",
       "type": "input",
-      "title": "Policy Holder’s ZIP",
+      "title": "Policy Holder\u2019s ZIP",
       "control": {
         "hint": null,
         "input_type": "zip"
@@ -1443,7 +1474,7 @@
       ],
       "key": "sec_insurance_phone",
       "type": "input",
-      "title": "Policy Holder’s Phone Number",
+      "title": "Policy Holder\u2019s Phone Number",
       "control": {
         "hint": null,
         "input_type": "phone"
@@ -1473,7 +1504,7 @@
       ],
       "key": "sec_insurance_employer",
       "type": "input",
-      "title": "Policy Holder’s Employer",
+      "title": "Policy Holder\u2019s Employer",
       "control": {
         "hint": null,
         "input_type": "name"
@@ -1639,7 +1670,7 @@
     {
       "key": "concerns",
       "type": "radio",
-      "title": "Do you have any immediate concerns you’d like us to address? ",
+      "title": "Do you have any immediate concerns you\u2019d like us to address? ",
       "control": {
         "extra": {
           "hint": "Please select all concerns",
@@ -4235,7 +4266,7 @@
       "type": "terms",
       "title": "Privacy Policy Consent",
       "control": {
-        "text": "CLIENT RIGHTS AND HIPAA AUTHORIZATIONS\n\nThe following specifies your rights about this authorization under the Health Insurance Portability and Accountability Act of 1996, as amended from time to time (“HIPAA”).\n\n1. Tell your provider if you do not understand this authorization, and the provider will explain it to you.\n\n2. You have the right to revoke or cancel this authorization at any time, except: (a) to the extent information has already been shared based on this authorization; or (b) this authorization was obtained as a condition of obtaining insurance coverage. To revoke or cancel this authorization, you must submit your request in writing to the provider at the following address: {{practice_address}}:\n\n3. You may refuse to sign this authorization. Your refusal to sign will not affect your ability to obtain treatment, payment, enrollment or your eligibility for benefits. However, you may be required to complete this authorization form before receiving treatment if you have authorized your provider to disclose information about you to a third party. If you refuse to sign this authorization, and you have authorized your provider to disclose information about you to a third party, your provider has the right to decide not to treat you or accept you as a patient in their practice.\n\n4. Once the information about you leaves this office according to the terms of this authorization, this office has no control over how it will be used by the recipient. You need to be aware that at that point your information may no longer be protected by HIPAA. If the person or entity receiving this information is not a health care provider or health plan covered by federal privacy regulations, the information described above may be disclosed to other individuals or institutions and no longer protected by these regulations.\n\n5. You may inspect or copy the protected dental information to be used or disclosed under this authorization. You do not have the right of access to the following protected dental information: psychotherapy notes, information compiled for legal proceedings, laboratory results to which the Clinical Laboratory Improvement Act (“CLIA”) prohibits access or information held by certain research laboratories. In addition, our provider may deny access if the provider reasonably believes access could cause harm to you or another individual. If access is denied, you may request to have a licensed health care professional for a second opinion at your expense.\n\n6. If this office initiated this authorization, you must receive a copy of the signed authorization.\n\n7. Special Instructions for completing this authorization for the use and disclosure of Psychotherapy Notes. HIPAA provides special protections to certain medical records known as “Psychotherapy Notes.” All Psychotherapy Notes recorded on any medium by a mental health professional (such as a psychologist or psychiatrist) must be kept by the author and filed separately from the rest of the client’s medical records to maintain a higher standard of protection. “Psychotherapy Notes” are defined under HIPAA as notes recorded by a health care provider who is a mental health professional documenting or analyzing the contents of conversation during a private counseling session or a group, joint or family counseling session and that are separate from the rest of the individual’s medical records. Excluded from the “Psychotherapy Notes” definition are the following: (a) medication prescription and monitoring, (b) counseling session start and stop times, (c) the modalities and frequencies of treatment furnished, (d) the results of clinical tests, and (e) any summary of diagnosis, functional status, the treatment plan, symptoms, prognosis, and progress to date. Except for limited circumstances set forth in HIPAA, in order for a medical provider to release “Psychotherapy Notes” to a third party, the client who is the subject of the Psychotherapy Notes must sign this authorization to specifically allow for the release of Psychotherapy Notes. Such authorization must be separate from an authorization to release other dental records.\n\n8. You have a right to an accounting of the disclosures of your protected dental information by the provider or its business associates. The maximum disclosure accounting period is the six years immediately preceding the accounting request. The provider is not required to provide an accounting for disclosures: (a) for treatment, payment, or dental care operations; (b) to you or your personal representative; (c) for notification of or to persons involved in an individual’s dental care or payment for dental care, for disaster relief, or for facility directories; (d) pursuant to an authorization; (e) of a limited data set; (f) for national security or intelligence purposes; (g) to correctional institutions or law enforcement officials for certain purposes regarding inmates or individuals in lawful custody; or (h) incident to otherwise permitted or required uses or disclosures. Accounting for disclosures to dental oversight agencies and law enforcement officials must be temporarily suspended on their written representation that an accounting would likely impede their activities.",
+        "text": "CLIENT RIGHTS AND HIPAA AUTHORIZATIONS\n\nThe following specifies your rights about this authorization under the Health Insurance Portability and Accountability Act of 1996, as amended from time to time (\u201cHIPAA\u201d).\n\n1. Tell your provider if you do not understand this authorization, and the provider will explain it to you.\n\n2. You have the right to revoke or cancel this authorization at any time, except: (a) to the extent information has already been shared based on this authorization; or (b) this authorization was obtained as a condition of obtaining insurance coverage. To revoke or cancel this authorization, you must submit your request in writing to the provider at the following address: {{practice_address}}:\n\n3. You may refuse to sign this authorization. Your refusal to sign will not affect your ability to obtain treatment, payment, enrollment or your eligibility for benefits. However, you may be required to complete this authorization form before receiving treatment if you have authorized your provider to disclose information about you to a third party. If you refuse to sign this authorization, and you have authorized your provider to disclose information about you to a third party, your provider has the right to decide not to treat you or accept you as a patient in their practice.\n\n4. Once the information about you leaves this office according to the terms of this authorization, this office has no control over how it will be used by the recipient. You need to be aware that at that point your information may no longer be protected by HIPAA. If the person or entity receiving this information is not a health care provider or health plan covered by federal privacy regulations, the information described above may be disclosed to other individuals or institutions and no longer protected by these regulations.\n\n5. You may inspect or copy the protected dental information to be used or disclosed under this authorization. You do not have the right of access to the following protected dental information: psychotherapy notes, information compiled for legal proceedings, laboratory results to which the Clinical Laboratory Improvement Act (\u201cCLIA\u201d) prohibits access or information held by certain research laboratories. In addition, our provider may deny access if the provider reasonably believes access could cause harm to you or another individual. If access is denied, you may request to have a licensed health care professional for a second opinion at your expense.\n\n6. If this office initiated this authorization, you must receive a copy of the signed authorization.\n\n7. Special Instructions for completing this authorization for the use and disclosure of Psychotherapy Notes. HIPAA provides special protections to certain medical records known as \u201cPsychotherapy Notes.\u201d All Psychotherapy Notes recorded on any medium by a mental health professional (such as a psychologist or psychiatrist) must be kept by the author and filed separately from the rest of the client\u2019s medical records to maintain a higher standard of protection. \u201cPsychotherapy Notes\u201d are defined under HIPAA as notes recorded by a health care provider who is a mental health professional documenting or analyzing the contents of conversation during a private counseling session or a group, joint or family counseling session and that are separate from the rest of the individual\u2019s medical records. Excluded from the \u201cPsychotherapy Notes\u201d definition are the following: (a) medication prescription and monitoring, (b) counseling session start and stop times, (c) the modalities and frequencies of treatment furnished, (d) the results of clinical tests, and (e) any summary of diagnosis, functional status, the treatment plan, symptoms, prognosis, and progress to date. Except for limited circumstances set forth in HIPAA, in order for a medical provider to release \u201cPsychotherapy Notes\u201d to a third party, the client who is the subject of the Psychotherapy Notes must sign this authorization to specifically allow for the release of Psychotherapy Notes. Such authorization must be separate from an authorization to release other dental records.\n\n8. You have a right to an accounting of the disclosures of your protected dental information by the provider or its business associates. The maximum disclosure accounting period is the six years immediately preceding the accounting request. The provider is not required to provide an accounting for disclosures: (a) for treatment, payment, or dental care operations; (b) to you or your personal representative; (c) for notification of or to persons involved in an individual\u2019s dental care or payment for dental care, for disaster relief, or for facility directories; (d) pursuant to an authorization; (e) of a limited data set; (f) for national security or intelligence purposes; (g) to correctional institutions or law enforcement officials for certain purposes regarding inmates or individuals in lawful custody; or (h) incident to otherwise permitted or required uses or disclosures. Accounting for disclosures to dental oversight agencies and law enforcement officials must be temporarily suspended on their written representation that an accounting would likely impede their activities.",
         "agree_text": "I confirm and agree"
       },
       "section": "Privacy Policy Consent"
@@ -4245,7 +4276,7 @@
       "type": "terms",
       "title": "Financial Policy",
       "control": {
-        "text": "FINANCIAL POLICY\n\nThank you for choosing us as your dental care provider. We are committed to your treatment being successful. Please understand that payment of your bill is considered part of your treatment. The following is a statement of our financial policy which we require that you read and sign prior to any treatment. It is our hope that this policy will facilitate open communication between us and help avoid potential misunderstandings, allowing you to always make the best choices related to your care.\n\nINSURANCE:\n\nPlease remember your insurance policy is a contract between you and your insurance company. We are not a party to that contract. As a courtesy to you, our office provides certain services, including a pre-treatment estimate which we send to the insurance company at your request. It is physically impossible for us to have the knowledge and keep track of every aspect of your insurance. It is up to you to contact your insurance company and inquire as to what benefits your employer has purchased for you. If you have any questions concerning the pre-treatment estimate and/or fees for service, it is your responsibility to have these answered prior to treatment to minimize any confusion on your behalf.\n\nPlease be aware some or perhaps all of the services provided may or may not be covered by your insurance policy. Any balance is your responsibility whether or not your insurance company pays any portion.\n\nPAYMENT:\n\nUnderstand that regardless of any insurance status, you are responsible for the balance due on your account. You are responsible for any and all professional services rendered. This includes but is not limited to: dental fees, surgical procedures, tests, office procedures, medications and also any other services not directly provided by the dentist.\n\nFULL PAYMENT is due at the time of service. If insurance benefits apply, ESTIMATED PATIENT CO-PAYMENTS and DEDUCTIBLES are due at the time of service, unless other arrangements are made.\n\nUNPAID BALANCE over 90 days old will be subject to a monthly interest of 1.0% (APR 12%). If payment is delinquent, the patient will be responsible for payment of collection, attorney’s fees, and court costs associated with the recovery of the monies due on the account.\n\nMISSED APPOINTMENTS:\n\nUnless we receive notice of cancellation 48 hours in advance, you will be charged {{practice_late_fee}}. Please help us maintain the highest quality of care by keeping scheduled appointments.\n\nI have read, understand and agree to the terms and conditions of this Financial Agreement.",
+        "text": "FINANCIAL POLICY\n\nThank you for choosing us as your dental care provider. We are committed to your treatment being successful. Please understand that payment of your bill is considered part of your treatment. The following is a statement of our financial policy which we require that you read and sign prior to any treatment. It is our hope that this policy will facilitate open communication between us and help avoid potential misunderstandings, allowing you to always make the best choices related to your care.\n\nINSURANCE:\n\nPlease remember your insurance policy is a contract between you and your insurance company. We are not a party to that contract. As a courtesy to you, our office provides certain services, including a pre-treatment estimate which we send to the insurance company at your request. It is physically impossible for us to have the knowledge and keep track of every aspect of your insurance. It is up to you to contact your insurance company and inquire as to what benefits your employer has purchased for you. If you have any questions concerning the pre-treatment estimate and/or fees for service, it is your responsibility to have these answered prior to treatment to minimize any confusion on your behalf.\n\nPlease be aware some or perhaps all of the services provided may or may not be covered by your insurance policy. Any balance is your responsibility whether or not your insurance company pays any portion.\n\nPAYMENT:\n\nUnderstand that regardless of any insurance status, you are responsible for the balance due on your account. You are responsible for any and all professional services rendered. This includes but is not limited to: dental fees, surgical procedures, tests, office procedures, medications and also any other services not directly provided by the dentist.\n\nFULL PAYMENT is due at the time of service. If insurance benefits apply, ESTIMATED PATIENT CO-PAYMENTS and DEDUCTIBLES are due at the time of service, unless other arrangements are made.\n\nUNPAID BALANCE over 90 days old will be subject to a monthly interest of 1.0% (APR 12%). If payment is delinquent, the patient will be responsible for payment of collection, attorney\u2019s fees, and court costs associated with the recovery of the monies due on the account.\n\nMISSED APPOINTMENTS:\n\nUnless we receive notice of cancellation 48 hours in advance, you will be charged {{practice_late_fee}}. Please help us maintain the highest quality of care by keeping scheduled appointments.\n\nI have read, understand and agree to the terms and conditions of this Financial Agreement.",
         "agree_text": "I confirm and agree"
       },
       "section": "Financial Policy"
@@ -4725,6 +4756,17 @@
         "input_type": "name"
       },
       "section": "Parent/Guardian Information",
+      "optional": true
+    },
+    {
+      "key": "guardian",
+      "type": "input",
+      "title": "Guardian",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Patient Information",
       "optional": true
     }
   ],
@@ -5771,6 +5813,96 @@
       },
       "section": "Health History",
       "optional": true
+    },
+    {
+      "key": "physician_care",
+      "type": "radio",
+      "title": "Are you under a physician's care now?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": "yes"
+          },
+          {
+            "name": "No",
+            "value": "no"
+          }
+        ]
+      },
+      "section": "Medical History"
+    },
+    {
+      "key": "taking_medications",
+      "type": "radio",
+      "title": "Are you taking any medications, pills or drugs?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": "yes"
+          },
+          {
+            "name": "No",
+            "value": "no"
+          }
+        ]
+      },
+      "section": "Medical History"
+    },
+    {
+      "key": "hospitalized_surgery",
+      "type": "radio",
+      "title": "Have you ever been hospitalized/ had major surgery?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": "yes"
+          },
+          {
+            "name": "No",
+            "value": "no"
+          }
+        ]
+      },
+      "section": "Medical History"
+    },
+    {
+      "key": "special_diet",
+      "type": "radio",
+      "title": "Are you on a special diet?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": "yes"
+          },
+          {
+            "name": "No",
+            "value": "no"
+          }
+        ]
+      },
+      "section": "Medical History"
+    },
+    {
+      "key": "controlled_substances",
+      "type": "radio",
+      "title": "Do you use controlled substances?",
+      "control": {
+        "options": [
+          {
+            "name": "Yes",
+            "value": "yes"
+          },
+          {
+            "name": "No",
+            "value": "no"
+          }
+        ]
+      },
+      "section": "Medical History"
     }
   ],
   "medical_conditions": [

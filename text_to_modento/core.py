@@ -150,6 +150,7 @@ from .modules.ocr_correction import (
     enhance_dental_term_corrections,
     correct_phone_number_patterns,
     correct_date_patterns,
+    clean_checkbox_ocr_artifacts,
 )
 # Performance Recommendations: Enhanced detection and consent handling
 from .modules.performance_enhancements import (
@@ -2341,6 +2342,7 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
 
 def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     # Improvement #2: Apply OCR corrections early in the pipeline
+    text = clean_checkbox_ocr_artifacts(text)  # Clean checkbox artifacts first
     text = enhance_dental_term_corrections(text)
     text = correct_phone_number_patterns(text)
     text = correct_date_patterns(text)

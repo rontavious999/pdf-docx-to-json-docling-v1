@@ -615,6 +615,7 @@ def is_numbered_list_item(line: str) -> bool:
     - (i), (ii), (iii), ..., (xxx) - Roman numerals in parentheses
     - (1), (2), (3) - Arabic numerals in parentheses
     - i), ii), iii) - Roman numerals with closing parenthesis only
+    - 1., 2., 3. - Numbered items (common in risk lists)
     - Usually followed by lowercase text (continuation of list)
     
     Args:
@@ -634,6 +635,8 @@ def is_numbered_list_item(line: str) -> bool:
         # Also match even without lowercase after (for edge cases)
         r'^\s*\([ivxlcdm]{1,4}\)\s*[a-z]', # (i), (ii), (iii), (iv) etc
         r'^\s*\(\d{1,2}\)\s*[a-z]',        # (1), (2), ..., (99)
+        # Numbered list items like "1. Risk item", "2. Another risk"
+        r'^\s*\d{1,2}\.\s+[A-Z]',          # 1. Capital letter (risk/benefit lists)
     ]
     
     line_lower = line.lower().strip()
