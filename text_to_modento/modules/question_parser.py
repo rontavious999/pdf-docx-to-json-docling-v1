@@ -26,12 +26,17 @@ PHONE_RE = re.compile(r"\b(phone|cell|mobile|telephone)\b", re.I)
 EMAIL_RE = re.compile(r"\bemail\b", re.I)
 ZIP_RE = re.compile(r"\b(zip|postal)\b", re.I)
 SSN_RE = re.compile(r"\b(ssn|social security|soc(?:ial)?\s*sec(?:urity)?|ss#)\b", re.I)
-DATE_LABEL_RE = re.compile(r"\b(date|dob|birth)\b", re.I)
+DATE_LABEL_RE = re.compile(r"\b(date|dob|birth|signed|today'?s?\s+date|"
+                     r"signature\s+date|consent\s+date|treatment\s+date|"
+                     r"visit\s+date|appointment\s+date|procedure\s+date)\b", re.I)
 INITIALS_RE = re.compile(r"\binitials?\b", re.I)
 NAME_RE = re.compile(r"\b(first\s*name|last\s*name|full\s*name|patient\s*name|insured'?s?\s*name|"
                      r"parent\s*name|responsible\s*party\s*name|emergency\s*contact\s*name|"
                      r"guardian\s*name|subscriber\s*name|member\s*name|policy\s*holder\s*name|"
-                     r"^name$|^name\s*of\s*(patient|insured|parent|guardian|subscriber))\b", re.I)
+                     r"patient'?s?\s*name|parent'?s?\s*name|guardian'?s?\s*name|"
+                     r"name\s+\(print\)|name\s+\(please\s+print\)|printed\s+name|"
+                     r"legal\s+name|authorized\s+representative|representative\s+name|"
+                     r"^name$|^name\s*of\s*(patient|insured|parent|guardian|subscriber|representative))\b", re.I)
 NUMBER_RE = re.compile(r"\b(age|years?|months?|days?|count|quantity|number|amount|total|"
                        r"how\s+many|num\s+of|no\.\s+of|#\s+of)\b", re.I)
 
