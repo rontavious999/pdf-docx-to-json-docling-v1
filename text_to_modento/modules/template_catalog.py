@@ -66,6 +66,8 @@ def _token_set_ratio(a: str, b: str) -> float:
 EXTRA_ALIASES = {
     # General
     "birth date": "date_of_birth", "dob": "date_of_birth",
+    "patient date of birth": "date_of_birth", "date of birth": "date_of_birth",
+    "birthdate": "date_of_birth",
     "zip": "zipcode", "zip code": "zipcode",
     "cell phone": "mobile_phone", "mobile": "mobile_phone",
     "home phone": "home_phone", "e mail": "email", "email address": "email",
@@ -77,16 +79,25 @@ EXTRA_ALIASES = {
     "responsible party": "responsible_party_name",
     "occupation": "occupation",
     "spouse's name": "spouse_name", "name of spouse": "spouse_name",
-    "date": "date_signed",
-    "patient name": "full_name",
-    # Parent/Guardian
+    "date": "date_signed", "today's date": "date_signed", "todays date": "date_signed",
+    "signature date": "date_signed", "signed date": "date_signed",
+    "patient name": "full_name", "patient's name": "full_name",
+    "name of patient": "full_name", "name (print)": "full_name",
+    "name (please print)": "full_name", "printed name": "full_name",
+    "patients name": "full_name", "patients name please print": "full_name",
+    # Parent/Guardian - Enhanced
     "parent ssn": "parent_ssn", "guardian ssn": "parent_ssn",
     "parent phone": "parent_phone", "guardian phone": "parent_phone",
     "parent name": "parent_name", "guardian name": "parent_name",
+    "parent/guardian name": "parent_name", "parent guardian name": "parent_name",
+    "parents name": "parent_name", "guardians name": "parent_name",
+    "parent or guardian name": "parent_name",
     # Insurance (avoid tiny 'id #' tokens)
     "insureds name": "insurance_holder", "insured name": "insurance_holder",
     "subscriber name": "insurance_holder", "member name": "insurance_holder",
     "policy holder name": "insurance_holder",
+    "name of insurance company": "insurance_company",
+    "primary insurance": "insurance_company", "secondary insurance": "insurance_company",
     "relationship to insured": "insurance_relationship",
     "relationship to subscriber": "insurance_relationship",
     "relationship to policy holder": "insurance_relationship",
@@ -104,6 +115,12 @@ EXTRA_ALIASES = {
     "address on card": "insurance_address_card", "insurance address": "insurance_address",
     # Referrals
     "who can we thank": "referred_by", "referred by": "referred_by",
+    "how did you hear about us": "referred_by", "referred by (who)": "referred_by",
+    # Procedure/Treatment specific
+    "number": "tooth_number", "tooth number": "tooth_number",
+    "diagnosis": "diagnosis", "treatment": "treatment_type",
+    # Relationship fields
+    "relationship": "relationship", "relationship to patient": "relationship",
 }
 
 # helper: detect conditions-like control to gate matching

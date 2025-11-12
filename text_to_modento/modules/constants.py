@@ -26,7 +26,9 @@ EMAIL_RE   = re.compile(r"\bemail\b", re.I)
 ZIP_RE     = re.compile(r"\b(zip|postal)\b", re.I)
 SSN_RE     = re.compile(r"\b(ssn|social security|soc(?:ial)?\s*sec(?:urity)?|ss#)\b", re.I)
 STATE_LABEL_RE = re.compile(r"^\s*state\b", re.I)
-DATE_LABEL_RE  = re.compile(r"\b(date|dob|birth)\b", re.I)
+DATE_LABEL_RE  = re.compile(r"\b(date|dob|birth|signed|today'?s?\s+date|"
+                           r"signature\s+date|consent\s+date|treatment\s+date|"
+                           r"visit\s+date|appointment\s+date|procedure\s+date)\b", re.I)
 INITIALS_RE    = re.compile(r"\binitials?\b", re.I)
 WITNESS_RE     = re.compile(r"\bwitness\b", re.I)
 
@@ -121,22 +123,27 @@ SPELL_FIX = {
 
 # Known field labels dictionary for pattern matching
 KNOWN_FIELD_LABELS = {
-    # Name fields
+    # Name fields - Enhanced patterns
     # Production Improvement: Use lookahead (?=[^a-zA-Z]|$) to handle underscores/dashes after labels
     'full_name': r'\bfull\s+name(?=[^a-zA-Z]|$)',
     'first_name': r'\bfirst\s+name(?=[^a-zA-Z]|$)',
     'last_name': r'\blast\s+name(?=[^a-zA-Z]|$)',
     'preferred_name': r'\bpreferred\s+name(?=[^a-zA-Z]|$)',
     'middle_initial': r'\b(?:middle\s+initial|m\.?i\.?)(?=[^a-zA-Z]|$)',
-    'patient_name': r'\b(?:patient(?:\'?s)?\s+name|name\s+of\s+patient)(?=[^a-zA-Z]|$)',
-    'parent_name': r'\bparent\s+name(?=[^a-zA-Z]|$)',
-    'guardian_name': r'\bguardian\s+name(?=[^a-zA-Z]|$)',
-    # Date/Age fields
+    'patient_name': r'\b(?:patient(?:\'?s)?\s+name|name\s+of\s+patient|patient\s+name\s+\(print\)|patient\s+name\s+\(please\s+print\))(?=[^a-zA-Z]|$)',
+    'parent_name': r'\b(?:parent\s+name|parent\'?s?\s+name|parent/guardian\s+name)(?=[^a-zA-Z]|$)',
+    'guardian_name': r'\b(?:guardian\s+name|guardian\'?s?\s+name|legal\s+guardian\s+name)(?=[^a-zA-Z]|$)',
+    'printed_name': r'\b(?:name\s+\(print\)|name\s+\(please\s+print\)|printed\s+name)(?=[^a-zA-Z]|$)',
+    'legal_name': r'\blegal\s+name(?=[^a-zA-Z]|$)',
+    'representative_name': r'\b(?:representative\s+name|authorized\s+representative)(?=[^a-zA-Z]|$)',
+    # Date/Age fields - Enhanced patterns
     'birth_date': r'\b(?:birth\s+date|date\s+of\s+birth|birthdate)(?=[^a-zA-Z]|$)',
     'dob': r'\bdob(?=[^a-zA-Z]|$)',
     'age': r'\bage(?=[^a-zA-Z]|$)',
     'mother_dob': r"\bmother'?s?\s+dob(?=[^a-zA-Z]|$)",
     'father_dob': r"\bfather'?s?\s+dob(?=[^a-zA-Z]|$)",
+    'date_signed': r'\b(?:date|today\'?s?\s+date|signature\s+date|consent\s+date|signed\s+date)(?=[^a-zA-Z]|$)',
+    'treatment_date': r'\b(?:treatment\s+date|procedure\s+date|visit\s+date)(?=[^a-zA-Z]|$)',
     # Demographics
     'sex': r'\bsex(?=[^a-zA-Z]|$)',
     'gender': r'\bgender(?=[^a-zA-Z]|$)',
