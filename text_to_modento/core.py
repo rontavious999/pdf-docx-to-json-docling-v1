@@ -639,13 +639,14 @@ def split_by_known_labels(line: str) -> List[str]:
 def split_label_with_subfields(line: str) -> List[str]:
     """
     Archivev17 Fix: Handle pattern "Label: Sub1    Sub2    Sub3"
+    Enhanced: Also handle patterns like "Label: Sub1 Sub2. Sub3" (period-separated)
     
     Detects lines where a single label (ending with colon) is followed by multiple
-    sub-labels separated by wide spacing (4+ spaces).
+    sub-labels separated by wide spacing (4+ spaces) OR periods.
     
     Example: "Phone: Mobile                                  Home                                  Work"
-    Should create: ["Phone: Mobile", "Phone: Home", "Phone: Work"]
-    Or better: ["Mobile Phone", "Home Phone", "Work Phone"]
+    Example: "Phone: Mobile Home. Work"
+    Should create: ["Mobile Phone", "Home Phone", "Work Phone"]
     
     Phase 4 Fix 8: Do NOT split lines that contain checkboxes - those are radio/dropdown fields
     with options, not separate input fields.
@@ -655,18 +656,29 @@ def split_label_with_subfields(line: str) -> List[str]:
     if re.search(CHECKBOX_ANY, line):
         return [line]
     
-    # Pattern: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
-    # Must have at least 2 sub-labels to consider splitting
+    # Pattern 1: Label ending with colon, followed by multiple capitalized words separated by 4+ spaces
     match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:\s{4,}[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
     
-    if not match:
-        return [line]
-    
-    main_label = match.group(1).strip(':').strip()  # e.g., "Phone"
-    sublabels_text = match.group(2)  # e.g., "Mobile    Home    Work"
-    
-    # Split by 4+ spaces to get individual sub-labels
-    sublabels = [s.strip() for s in re.split(r'\s{4,}', sublabels_text) if s.strip()]
+    if match:
+        main_label = match.group(1).strip(':').strip()  # e.g., "Phone"
+        sublabels_text = match.group(2)  # e.g., "Mobile    Home    Work"
+        
+        # Split by 4+ spaces to get individual sub-labels
+        sublabels = [s.strip() for s in re.split(r'\s{4,}', sublabels_text) if s.strip()]
+    else:
+        # Pattern 2: Label ending with colon, followed by multiple capitalized words separated by periods and/or spaces
+        # Example: "Phone: Mobile Home. Work" or "Phone: Mobile Home Work"
+        match = re.match(r'^([A-Za-z][^:]{0,30}:)\s+([A-Z][a-z]+(?:[\s.]+[A-Z][a-z]+)+)\s*$', line.strip(), re.I)
+        
+        if not match:
+            return [line]
+        
+        main_label = match.group(1).strip(':').strip()  # e.g., "Phone"
+        sublabels_text = match.group(2)  # e.g., "Mobile Home. Work"
+        
+        # Split by periods and/or spaces to get individual sub-labels
+        # Remove empty strings and strip whitespace
+        sublabels = [s.strip() for s in re.split(r'[\s.]+', sublabels_text) if s.strip()]
     
     # Must have at least 2 sub-labels to be valid
     if len(sublabels) < 2:
