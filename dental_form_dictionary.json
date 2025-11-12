@@ -34,6 +34,21 @@
       "section": "Basic Information"
     },
     {
+      "key": "full_name",
+      "type": "input",
+      "title": "Full Name",
+      "control": {
+        "hint": null,
+        "input_type": "name"
+      },
+      "section": "Patient Information",
+      "aliases": [
+        "patient name",
+        "patient's name",
+        "name of patient"
+      ]
+    },
+    {
       "key": "mi",
       "type": "input",
       "title": "Middle Initial",
@@ -440,7 +455,7 @@
           }
         ]
       },
-      "section": "Emergency Contact Information"
+      "section": "Emergency Contact"
     },
     {
       "if": [
@@ -456,7 +471,7 @@
         "hint": "Who should we contact?",
         "input_type": "name"
       },
-      "section": "Emergency Contact Information"
+      "section": "Emergency Contact"
     },
     {
       "if": [
@@ -473,7 +488,7 @@
         "input_type": "phone",
         "phone_prefix": "+1"
       },
-      "section": "Emergency Contact Information"
+      "section": "Emergency Contact"
     },
     {
       "if": [
@@ -489,7 +504,7 @@
         "hint": "Relationship to patient",
         "input_type": "text"
       },
-      "section": "Emergency Contact Information",
+      "section": "Emergency Contact",
       "optional": true
     }
   ],
