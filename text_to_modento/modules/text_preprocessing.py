@@ -711,6 +711,9 @@ def is_instructional_paragraph(line: str) -> bool:
         r'^if\s+you\s+do\s+not',
         # General imperative patterns (verb at start followed by object)
         r'^(?:take|wear|remove|bring|arrive)\s+(?:any|your|all|the|short)',
+        # Consent form references (Archivev23)
+        r'^this\s+(?:consent\s+)?form\s+(?:should|must|is|will)',
+        r'^this\s+(?:document|consent)\s+(?:should|must|is|will)',
     ]
     
     line_lower = line_stripped.lower()
@@ -718,7 +721,8 @@ def is_instructional_paragraph(line: str) -> bool:
         if re.match(pattern, line_lower):
             # If it starts with these AND is reasonably long, it's instructional
             # Lower threshold for imperative instructions (6+ words)
-            if word_count > 6:
+            # Even lower (10+ words) for "this form/document" patterns
+            if word_count > 10 or (word_count > 6 and 'form' not in pattern):
                 return True
     
     # Legal/risk terminology in longer sentences
