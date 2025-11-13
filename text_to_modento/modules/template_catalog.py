@@ -353,8 +353,22 @@ def _dedupe_keys_dicts(items: List[dict]) -> List[dict]:
     def dedupe_dict_question(q: dict) -> None:
         """Deduplicate a single question dict and its nested questions recursively."""
         key = q.get("key") or "q"
-        if q.get("type") == "signature":
+        field_type = q.get("type")
+        
+        # PARITY FIX: Handle signature types properly
+        # Old "signature" type should always be "signature" key
+        # But "block_signature" types can have different keys (signature, witness_signature, etc.)
+        if field_type == "signature":
             q["key"] = "signature"
+        elif field_type == "block_signature":
+            # Preserve specific signature keys but ensure uniqueness
+            base = key
+            if base not in seen:
+                seen[base] = 1
+                q["key"] = base
+            else:
+                seen[base] += 1
+                q["key"] = f"{base}_{seen[base]}"
         else:
             base = key
             if base not in seen:

@@ -795,7 +795,7 @@ def is_form_metadata(line: str) -> bool:
     # But not if it contains common words
     if len(line_lower) <= 12 and re.match(r'^[a-z0-9_\-]+$', line_lower):
         # Check if it's not a common abbreviation or word
-        common_words = ['yes', 'no', 'other', 'name', 'date', 'phone', 'email', 'city', 'state', 'zip']
+        common_words = ['yes', 'no', 'other', 'name', 'date', 'phone', 'email', 'city', 'state', 'zip', 'witness', 'signature']
         if line_lower not in common_words:
             # Could be a form code
             return True
