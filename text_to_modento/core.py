@@ -136,6 +136,7 @@ from .modules.consent_handler import (
     is_risk_list_header,
     group_risk_list_items,
     normalize_signature_field,
+    parse_tabulated_signature_line,
 )
 # Improvement #10, #11, #15: Import postprocessing enhancements
 from .modules.postprocessing import (
@@ -2663,20 +2664,63 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     i = k
                     continue
 
-        # Drop witness
-        if WITNESS_RE.search(line):
+        # Drop witness (unless it's a tabulated signature line with witness field)
+        if WITNESS_RE.search(line) and '\t' not in line:
             i += 1; continue
+        
+        # Check for tabulated witness signature lines
+        if WITNESS_RE.search(line) and '\t' in line:
+            witness_fields = parse_tabulated_signature_line(line)
+            if witness_fields:
+                for field_dict in witness_fields:
+                    q = Question(
+                        field_dict['key'],
+                        field_dict['title'],
+                        field_dict.get('section', 'Consent'),
+                        field_dict['type'],
+                        control=field_dict.get('control', {})
+                    )
+                    questions.append(q)
+                i += 1; continue
 
         # Signature (+ optional date)
-        if "signature" in line.lower():
+        if "signature" in line.lower() or "signatory" in line.lower():
+            # PARITY FIX: Skip if this is just a reference to signature in a paragraph (not an actual signature field)
+            # Signature fields are typically short and contain underscores or are at the end of forms
+            # Skip if the line is long (>100 chars) and doesn't have underscores (likely prose)
+            line_stripped = line.strip()
+            if len(line_stripped) > 100 and '_' not in line_stripped and not line.strip().endswith(':'):
+                # This is likely a paragraph mentioning signature, not a signature field
+                i += 1; continue
+            
+            # PARITY FIX: Skip lines like "Or authorized signatory" (orphaned text)
+            if line_stripped.lower().startswith('or ') and len(line_stripped) < 40:
+                i += 1; continue
+            
             if not seen_signature:
-                questions.append(Question("signature", line.rstrip(":"), "Signature", "signature"))
-                seen_signature = True
-                # Adjacent Date (normalized title)
-                if i + 1 < len(lines) and DATE_LABEL_RE.search(lines[i+1]):
-                    title_dt = "Date Signed"
-                    questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"any"}))
-                    i += 1
+                # PARITY FIX: Check if this is a tab-separated signature line with name/date fields
+                tabulated_fields = parse_tabulated_signature_line(line)
+                if tabulated_fields:
+                    # Add all the parsed fields (name, signature, date)
+                    for field_dict in tabulated_fields:
+                        q = Question(
+                            field_dict['key'],
+                            field_dict['title'],
+                            field_dict.get('section', 'Consent'),
+                            field_dict['type'],
+                            control=field_dict.get('control', {})
+                        )
+                        questions.append(q)
+                    seen_signature = True
+                else:
+                    # Original single-field signature logic
+                    questions.append(Question("signature", line.rstrip(":"), "Signature", "signature"))
+                    seen_signature = True
+                    # Adjacent Date (normalized title)
+                    if i + 1 < len(lines) and DATE_LABEL_RE.search(lines[i+1]):
+                        title_dt = "Date Signed"
+                        questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"any"}))
+                        i += 1
             i += 1; continue
 
         # Archivev10 Fix 1: Try multi-column checkbox grid detection first

@@ -317,18 +317,28 @@ def normalize_signature_field(field: Dict) -> Dict:
     Improvement #11: Signature normalization
     """
     title = field.get('title', '').lower()
+    key = field.get('key', '')
+    
+    # PARITY FIX: Don't normalize witness signatures or other specialized signature types
+    if 'witness' in title or 'witness' in key:
+        # Keep witness signatures as-is
+        if field.get('type') != 'block_signature':
+            field['type'] = 'block_signature'
+        return field
     
     # Check if this should be a signature field
     if any(word in title for word in ['signature', 'sign', 'patient signature', 'guardian signature']):
         # Convert to block_signature type
         field['type'] = 'block_signature'
-        field['title'] = 'Signature'
-        field['key'] = 'signature'
+        if 'witness' not in title:
+            field['title'] = 'Signature'
+            field['key'] = 'signature'
         field['control'] = {
             'language': 'en',
             'variant': 'adult_no_guardian_details'
         }
-        field['section'] = 'Signature'
+        if field.get('section') != 'Consent':
+            field['section'] = 'Consent'
     
     return field
 
@@ -365,3 +375,91 @@ def detect_signature_block_components(lines: List[str]) -> Optional[Dict]:
         }
     
     return None
+
+
+def parse_tabulated_signature_line(line: str) -> List[Dict]:
+    """
+    Parse signature lines with tab-separated fields.
+    
+    Handles patterns like:
+    "Patient's name (please print)\tSignature of patient or legal guardian\tDate"
+    "Patient Name\tSignature\tDate"
+    
+    Returns a list of field dictionaries for name, signature, and date.
+    """
+    if '\t' not in line:
+        return []
+    
+    parts = [p.strip() for p in line.split('\t') if p.strip()]
+    if len(parts) < 2:
+        return []
+    
+    fields = []
+    line_lower = line.lower()
+    
+    # Check if this line contains signature-related keywords
+    if 'signature' not in line_lower and 'sign' not in line_lower:
+        return []
+    
+    for part in parts:
+        part_lower = part.lower()
+        
+        # Identify the type of each field - check witness FIRST before generic signature
+        if 'witness' in part_lower:
+            # This is a witness signature field
+            fields.append({
+                'key': 'witness_signature',
+                'type': 'block_signature',
+                'title': 'Witness Signature',
+                'section': 'Consent',
+                'optional': False,
+                'control': {
+                    'language': 'en',
+                    'variant': 'adult_no_guardian_details'
+                }
+            })
+        elif any(keyword in part_lower for keyword in ['name', 'print']) and 'signature' not in part_lower:
+            # This is a name field (printed name)
+            # Extract a cleaner title
+            title = part
+            if 'please print' in part_lower:
+                title = part.split('(')[0].strip() if '(' in part else "Patient Name"
+            
+            fields.append({
+                'key': 'patient_name_print',
+                'type': 'input',
+                'title': title if len(title) < 50 else "Patient Name",
+                'section': 'Patient Information',
+                'optional': False,
+                'control': {
+                    'hint': 'Please print',
+                    'input_type': 'name'
+                }
+            })
+        elif any(keyword in part_lower for keyword in ['signature', 'signed', 'sign here']):
+            # This is a signature field (not witness)
+            fields.append({
+                'key': 'signature',
+                'type': 'block_signature',
+                'title': 'Signature',
+                'section': 'Consent',
+                'optional': False,
+                'control': {
+                    'language': 'en',
+                    'variant': 'adult_with_guardian_details' if 'guardian' in part_lower else 'adult_no_guardian_details'
+                }
+            })
+        elif 'date' in part_lower and len(part) < 30:
+            # This is a date field
+            fields.append({
+                'key': 'date_signed',
+                'type': 'date',
+                'title': 'Date',
+                'section': 'Consent',
+                'optional': False,
+                'control': {
+                    'input_type': 'past'
+                }
+            })
+    
+    return fields
