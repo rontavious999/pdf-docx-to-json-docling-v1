@@ -3469,6 +3469,32 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                     should_skip = True
                     if debug: print(f"  [debug] skipping sentence fragment: '{title[:60]}'")
         
+        # Archivev23 Fix: Skip malformed merged field labels (extraction artifacts)
+        # These have pattern: "Word1 Word2 Label:" indicating truncated first field + second field
+        # Example: "Male Female Marital Status:" (Gender was already extracted)
+        if not should_skip:
+            # Check for pattern: words followed by capitalized Label followed by colon
+            # But NOT if the first part looks like a complete field (e.g., has its own colon)
+            words = title.split()
+            if len(words) >= 3 and ':' in title:
+                # Find position of last colon
+                last_colon_pos = title.rfind(':')
+                before_colon = title[:last_colon_pos].strip()
+                words_before = before_colon.split()
+                
+                # If we have 2+ words before colon and none of them are common prefixes/articles
+                # and the last 2 words look like a field label (both capitalized)
+                if len(words_before) >= 2:
+                    last_two = words_before[-2:]
+                    # Check if last two words are capitalized (looks like "Marital Status")
+                    if all(w and w[0].isupper() for w in last_two):
+                        # Check if earlier words are option-like (Male, Female, etc.)
+                        earlier_words = words_before[:-2]
+                        looks_like_options = all(w and w[0].isupper() and len(w) <= 10 for w in earlier_words)
+                        if looks_like_options and len(earlier_words) >= 1:
+                            should_skip = True
+                            if debug: print(f"  [debug] skipping merged field fragment: '{title[:60]}'")
+        
         # Archivev23 Enhancement: Skip questions that are clearly section headings, not fields
         # (e.g., "What are the risks?" vs "Are you pregnant?" which IS a field)
         # Section heading questions typically ask about topics, not patient status
