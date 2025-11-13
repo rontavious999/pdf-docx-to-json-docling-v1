@@ -2738,7 +2738,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 # Adjacent Date (normalized title)
                 if i + 1 < len(lines) and DATE_LABEL_RE.search(lines[i+1]):
                     title_dt = "Date Signed"
-                    questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"any"}))
+                    questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"past"}))
                     i += 1
             i += 1; continue
 
@@ -2971,7 +2971,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             harvested = " ".join(collapse_spaced_caps(lines[j].strip()) for j in range(i, min(i+3,len(lines))))
             for lbl in ["Cleaning","Cancer Screening","X-Rays","X Rays","Xray"]:
                 if re.search(lbl.replace(" ", r"\s*"), harvested, re.I):
-                    questions.append(Question(slugify(lbl), lbl, cur_section, "date", control={"input_type":"any"}))
+                    questions.append(Question(slugify(lbl), lbl, cur_section, "date", control={"input_type":"past"}))
             i += 1; continue
 
         # Robust 1..10 detection (pain scale etc.)
@@ -3732,7 +3732,7 @@ def ensure_control_present(q: Question) -> None:
     if q.control is None: q.control = {}
     if q.type == "radio":    q.control.setdefault("options", [])
     if q.type == "dropdown": q.control.setdefault("options", []); q.control.setdefault("multi", True)
-    if q.type == "date":     q.control.setdefault("input_type", "any")
+    if q.type == "date":     q.control.setdefault("input_type", "past")
     if q.type == "input":    q.control.setdefault("input_type", "text")
     if q.type == "terms":
         q.control.setdefault("agree_text","I have read and agree to the terms.")
@@ -4801,26 +4801,42 @@ def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[D
     Checks:
     1. All option values are non-empty
     2. Exactly one signature field with key "signature"
-    3. No footer/header/witness fields
+    3. Filter out footer/header/witness fields
     4. All keys are unique
     """
     issues = []
     seen_keys = set()
     signature_count = 0
     
-    # Patterns for footer/header/witness fields that should not be in output
+    # Patterns for footer/header/witness fields that should be filtered out
     EXCLUDED_PATTERNS = [
         r'\bpractice\s+(name|phone|address|email)\b',
         r'\bwitness\b',
-        r'\boffice\s+(phone|address|email)\b',
+        r'\boffice\s+(phone|address|email|name)\b',
         r'\bfooter\b',
         r'\bheader\b',
+        r'\bdoctor\s+(name|phone)\b',
+        r'\bclinic\s+(name|phone|address)\b',
+        r'\bfacility\s+(name|phone|address)\b',
     ]
     
+    # First pass: filter out excluded fields and collect issues
+    filtered_payload = []
     for idx, field in enumerate(payload):
         key = field.get("key", "")
         title = field.get("title", "").lower()
         field_type = field.get("type", "")
+        
+        # Check 3: Excluded fields (footer/header/witness) - FILTER THEM OUT
+        is_excluded = False
+        for pattern in EXCLUDED_PATTERNS:
+            if re.search(pattern, title, re.I):
+                issues.append(f"Filtered out excluded field: {title}")
+                is_excluded = True
+                break
+        
+        if is_excluded:
+            continue  # Skip this field - don't add it to filtered_payload
         
         # Check 1: Duplicate keys
         if key in seen_keys:
@@ -4833,12 +4849,6 @@ def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[D
             if key != "signature":
                 issues.append(f"Signature field has incorrect key: {key} (should be 'signature')")
         
-        # Check 3: Excluded fields (footer/header/witness)
-        for pattern in EXCLUDED_PATTERNS:
-            if re.search(pattern, title, re.I):
-                issues.append(f"Excluded field found: {title}")
-                break
-        
         # Check 4: Option values are non-empty
         if field_type in ["radio", "dropdown"]:
             options = field.get("control", {}).get("options", [])
@@ -4847,6 +4857,8 @@ def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[D
                 if value is None or value == "":
                     name = opt.get("name", f"option_{opt_idx}")
                     issues.append(f"Empty option value in {key}: option '{name}'")
+        
+        filtered_payload.append(field)
     
     # Check signature count
     if signature_count == 0:
@@ -4862,7 +4874,7 @@ def postprocess_validate_modento_compliance(payload: List[dict], dbg: Optional[D
         if len(issues) > 10:
             dbg.gate(f"  ... and {len(issues) - 10} more")
     
-    return payload
+    return filtered_payload
 
 
 # ========== Parity Improvement Post-Processing Functions ==========
