@@ -137,6 +137,7 @@ from .modules.consent_handler import (
     group_risk_list_items,
     normalize_signature_field,
     parse_tabulated_signature_line,
+    is_tabulated_signature_line,
 )
 # Improvement #10, #11, #15: Import postprocessing enhancements
 from .modules.postprocessing import (
@@ -1076,6 +1077,14 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             processed.append(line)
             continue
         
+        # PARITY FIX: Check for tab-separated signature lines FIRST
+        # These should NOT be split by colon-delimited parsing
+        # Example: "Patient's name (please print)\tSignature\tDate"
+        if is_tabulated_signature_line(line):
+            # Preserve the line as-is for signature parsing in main loop
+            processed.append(line)
+            continue
+        
         # Improvement #1: Separate field labels from underscores
         line = separate_field_label_from_blanks(line)
         
@@ -1086,7 +1095,7 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             processed.extend(compound_fields)
             continue
         
-        # NEW Improvement #1: Try colon-delimited field splitting FIRST
+        # NEW Improvement #1: Try colon-delimited field splitting
         # This handles insurance/registration blocks like "Name: State: Holder: Birth Date:"
         if should_split_line_into_fields(line):
             colon_split = split_colon_delimited_fields(line)
@@ -2697,30 +2706,33 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             if line_stripped.lower().startswith('or ') and len(line_stripped) < 40:
                 i += 1; continue
             
+            # PARITY FIX: Check if this is a tab-separated signature line with name/date fields
+            # This check should happen for ALL signature lines, not just the first one
+            tabulated_fields = parse_tabulated_signature_line(line)
+            if tabulated_fields:
+                # Add all the parsed fields (name, signature, date)
+                for field_dict in tabulated_fields:
+                    q = Question(
+                        field_dict['key'],
+                        field_dict['title'],
+                        field_dict.get('section', 'Consent'),
+                        field_dict['type'],
+                        control=field_dict.get('control', {})
+                    )
+                    questions.append(q)
+                seen_signature = True
+                i += 1; continue
+            
+            # Fall back to single-field signature parsing
             if not seen_signature:
-                # PARITY FIX: Check if this is a tab-separated signature line with name/date fields
-                tabulated_fields = parse_tabulated_signature_line(line)
-                if tabulated_fields:
-                    # Add all the parsed fields (name, signature, date)
-                    for field_dict in tabulated_fields:
-                        q = Question(
-                            field_dict['key'],
-                            field_dict['title'],
-                            field_dict.get('section', 'Consent'),
-                            field_dict['type'],
-                            control=field_dict.get('control', {})
-                        )
-                        questions.append(q)
-                    seen_signature = True
-                else:
-                    # Original single-field signature logic
-                    questions.append(Question("signature", line.rstrip(":"), "Signature", "signature"))
-                    seen_signature = True
-                    # Adjacent Date (normalized title)
-                    if i + 1 < len(lines) and DATE_LABEL_RE.search(lines[i+1]):
-                        title_dt = "Date Signed"
-                        questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"any"}))
-                        i += 1
+                # Original single-field signature logic
+                questions.append(Question("signature", line.rstrip(":"), "Signature", "signature"))
+                seen_signature = True
+                # Adjacent Date (normalized title)
+                if i + 1 < len(lines) and DATE_LABEL_RE.search(lines[i+1]):
+                    title_dt = "Date Signed"
+                    questions.append(Question(slugify(title_dt), title_dt, "Signature", "date", control={"input_type":"any"}))
+                    i += 1
             i += 1; continue
 
         # Archivev10 Fix 1: Try multi-column checkbox grid detection first

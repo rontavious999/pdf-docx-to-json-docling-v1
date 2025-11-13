@@ -377,6 +377,33 @@ def detect_signature_block_components(lines: List[str]) -> Optional[Dict]:
     return None
 
 
+def is_tabulated_signature_line(line: str) -> bool:
+    """
+    Check if a line is a tab-separated signature block that should be preserved.
+    
+    This prevents such lines from being split by colon-delimited field parsing.
+    
+    Returns True if the line:
+    - Contains tabs
+    - Contains signature-related keywords (signature, sign, witness)
+    - Has multiple parts separated by tabs
+    """
+    if '\t' not in line:
+        return False
+    
+    parts = [p.strip() for p in line.split('\t') if p.strip()]
+    if len(parts) < 2:
+        return False
+    
+    line_lower = line.lower()
+    
+    # Check if this line contains signature-related keywords
+    if 'signature' not in line_lower and 'sign' not in line_lower and 'witness' not in line_lower:
+        return False
+    
+    return True
+
+
 def parse_tabulated_signature_line(line: str) -> List[Dict]:
     """
     Parse signature lines with tab-separated fields.
@@ -387,19 +414,13 @@ def parse_tabulated_signature_line(line: str) -> List[Dict]:
     
     Returns a list of field dictionaries for name, signature, and date.
     """
-    if '\t' not in line:
+    if not is_tabulated_signature_line(line):
         return []
     
     parts = [p.strip() for p in line.split('\t') if p.strip()]
-    if len(parts) < 2:
-        return []
     
     fields = []
     line_lower = line.lower()
-    
-    # Check if this line contains signature-related keywords
-    if 'signature' not in line_lower and 'sign' not in line_lower:
-        return []
     
     for part in parts:
         part_lower = part.lower()
