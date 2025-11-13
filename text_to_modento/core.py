@@ -4924,6 +4924,7 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
     for q in payload:
         # Archivev8 Fix 3: Check if this is a conditional/explanation field
         # Archivev15 Fix: Also skip opt-in preference fields (inline checkbox options)
+        # PARITY FIX: Also skip witness signatures (they should not be matched against generic signature template)
         # These should not have templates applied to avoid breaking conditional relationships or changing keys
         is_conditional_field = (
             bool(q.get("conditional_on")) or
@@ -4931,6 +4932,7 @@ def apply_templates_and_count(payload: List[dict], catalog: Optional[TemplateCat
             "_followup" in q.get("key", "") or
             "_details" in q.get("key", "") or
             q.get("key", "").startswith("opt_in_") or  # Archivev15: Skip opt-in preference fields
+            q.get("key", "") == "witness_signature" or  # PARITY FIX: Skip witness signatures
             (q.get("title", "").lower().strip() in ["please explain", "explanation", "details", "comments"])
         )
         
