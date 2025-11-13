@@ -2417,11 +2417,30 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Improvement #7: Skip instructional paragraphs (consent/legal text)
         # Long paragraphs with legal/consent language should not become fields
+        # Archivev23 Fix: Don't skip consent disclosure paragraphs - they should be captured as terms
+        # Allow through if: in Consent section OR looks like consent/risk disclosure body text
         if is_instructional_paragraph(line):
-            if debug:
-                print(f"  [debug] skipping instructional text: '{line[:60]}...'")
-            i += 1
-            continue
+            # Check if this might be consent body text that should be captured as terms
+            # Consent body text typically: mentions risks, complications, procedures, treatments
+            # AND is reasonably long (multiple sentences about medical/dental topics)
+            consent_body_keywords = ['risk', 'complication', 'procedure', 'treatment', 'may include',
+                                    'may result', 'may cause', 'may occur', 'include but not limited',
+                                    'understand that', 'i consent', 'i acknowledge', 'informed about']
+            has_consent_keywords = any(kw in line.lower() for kw in consent_body_keywords)
+            has_medical_terms = any(term in line.lower() for term in ['endodontic', 'dental', 'tooth', 'surgery', 
+                                                                      'anesthesia', 'medication', 'extraction'])
+            is_consent_body = has_consent_keywords and (has_medical_terms or len(line) > 200)
+            
+            # If in Consent section or looks like consent body, allow it through for terms capture
+            # Otherwise skip as regular instructional text
+            if cur_section == "Consent" or is_consent_body:
+                # Allow through - will be captured as terms field later
+                pass
+            else:
+                if debug:
+                    print(f"  [debug] skipping instructional text: '{line[:60]}...'")
+                i += 1
+                continue
 
         # Insurance anchoring
         if INSURANCE_BLOCK_RE.search(line):
@@ -3369,6 +3388,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 para.append(lines[k]); k += 1
             joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
             if len(joined) > 250 and joined.count(".") >= 2:
+                if debug:
+                    print(f"  [debug] capturing long paragraph as terms: len={len(joined)}, periods={joined.count('.')}")
                 chunks: List[List[str]] = []; cur: List[str] = []
                 for s in para:
                     if is_heading(s.strip()) and cur:
@@ -3468,14 +3489,18 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         
         # Archivev22 Enhancement: Skip document titles that look like form headers
         # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
+        # Archivev23 Fix: Relax title case requirement - accept any capitalized title with form keywords
         if not should_skip and len(title.split()) >= 4:
             title_lower = title.lower()
             # Check for form title keywords
             has_form_keywords = any(kw in title_lower for kw in ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure'])
-            # Must be title case or all caps (not mixed case sentences)
-            is_title_case = title.istitle() or title.isupper()
+            # Check if it looks like a title (first letter capitalized, multiple capitalized words)
+            words = title.split()
+            capitalized_words = sum(1 for w in words if w and w[0].isupper())
+            # Relaxed: 2+ capitalized words OR title case OR all caps
+            looks_like_title = capitalized_words >= 2 or title.istitle() or title.isupper()
             
-            if has_form_keywords and is_title_case:
+            if has_form_keywords and looks_like_title:
                 should_skip = True
                 if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
         
