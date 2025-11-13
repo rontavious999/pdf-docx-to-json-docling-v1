@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from typing import Dict, List, Optional, Tuple, Set
-from .question_parser import slugify, classify_input_type, clean_field_title
+from .question_parser import slugify, classify_input_type, clean_field_title, classify_date_input
 
 
 # ========== Constants ==========
@@ -100,7 +100,7 @@ def suggest_dictionary_additions(unmatched_tracker: Dict, min_occurrences: int =
             
             # Add control hints for specific types
             if data['type'] == 'date':
-                suggestion['control'] = {'input_type': 'any'}
+                suggestion['control'] = {'input_type': classify_date_input(data['title'])}
             elif data['type'] == 'input':
                 suggestion['control'] = {'input_type': classify_input_type(data['title'])}
             
