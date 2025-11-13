@@ -18,7 +18,8 @@ from __future__ import annotations
 
 import re
 from typing import Dict, List, Optional, Tuple
-from .question_parser import slugify, classify_input_type, clean_field_title
+from .question_parser import slugify, classify_input_type, clean_field_title, classify_date_input
+
 
 
 # ========== Improvement #1: Parse Combined Registration/Insurance Blocks ==========
@@ -228,7 +229,7 @@ def infer_field_type_from_label(label: str, value_hint: str = "") -> Tuple[str, 
     
     # Date fields
     if any(word in label_lower for word in ['date', 'birth', 'dob', 'birthday', 'born']):
-        return ('date', {'input_type': 'any'})
+        return ('date', {'input_type': classify_date_input(label)})
     
     # Phone fields
     if any(word in label_lower for word in ['phone', 'mobile', 'cell', 'tel', 'telephone', 'fax']):
