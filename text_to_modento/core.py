@@ -1095,6 +1095,13 @@ def preprocess_lines(lines: List[str]) -> List[str]:
             processed.extend(compound_fields)
             continue
         
+        # PARITY FIX: Skip colon splitting for consent paragraphs
+        # Long lines with consent/legal text should not be split into fields
+        # Example: "Breakage: Due to the types of materials..." is a paragraph, not a field
+        if is_consent_paragraph(line) or len(line) > 200:
+            processed.append(line)
+            continue
+        
         # NEW Improvement #1: Try colon-delimited field splitting
         # This handles insurance/registration blocks like "Name: State: Holder: Birth Date:"
         if should_split_line_into_fields(line):
