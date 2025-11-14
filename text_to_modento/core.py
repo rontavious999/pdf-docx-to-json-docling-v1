@@ -1897,12 +1897,14 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     return None
 
 
-def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
+def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None, next_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
     """
     Category 1 Fix 1.2: Detect standalone fill-in-blank fields.
     
     Pattern: Lines with mostly underscores (5+ consecutive underscores).
-    Uses text on same line or previous line as label.
+    Uses text on same line, previous line, or next line as label.
+    
+    Production Parity Fix: Also check next line for labels (common in signature blocks).
     
     Returns: (key, title) or None
     """
@@ -1937,6 +1939,25 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
         label = label_match.group(1).strip()
         if label and len(label) >= 2:
             return (slugify(label), label)
+    
+    # PRODUCTION PARITY FIX: Try to use next line as label (common in signature blocks)
+    # Pattern: blank underscore line followed by "Patient Signature" or similar
+    if next_line:
+        next_clean = next_line.strip().rstrip(':.')
+        if next_clean and len(next_clean) < 100 and not re.search(CHECKBOX_ANY, next_clean):
+            # Check if next line looks like a field label (not a sentence)
+            # Common signature/name/date labels
+            signature_patterns = [
+                r'\b(?:patient|parent|guardian|witness|provider|doctor|dentist).*(?:signature|name|date)\b',
+                r'\b(?:signature|name|date)\b',
+                r'\bsign(?:ed)?\s+(?:by|on|at)\b'
+            ]
+            next_lower = next_clean.lower()
+            is_label = any(re.search(p, next_lower) for p in signature_patterns)
+            
+            if is_label and not is_heading(next_clean):
+                # Use next line as label
+                return (slugify(next_clean), next_clean)
     
     # Try to use previous line as label if available
     if prev_line:
@@ -3393,13 +3414,26 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         
         # Category 1 Fix 1.2: Check for fill-in-blank fields
         prev_line_text = lines[i-1] if i > 0 else None
-        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text)
+        next_line_text = lines[i+1] if i+1 < len(lines) else None
+        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text, next_line_text)
         if fill_in_blank:
             field_key, field_title = fill_in_blank
             if debug:
                 print(f"  [debug] fill-in-blank detected: {line[:60]}... -> {field_key}")
-            questions.append(Question(field_key, field_title, cur_section, "input",
-                                      control={"input_type": "text"}))
+            
+            # Determine field type based on the title
+            if 'signature' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                        control={"language": "en", "variant": "adult_no_guardian_details"}))
+            elif 'date' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "date",
+                                        control={"input_type": "past"}))
+            elif 'name' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"hint": None, "input_type": "name"}))
+            else:
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"input_type": "text"}))
             i += 1
             continue
         
