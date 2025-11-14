@@ -2389,6 +2389,52 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     
     # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
     lines = [normalize_glyphs_line(x) for x in lines]
+    
+    # Parity Fix: Detect if document is an information sheet (not a form)
+    # Information sheets have instructional text but no fillable fields
+    # Heuristics: 
+    # 1. No common field markers (colons, underscores, blank lines for input)
+    # 2. Short document (<20 lines) with mostly instructional content
+    # 3. Contains congratulatory or informational keywords
+    def is_information_sheet(text_lines: List[str]) -> bool:
+        """Detect if document is informational content, not a form to fill out."""
+        if len(text_lines) < 5:  # Too short to determine
+            return False
+        
+        # Count field indicators
+        field_indicators = 0
+        info_indicators = 0
+        
+        for line in text_lines[:30]:  # Check first 30 lines
+            line_lower = line.lower().strip()
+            # Field indicators
+            if re.search(r':\s*_{2,}', line):  # "Label: ___"
+                field_indicators += 1
+            if re.search(r'^\s*\[\s*\]', line):  # Checkbox at start
+                field_indicators += 1
+            if re.search(r'\b(name|address|phone|email|date|signature|birth|ssn):', line_lower):
+                field_indicators += 1
+                
+            # Information indicators
+            if re.match(r'^(congratulations|welcome|thank you|important|note|remember)', line_lower):
+                info_indicators += 1
+            if 'retainer' in line_lower and ('#' in line_lower or 'guide' in line_lower):
+                info_indicators += 2  # Strong indicator of retainer instructions
+            if re.search(r'\bhooray\b|beautiful smile|party.*over', line_lower):
+                info_indicators += 1
+            
+        # Decision: If very few field indicators and some info indicators, it's informational
+        if field_indicators <= 1 and info_indicators >= 2:
+            return True
+        if len(text_lines) < 20 and field_indicators == 0 and info_indicators >= 1:
+            return True
+        return False
+    
+    if is_information_sheet(lines):
+        if debug:
+            print("  [debug] Document detected as information sheet, not a fillable form. Returning empty field list.")
+        # Return empty questions list - this is not a form to be filled
+        return []
 
     questions: List[Question] = []
     cur_section = "General"
@@ -3513,6 +3559,43 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             r'^within\s+[-\d]+\s+(days?|hours?|weeks?)',  # Time references like "within -5 days"
         ]
         should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
+        
+        # Parity Fix: Skip numbered consent section headings (e.g., "1. Reduction of tooth structure")
+        # These are descriptive headings in consent forms, not fillable fields
+        # Check regardless of current section, as section may not be set yet during parsing
+        if not should_skip:
+            # Pattern: starts with digit, period, space, then capitalized text
+            # Examples: "1. Numbness following use of anesthesia", "3. Sensitivity of teeth"
+            numbered_heading_match = re.match(r'^\d+\.\s+[A-Z]', title)
+            if numbered_heading_match:
+                # Additional check: verify this looks like a consent/informational heading
+                # (not a numbered question like "1. Patient Name" which would have a colon or be very short)
+                has_colon = ':' in title
+                is_short = len(title.split()) <= 3
+                # Skip if it's a longer numbered heading without colon (consent section pattern)
+                if not has_colon and not is_short and len(title) > 10:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping numbered consent heading: '{title[:60]}'")
+        
+        # Parity Fix: Skip bullet-point risk descriptions in Consent sections
+        # These are informational lists, not fields to be filled
+        # Check regardless of section as consent patterns can appear anywhere
+        if not should_skip:
+            # Pattern: starts with bullet symbol (●, •, ·, -, *) followed by descriptive text
+            # Common in risk/complication lists
+            bullet_risk_match = re.match(r'^[●•·\-\*]\s+', title)
+            if bullet_risk_match:
+                # Check if it's a risk/complication description (not a checkbox option)
+                risk_keywords = ['risk', 'complication', 'may', 'can', 'possible', 'potential',
+                                'numbness', 'infection', 'swelling', 'pain', 'sensitivity',
+                                'bleeding', 'reaction', 'damage', 'fracture', 'decay',
+                                'temporary', 'permanent', 'post', 'treatment', 'procedure']
+                has_risk_keywords = any(kw in title.lower() for kw in risk_keywords)
+                # Also skip if it's a single word/short phrase (likely a condition name)
+                is_short_item = len(title.split()) <= 4
+                if has_risk_keywords or is_short_item:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping bullet risk description: '{title[:60]}'")
         
         # Archivev23 Enhancement: Skip sentence fragments that end with a period but aren't questions
         # (e.g., "healthy gums tissue.", "It is carried out to provide...")
