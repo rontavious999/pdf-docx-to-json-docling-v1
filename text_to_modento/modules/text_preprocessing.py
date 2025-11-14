@@ -682,6 +682,12 @@ def is_instructional_paragraph(line: str) -> bool:
     if underscore_sequences >= 3 or colon_count >= 5:
         return False  # This is likely a form field line, not instructional text
     
+    # PRODUCTION PARITY FIX: Check for embedded parenthetical field labels
+    # Lines like "PATIENT CONSENT: I, _____(print name) have been..." contain fillable fields
+    # Pattern: underscores followed by parenthetical label
+    if re.search(r'_{3,}\s*\([^)]{3,40}\)', line_stripped):
+        return False  # This line contains a fillable field, not just instructions
+    
     # Long text is likely instructional (>50 words or >250 chars)
     # BUT only if it doesn't have form field indicators (checked above)
     if word_count > 50 or len(line_stripped) > 250:

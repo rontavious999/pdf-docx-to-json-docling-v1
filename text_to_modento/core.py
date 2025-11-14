@@ -2364,6 +2364,74 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
     return None
 
 
+def detect_embedded_parenthetical_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Detect fields embedded in sentences with parenthetical labels.
+    
+    Examples:
+        "I, _____(print name) have been..." -> ("print_name", "Print Name")
+        "PATIENT CONSENT: I, _____(print name) have..." -> ("patient_name", "Patient Name") 
+        "Date: _____(mm/dd/yyyy)" -> ("date", "Date")
+        "Signature: _____(patient signature)" -> ("signature", "Patient Signature")
+    
+    This pattern is common in consent forms where the field label is given
+    as a clarification in parentheses after blank underscores.
+    
+    Production Parity Fix: Capture fields that were previously missed in consent forms.
+    """
+    # Pattern: underscores followed by parenthetical label
+    # Need at least 3 underscores and a label in parentheses
+    pattern = r'_{3,}\s*\(([^)]{3,40})\)'
+    
+    matches = list(re.finditer(pattern, line))
+    if not matches:
+        return None
+    
+    # Take the first match (most common case)
+    match = matches[0]
+    label_text = match.group(1).strip()
+    
+    # Clean up common variations
+    label_lower = label_text.lower()
+    
+    # Map common variations to standard field names
+    if 'print' in label_lower and 'name' in label_lower:
+        # "print name", "please print name", "print full name"
+        return ("patient_name", "Patient Name")
+    elif 'name' in label_lower and 'patient' in label_lower:
+        return ("patient_name", "Patient Name")
+    elif 'date' in label_lower and ('mm' in label_lower or 'dd' in label_lower or 'yyyy' in label_lower):
+        return ("date", "Date")
+    elif 'signature' in label_lower:
+        # Extract more specific signature type if present
+        if 'patient' in label_lower:
+            return ("patient_signature", "Patient Signature")
+        elif 'witness' in label_lower:
+            return ("witness_signature", "Witness Signature")
+        elif 'guardian' in label_lower or 'parent' in label_lower:
+            return ("guardian_signature", "Guardian Signature")
+        else:
+            return ("signature", "Signature")
+    else:
+        # Generic case: use the label text as-is
+        # Clean and slugify the label
+        clean_label = label_text.strip()
+        # Remove common filler words
+        clean_label = re.sub(r'\b(please|kindly)\b', '', clean_label, flags=re.I).strip()
+        
+        # Create title case for display
+        title = ' '.join(word.capitalize() for word in clean_label.split())
+        
+        # Create key
+        key = slugify(clean_label)
+        
+        # Only return if we have a reasonable key (not too short)
+        if len(key) >= 3:
+            return (key, title)
+    
+    return None
+
+
 # ============================================================================
 # SECTION 3: MAIN PARSING LOGIC
 # ============================================================================
@@ -3332,6 +3400,29 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                 print(f"  [debug] fill-in-blank detected: {line[:60]}... -> {field_key}")
             questions.append(Question(field_key, field_title, cur_section, "input",
                                       control={"input_type": "text"}))
+            i += 1
+            continue
+        
+        # Production Parity Fix: Check for embedded parenthetical fields
+        # Detects patterns like "I, _____(print name) have been..."
+        embedded_field = detect_embedded_parenthetical_field(line)
+        if embedded_field:
+            field_key, field_title = embedded_field
+            if debug:
+                print(f"  [debug] embedded parenthetical field: {line[:60]}... -> {field_key}")
+            
+            # Determine field type based on key
+            if 'signature' in field_key:
+                questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                        control={"language": "en", "variant": "adult_no_guardian_details"}))
+            elif 'date' in field_key:
+                questions.append(Question(field_key, field_title, cur_section, "date",
+                                        control={"input_type": "past"}))
+            else:
+                # Most commonly a name field
+                input_type = "name" if 'name' in field_key else "text"
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"hint": None, "input_type": input_type}))
             i += 1
             continue
         
