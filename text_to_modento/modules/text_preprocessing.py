@@ -144,6 +144,12 @@ def is_heading(line: str, context: dict = None) -> bool:
     if has_checkbox:
         return False
     
+    # PRODUCTION PARITY FIX: Lines with multiple colons are multi-field lines, not headings
+    # e.g., "Signature:	Printed Name:	Date:" should be treated as multiple fields
+    # Check this BEFORE strong_headers to avoid false matches on "Signature:" alone
+    if t.count(':') >= 2:
+        return False
+    
     # Improvement 10: Strong header indicators (common section names)
     strong_headers = [
         'patient information',
