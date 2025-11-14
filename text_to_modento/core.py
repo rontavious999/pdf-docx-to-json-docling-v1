@@ -3662,7 +3662,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Archivev22 Enhancement: Skip document titles that look like form headers
         # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
         # Archivev23 Fix: Relax title case requirement - accept any capitalized title with form keywords
-        if not should_skip and len(title.split()) >= 4:
+        # Parity Fix: Also handle 3-word titles like "Endodontic Informed Consent"
+        if not should_skip and len(title.split()) >= 3:
             title_lower = title.lower()
             # Check for form title keywords
             has_form_keywords = any(kw in title_lower for kw in ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure'])
@@ -3672,9 +3673,19 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             # Relaxed: 2+ capitalized words OR title case OR all caps
             looks_like_title = capitalized_words >= 2 or title.istitle() or title.isupper()
             
-            if has_form_keywords and looks_like_title:
-                should_skip = True
-                if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+            # For 3-word titles, require stronger signal (e.g., "Informed Consent")
+            if len(words) == 3:
+                # Common 3-word consent patterns
+                consent_patterns = ['informed consent', 'consent form', 'patient consent', 'consent agreement']
+                has_consent_pattern = any(pattern in title_lower for pattern in consent_patterns)
+                if has_form_keywords and has_consent_pattern and looks_like_title:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+            elif len(words) >= 4:
+                # 4+ word titles with form keywords
+                if has_form_keywords and looks_like_title:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
         
         # Archivev22 Enhancement: Skip lines that look like section headers describing content
         # (e.g., "Endodontic (Root Canal) Treatment, Endodontic Surgery, Anesthetics, and Medications")
@@ -4417,6 +4428,57 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
                 item['section'] = 'Dental History'
     
     return payload
+
+def postprocess_filter_document_titles(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Parity Fix: Remove fields that are actually document titles.
+    
+    Document titles like "Endodontic Informed Consent" sometimes slip through
+    parsing and get created as fields. Filter them out in postprocessing.
+    """
+    filtered = []
+    removed_count = 0
+    
+    for field in payload:
+        title = field.get('title', '')
+        field_type = field.get('type', '')
+        
+        # Skip if not an input/checkbox field (terms, signatures are OK)
+        if field_type not in ['input', 'checkbox']:
+            filtered.append(field)
+            continue
+        
+        title_lower = title.lower()
+        words = title.split()
+        
+        # Pattern 1: 3-word consent patterns (e.g., "Endodontic Informed Consent")
+        if len(words) == 3:
+            consent_patterns = ['informed consent', 'consent form', 'patient consent', 'consent agreement']
+            if any(pattern in title_lower for pattern in consent_patterns):
+                removed_count += 1
+                if dbg:
+                    dbg.log(f"filter_document_titles -> Removed '{title}'")
+                continue
+        
+        # Pattern 2: 4+ word titles with "consent" or "form" keywords
+        if len(words) >= 4:
+            form_keywords = ['consent', 'form', 'information', 'agreement', 'authorization', 'release']
+            if any(kw in title_lower for kw in form_keywords):
+                # Check if it looks like a title (mostly capitalized)
+                capitalized = sum(1 for w in words if w and w[0].isupper())
+                if capitalized >= len(words) - 1:  # Allow one lowercase word
+                    removed_count += 1
+                    if dbg:
+                        dbg.log(f"filter_document_titles -> Removed '{title}'")
+                    continue
+        
+        filtered.append(field)
+    
+    if removed_count > 0 and dbg:
+        dbg.log(f"Filtered {removed_count} document title fields")
+    
+    return filtered
+
 
 def postprocess_consolidate_duplicates(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
     """
@@ -5190,6 +5252,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     # New post-processing steps (Archivev9 fixes)
     payload = postprocess_infer_sections(payload, dbg=dbg)
     payload = postprocess_consolidate_duplicates(payload, dbg=dbg)
+    
+    # Parity Fix: Filter out document title fields that slipped through parsing
+    payload = postprocess_filter_document_titles(payload, dbg=dbg)
     
     # Improvement #10: Enhanced duplicate consolidation
     payload = list(consolidate_duplicate_fields_enhanced(payload, debug=debug))
