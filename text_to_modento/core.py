@@ -4433,8 +4433,8 @@ def postprocess_filter_document_titles(payload: List[dict], dbg: Optional[DebugL
     """
     Parity Fix: Remove fields that are actually document titles.
     
-    Document titles like "Endodontic Informed Consent" sometimes slip through
-    parsing and get created as fields. Filter them out in postprocessing.
+    Document titles like "Endodontic Informed Consent" or "Extraction Consent"
+    sometimes slip through parsing and get created as fields. Filter them out.
     """
     filtered = []
     removed_count = 0
@@ -4451,16 +4451,25 @@ def postprocess_filter_document_titles(payload: List[dict], dbg: Optional[DebugL
         title_lower = title.lower()
         words = title.split()
         
-        # Pattern 1: 3-word consent patterns (e.g., "Endodontic Informed Consent")
+        # Pattern 1: Single word + "consent" (e.g., "extraction consent", "implant consent")
+        if len(words) == 2 and 'consent' in title_lower:
+            # Check if it's not a field-like pattern (no colon, no underscores)
+            if ':' not in title and '_' not in title:
+                removed_count += 1
+                if dbg:
+                    dbg.log(f"filter_document_titles -> Removed '{title}' (2-word consent title)")
+                continue
+        
+        # Pattern 2: 3-word consent patterns (e.g., "Endodontic Informed Consent")
         if len(words) == 3:
             consent_patterns = ['informed consent', 'consent form', 'patient consent', 'consent agreement']
             if any(pattern in title_lower for pattern in consent_patterns):
                 removed_count += 1
                 if dbg:
-                    dbg.log(f"filter_document_titles -> Removed '{title}'")
+                    dbg.log(f"filter_document_titles -> Removed '{title}' (3-word consent pattern)")
                 continue
         
-        # Pattern 2: 4+ word titles with "consent" or "form" keywords
+        # Pattern 3: 4+ word titles with "consent" or "form" keywords
         if len(words) >= 4:
             form_keywords = ['consent', 'form', 'information', 'agreement', 'authorization', 'release']
             if any(kw in title_lower for kw in form_keywords):
@@ -4469,7 +4478,7 @@ def postprocess_filter_document_titles(payload: List[dict], dbg: Optional[DebugL
                 if capitalized >= len(words) - 1:  # Allow one lowercase word
                     removed_count += 1
                     if dbg:
-                        dbg.log(f"filter_document_titles -> Removed '{title}'")
+                        dbg.log(f"filter_document_titles -> Removed '{title}' (multi-word form title)")
                     continue
         
         filtered.append(field)
