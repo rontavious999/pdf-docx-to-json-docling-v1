@@ -2389,6 +2389,52 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     
     # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
     lines = [normalize_glyphs_line(x) for x in lines]
+    
+    # Parity Fix: Detect if document is an information sheet (not a form)
+    # Information sheets have instructional text but no fillable fields
+    # Heuristics: 
+    # 1. No common field markers (colons, underscores, blank lines for input)
+    # 2. Short document (<20 lines) with mostly instructional content
+    # 3. Contains congratulatory or informational keywords
+    def is_information_sheet(text_lines: List[str]) -> bool:
+        """Detect if document is informational content, not a form to fill out."""
+        if len(text_lines) < 5:  # Too short to determine
+            return False
+        
+        # Count field indicators
+        field_indicators = 0
+        info_indicators = 0
+        
+        for line in text_lines[:30]:  # Check first 30 lines
+            line_lower = line.lower().strip()
+            # Field indicators
+            if re.search(r':\s*_{2,}', line):  # "Label: ___"
+                field_indicators += 1
+            if re.search(r'^\s*\[\s*\]', line):  # Checkbox at start
+                field_indicators += 1
+            if re.search(r'\b(name|address|phone|email|date|signature|birth|ssn):', line_lower):
+                field_indicators += 1
+                
+            # Information indicators
+            if re.match(r'^(congratulations|welcome|thank you|important|note|remember)', line_lower):
+                info_indicators += 1
+            if 'retainer' in line_lower and ('#' in line_lower or 'guide' in line_lower):
+                info_indicators += 2  # Strong indicator of retainer instructions
+            if re.search(r'\bhooray\b|beautiful smile|party.*over', line_lower):
+                info_indicators += 1
+            
+        # Decision: If very few field indicators and some info indicators, it's informational
+        if field_indicators <= 1 and info_indicators >= 2:
+            return True
+        if len(text_lines) < 20 and field_indicators == 0 and info_indicators >= 1:
+            return True
+        return False
+    
+    if is_information_sheet(lines):
+        if debug:
+            print("  [debug] Document detected as information sheet, not a fillable form. Returning empty field list.")
+        # Return empty questions list - this is not a form to be filled
+        return []
 
     questions: List[Question] = []
     cur_section = "General"
@@ -3514,6 +3560,43 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         ]
         should_skip = any(re.search(pattern, title, re.I) for pattern in skip_patterns)
         
+        # Parity Fix: Skip numbered consent section headings (e.g., "1. Reduction of tooth structure")
+        # These are descriptive headings in consent forms, not fillable fields
+        # Check regardless of current section, as section may not be set yet during parsing
+        if not should_skip:
+            # Pattern: starts with digit, period, space, then capitalized text
+            # Examples: "1. Numbness following use of anesthesia", "3. Sensitivity of teeth"
+            numbered_heading_match = re.match(r'^\d+\.\s+[A-Z]', title)
+            if numbered_heading_match:
+                # Additional check: verify this looks like a consent/informational heading
+                # (not a numbered question like "1. Patient Name" which would have a colon or be very short)
+                has_colon = ':' in title
+                is_short = len(title.split()) <= 3
+                # Skip if it's a longer numbered heading without colon (consent section pattern)
+                if not has_colon and not is_short and len(title) > 10:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping numbered consent heading: '{title[:60]}'")
+        
+        # Parity Fix: Skip bullet-point risk descriptions in Consent sections
+        # These are informational lists, not fields to be filled
+        # Check regardless of section as consent patterns can appear anywhere
+        if not should_skip:
+            # Pattern: starts with bullet symbol (●, •, ·, -, *) followed by descriptive text
+            # Common in risk/complication lists
+            bullet_risk_match = re.match(r'^[●•·\-\*]\s+', title)
+            if bullet_risk_match:
+                # Check if it's a risk/complication description (not a checkbox option)
+                risk_keywords = ['risk', 'complication', 'may', 'can', 'possible', 'potential',
+                                'numbness', 'infection', 'swelling', 'pain', 'sensitivity',
+                                'bleeding', 'reaction', 'damage', 'fracture', 'decay',
+                                'temporary', 'permanent', 'post', 'treatment', 'procedure']
+                has_risk_keywords = any(kw in title.lower() for kw in risk_keywords)
+                # Also skip if it's a single word/short phrase (likely a condition name)
+                is_short_item = len(title.split()) <= 4
+                if has_risk_keywords or is_short_item:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping bullet risk description: '{title[:60]}'")
+        
         # Archivev23 Enhancement: Skip sentence fragments that end with a period but aren't questions
         # (e.g., "healthy gums tissue.", "It is carried out to provide...")
         # Field labels typically DON'T end with periods unless they're questions or abbreviations
@@ -3579,7 +3662,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Archivev22 Enhancement: Skip document titles that look like form headers
         # (e.g., "ENDODONTIC INFORMATION AND CONSENT FORM", "Informed Consent for Tooth Extraction")
         # Archivev23 Fix: Relax title case requirement - accept any capitalized title with form keywords
-        if not should_skip and len(title.split()) >= 4:
+        # Parity Fix: Also handle 3-word titles like "Endodontic Informed Consent"
+        if not should_skip and len(title.split()) >= 3:
             title_lower = title.lower()
             # Check for form title keywords
             has_form_keywords = any(kw in title_lower for kw in ['consent', 'form', 'information', 'agreement', 'authorization', 'release', 'disclosure'])
@@ -3589,9 +3673,19 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             # Relaxed: 2+ capitalized words OR title case OR all caps
             looks_like_title = capitalized_words >= 2 or title.istitle() or title.isupper()
             
-            if has_form_keywords and looks_like_title:
-                should_skip = True
-                if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+            # For 3-word titles, require stronger signal (e.g., "Informed Consent")
+            if len(words) == 3:
+                # Common 3-word consent patterns
+                consent_patterns = ['informed consent', 'consent form', 'patient consent', 'consent agreement']
+                has_consent_pattern = any(pattern in title_lower for pattern in consent_patterns)
+                if has_form_keywords and has_consent_pattern and looks_like_title:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
+            elif len(words) >= 4:
+                # 4+ word titles with form keywords
+                if has_form_keywords and looks_like_title:
+                    should_skip = True
+                    if debug: print(f"  [debug] skipping document title: '{title[:60]}'")
         
         # Archivev22 Enhancement: Skip lines that look like section headers describing content
         # (e.g., "Endodontic (Root Canal) Treatment, Endodontic Surgery, Anesthetics, and Medications")
@@ -4334,6 +4428,66 @@ def postprocess_infer_sections(payload: List[dict], dbg: Optional[DebugLogger] =
                 item['section'] = 'Dental History'
     
     return payload
+
+def postprocess_filter_document_titles(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
+    """
+    Parity Fix: Remove fields that are actually document titles.
+    
+    Document titles like "Endodontic Informed Consent" or "Extraction Consent"
+    sometimes slip through parsing and get created as fields. Filter them out.
+    """
+    filtered = []
+    removed_count = 0
+    
+    for field in payload:
+        title = field.get('title', '')
+        field_type = field.get('type', '')
+        
+        # Skip if not an input/checkbox field (terms, signatures are OK)
+        if field_type not in ['input', 'checkbox']:
+            filtered.append(field)
+            continue
+        
+        title_lower = title.lower()
+        words = title.split()
+        
+        # Pattern 1: Single word + "consent" (e.g., "extraction consent", "implant consent")
+        if len(words) == 2 and 'consent' in title_lower:
+            # Check if it's not a field-like pattern (no colon, no underscores)
+            if ':' not in title and '_' not in title:
+                removed_count += 1
+                if dbg:
+                    dbg.log(f"filter_document_titles -> Removed '{title}' (2-word consent title)")
+                continue
+        
+        # Pattern 2: 3-word consent patterns (e.g., "Endodontic Informed Consent")
+        if len(words) == 3:
+            consent_patterns = ['informed consent', 'consent form', 'patient consent', 'consent agreement']
+            if any(pattern in title_lower for pattern in consent_patterns):
+                removed_count += 1
+                if dbg:
+                    dbg.log(f"filter_document_titles -> Removed '{title}' (3-word consent pattern)")
+                continue
+        
+        # Pattern 3: 4+ word titles with "consent" or "form" keywords
+        if len(words) >= 4:
+            form_keywords = ['consent', 'form', 'information', 'agreement', 'authorization', 'release']
+            if any(kw in title_lower for kw in form_keywords):
+                # Check if it looks like a title (mostly capitalized)
+                capitalized = sum(1 for w in words if w and w[0].isupper())
+                if capitalized >= len(words) - 1:  # Allow one lowercase word
+                    removed_count += 1
+                    if dbg:
+                        dbg.log(f"filter_document_titles -> Removed '{title}' (multi-word form title)")
+                    continue
+        
+        filtered.append(field)
+    
+    if removed_count > 0 and dbg:
+        dbg.log(f"Filtered {removed_count} document title fields")
+    
+    return filtered
+
 
 def postprocess_consolidate_duplicates(payload: List[dict], dbg: Optional[DebugLogger] = None) -> List[dict]:
     """
@@ -5107,6 +5261,9 @@ def process_one(txt_path: Path, out_dir: Path, catalog: Optional[TemplateCatalog
     # New post-processing steps (Archivev9 fixes)
     payload = postprocess_infer_sections(payload, dbg=dbg)
     payload = postprocess_consolidate_duplicates(payload, dbg=dbg)
+    
+    # Parity Fix: Filter out document title fields that slipped through parsing
+    payload = postprocess_filter_document_titles(payload, dbg=dbg)
     
     # Improvement #10: Enhanced duplicate consolidation
     payload = list(consolidate_duplicate_fields_enhanced(payload, debug=debug))
