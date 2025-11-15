@@ -1897,14 +1897,19 @@ def _insurance_id_ssn_fanout(title: str) -> Optional[List[Tuple[str, str, Dict]]
     return None
 
 
-def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
+def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None, next_line: Optional[str] = None) -> Optional[Tuple[str, str]]:
     """
     Category 1 Fix 1.2: Detect standalone fill-in-blank fields.
     
     Pattern: Lines with mostly underscores (5+ consecutive underscores).
-    Uses text on same line or previous line as label.
+    Uses text on same line, previous line, or next line as label.
+    
+    Production Parity Fix: Also check next line for labels (common in signature blocks).
     
     Returns: (key, title) or None
+    
+    NOTE: This function handles SINGLE blank fields. For lines with multiple underscore
+    groups, use detect_multi_blank_line_with_labels() instead.
     """
     # Check if line has 5+ consecutive underscores
     if not re.search(r'_{5,}', line):
@@ -1922,6 +1927,8 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
         # If there are text labels between underscore groups, this is multi-field
         if text_chunks_between and any(len(c) > 2 for c in text_chunks_between):
             return None  # Let multi-field splitters handle this
+        # If just spaces between, might be a multi-blank line - return None to let specific handler deal with it
+        return None
     
     # Count underscore vs non-underscore content
     underscore_count = line.count('_')
@@ -1937,6 +1944,25 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
         label = label_match.group(1).strip()
         if label and len(label) >= 2:
             return (slugify(label), label)
+    
+    # PRODUCTION PARITY FIX: Try to use next line as label (common in signature blocks)
+    # Pattern: blank underscore line followed by "Patient Signature" or similar
+    if next_line:
+        next_clean = next_line.strip().rstrip(':.')
+        if next_clean and len(next_clean) < 100 and not re.search(CHECKBOX_ANY, next_clean):
+            # Check if next line looks like a field label (not a sentence)
+            # Common signature/name/date labels
+            signature_patterns = [
+                r'\b(?:patient|parent|guardian|witness|provider|doctor|dentist).*(?:signature|name|date)\b',
+                r'\b(?:signature|name|date)\b',
+                r'\bsign(?:ed)?\s+(?:by|on|at)\b'
+            ]
+            next_lower = next_clean.lower()
+            is_label = any(re.search(p, next_lower) for p in signature_patterns)
+            
+            if is_label and not is_heading(next_clean):
+                # Use next line as label
+                return (slugify(next_clean), next_clean)
     
     # Try to use previous line as label if available
     if prev_line:
@@ -1958,6 +1984,44 @@ def detect_fill_in_blank_field(line: str, prev_line: Optional[str] = None) -> Op
         return (slugify(line_text), line_text)
     
     # No label found and no identifying text - skip this underscore field
+    return None
+
+
+def detect_multi_blank_line_with_labels(line: str, next_lines: List[str]) -> Optional[List[Tuple[str, str]]]:
+    """
+    PARITY FIX: Detect lines with multiple underscore groups that have labels on a following line.
+    
+    Pattern:
+        Line N:   "____________         ____________"  (multiple blank groups)
+        Line N+1: empty or whitespace
+        Line N+2: "Signature            Date"          (space-separated labels)
+    
+    This is common in signature blocks where blanks are above aligned column labels.
+    
+    Returns: List of (key, title) tuples, one for each blank/label pair
+    """
+    # Must have 2+ underscore groups
+    underscore_groups = re.findall(r'_{5,}', line)
+    if len(underscore_groups) < 2:
+        return None
+    
+    # Check if there's only whitespace between underscore groups (no text labels)
+    parts = re.split(r'_{5,}', line)
+    text_between = [p.strip() for p in parts[1:-1] if p.strip()]
+    if text_between:
+        return None  # Has text between - not a pure multi-blank line
+    
+    # Look ahead up to 3 lines for space-separated labels
+    for i, next_line in enumerate(next_lines[:3]):
+        if not next_line or not next_line.strip():
+            continue  # Skip empty lines
+        
+        # Check if this line has space-separated labels
+        labels = detect_space_separated_labels(next_line)
+        if labels and len(labels) == len(underscore_groups):
+            # Found matching labels! Return them
+            return labels
+    
     return None
 
 
@@ -2075,13 +2139,16 @@ def detect_multiple_label_colon_line(line: str) -> Optional[List[Tuple[str, str]
                 for token in tokens:
                     token = token.strip()
                     if token and len(token) >= 2:
-                        token = re.sub(r'[_/]+$', '', token).strip()
-                        if token:
+                        # Remove leading and trailing underscores/slashes
+                        token = re.sub(r'^[_/\s]+|[_/]+$', '', token).strip()
+                        if token and len(token) >= 2:
                             field_key = slugify(token)
                             fields.append((field_key, token))
             else:
                 # Keep as single label (this preserves "Policy Holder Name", "Member ID/ SS#")
-                label = re.sub(r'[_/]+$', '', label).strip()
+                # PARITY FIX: Remove leading underscores/blanks from labels between colons
+                # Example: "Tooth Number: ______ Diagnosis:" should extract "Diagnosis" not "______ Diagnosis"
+                label = re.sub(r'^[_/\s]+|[_/]+$', '', label).strip()
                 if label and len(label) >= 2:
                     field_key = slugify(label)
                     fields.append((field_key, label))
@@ -2360,6 +2427,118 @@ def detect_inline_text_options(line: str) -> Optional[Tuple[str, str, List[Tuple
         # Need at least 2 options and all options should be short (single words/phrases)
         if len(options) >= 2 and all(len(o[0]) < 20 for o in options):
             return (question_text, "select_one", options)
+    
+    return None
+
+
+def detect_space_separated_labels(line: str) -> Optional[List[Tuple[str, str]]]:
+    """
+    Detect lines with multiple labels separated by significant spacing (10+ spaces).
+    
+    Examples:
+        "Patient Signature                    Date" -> [("patient_signature", "Patient Signature"), ("date", "Date")]
+        "Patient Name (Print)            Witness" -> [("patient_name_print", "Patient Name (Print)"), ("witness", "Witness")]
+    
+    This pattern is common in signature blocks where labels are aligned in columns.
+    
+    PARITY FIX: Capture multi-column signature block labels that don't have colons or tabs.
+    """
+    # Must have significant spacing (10+ spaces) to indicate column layout
+    if not re.search(r'\s{10,}', line):
+        return None
+    
+    # Split by 10+ consecutive spaces
+    parts = re.split(r'\s{10,}', line)
+    
+    # Filter out empty parts and underscore-only parts
+    labels = []
+    for part in parts:
+        part = part.strip()
+        # Skip if empty or mostly underscores
+        if not part or len(re.sub(r'[_\s]', '', part)) < 2:
+            continue
+        
+        # Check if this looks like a label (contains letters and common field keywords)
+        if re.search(r'[A-Za-z]', part):
+            # Common signature block keywords
+            if re.search(r'\b(signature|name|date|witness|provider|patient|guardian|parent|print)\b', part, re.I):
+                # Clean the label
+                clean_label = part.strip()
+                key = slugify(clean_label)
+                if len(key) >= 3:  # Reasonable key length
+                    labels.append((key, clean_label))
+    
+    # Return only if we found at least 2 valid labels
+    if len(labels) >= 2:
+        return labels
+    
+    return None
+
+
+def detect_embedded_parenthetical_field(line: str) -> Optional[Tuple[str, str]]:
+    """
+    Detect fields embedded in sentences with parenthetical labels.
+    
+    Examples:
+        "I, _____(print name) have been..." -> ("print_name", "Print Name")
+        "PATIENT CONSENT: I, _____(print name) have..." -> ("patient_name", "Patient Name") 
+        "Date: _____(mm/dd/yyyy)" -> ("date", "Date")
+        "Signature: _____(patient signature)" -> ("signature", "Patient Signature")
+    
+    This pattern is common in consent forms where the field label is given
+    as a clarification in parentheses after blank underscores.
+    
+    Production Parity Fix: Capture fields that were previously missed in consent forms.
+    """
+    # Pattern: underscores followed by parenthetical label
+    # Need at least 3 underscores and a label in parentheses
+    pattern = r'_{3,}\s*\(([^)]{3,40})\)'
+    
+    matches = list(re.finditer(pattern, line))
+    if not matches:
+        return None
+    
+    # Take the first match (most common case)
+    match = matches[0]
+    label_text = match.group(1).strip()
+    
+    # Clean up common variations
+    label_lower = label_text.lower()
+    
+    # Map common variations to standard field names
+    if 'print' in label_lower and 'name' in label_lower:
+        # "print name", "please print name", "print full name"
+        return ("patient_name", "Patient Name")
+    elif 'name' in label_lower and 'patient' in label_lower:
+        return ("patient_name", "Patient Name")
+    elif 'date' in label_lower and ('mm' in label_lower or 'dd' in label_lower or 'yyyy' in label_lower):
+        return ("date", "Date")
+    elif 'signature' in label_lower:
+        # Extract more specific signature type if present
+        if 'patient' in label_lower:
+            return ("patient_signature", "Patient Signature")
+        elif 'witness' in label_lower:
+            return ("witness_signature", "Witness Signature")
+        elif 'guardian' in label_lower or 'parent' in label_lower:
+            return ("guardian_signature", "Guardian Signature")
+        else:
+            return ("signature", "Signature")
+    else:
+        # Generic case: use the label text as-is
+        # Clean and slugify the label
+        clean_label = label_text.strip()
+        # Remove common filler words
+        clean_label = re.sub(r'\b(please|kindly)\b', '', clean_label, flags=re.I).strip()
+        
+        # Create title case for display
+        title = ' '.join(word.capitalize() for word in clean_label.split())
+        
+        # Create key
+        key = slugify(clean_label)
+        
+        # Only return if we have a reasonable key (not too short)
+        if len(key) >= 3:
+            return (key, title)
     
     return None
 
@@ -3302,6 +3481,34 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             i += 1
             continue
         
+        # PARITY FIX: Check for space-separated labels (signature blocks)
+        # Handles lines like "Patient Signature                    Date"
+        space_sep_fields = detect_space_separated_labels(line)
+        if space_sep_fields:
+            if debug:
+                print(f"  [debug] space-separated labels detected: {line[:60]}... -> {len(space_sep_fields)} fields")
+                print(f"  [debug]   Keys: {[k for k, _ in space_sep_fields]}")
+            for field_key, field_title in space_sep_fields:
+                # Determine field type based on title
+                if 'signature' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                            control={"language": "en", "variant": "adult_no_guardian_details"}))
+                elif 'date' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "date",
+                                            control={"input_type": "past"}))
+                elif 'name' in field_key.lower() and 'print' in field_key.lower():
+                    # "Name (Print)" or "Printed Name"
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"hint": None, "input_type": "name"}))
+                elif 'witness' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"hint": None, "input_type": "name"}))
+                else:
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"input_type": "text"}))
+            i += 1
+            continue
+        
         # Priority 2.1: Check for multi-field lines (e.g., "Phone: Mobile ___ Home ___ Work ___")
         # Improvement 3: Pass section and context for enhanced field naming
         prev_context = lines[max(0, i-3):i] if i > 0 else []
@@ -3323,15 +3530,79 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             i += 1
             continue
         
+        # PARITY FIX: Check for multi-blank lines with labels on following line
+        # Handles signature blocks where blanks are vertically aligned above column labels
+        next_lines_for_blanks = lines[i+1:min(i+4, len(lines))]  # Look ahead 3 lines
+        multi_blank_fields = detect_multi_blank_line_with_labels(line, next_lines_for_blanks)
+        if multi_blank_fields:
+            if debug:
+                print(f"  [debug] multi-blank-with-labels detected: {line[:60]}... -> {len(multi_blank_fields)} fields")
+                print(f"  [debug]   Keys: {[k for k, _ in multi_blank_fields]}")
+            for field_key, field_title in multi_blank_fields:
+                # Determine field type based on title
+                if 'signature' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                            control={"language": "en", "variant": "adult_no_guardian_details"}))
+                elif 'date' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "date",
+                                            control={"input_type": "past"}))
+                elif 'name' in field_key.lower() and 'print' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"hint": None, "input_type": "name"}))
+                elif 'witness' in field_key.lower():
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"hint": None, "input_type": "name"}))
+                else:
+                    questions.append(Question(field_key, field_title, cur_section, "input",
+                                            control={"input_type": "text"}))
+            i += 1
+            continue
+        
         # Category 1 Fix 1.2: Check for fill-in-blank fields
         prev_line_text = lines[i-1] if i > 0 else None
-        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text)
+        next_line_text = lines[i+1] if i+1 < len(lines) else None
+        fill_in_blank = detect_fill_in_blank_field(line, prev_line_text, next_line_text)
         if fill_in_blank:
             field_key, field_title = fill_in_blank
             if debug:
                 print(f"  [debug] fill-in-blank detected: {line[:60]}... -> {field_key}")
-            questions.append(Question(field_key, field_title, cur_section, "input",
-                                      control={"input_type": "text"}))
+            
+            # Determine field type based on the title
+            if 'signature' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                        control={"language": "en", "variant": "adult_no_guardian_details"}))
+            elif 'date' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "date",
+                                        control={"input_type": "past"}))
+            elif 'name' in field_title.lower():
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"hint": None, "input_type": "name"}))
+            else:
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"input_type": "text"}))
+            i += 1
+            continue
+        
+        # Production Parity Fix: Check for embedded parenthetical fields
+        # Detects patterns like "I, _____(print name) have been..."
+        embedded_field = detect_embedded_parenthetical_field(line)
+        if embedded_field:
+            field_key, field_title = embedded_field
+            if debug:
+                print(f"  [debug] embedded parenthetical field: {line[:60]}... -> {field_key}")
+            
+            # Determine field type based on key
+            if 'signature' in field_key:
+                questions.append(Question(field_key, field_title, cur_section, "block_signature",
+                                        control={"language": "en", "variant": "adult_no_guardian_details"}))
+            elif 'date' in field_key:
+                questions.append(Question(field_key, field_title, cur_section, "date",
+                                        control={"input_type": "past"}))
+            else:
+                # Most commonly a name field
+                input_type = "name" if 'name' in field_key else "text"
+                questions.append(Question(field_key, field_title, cur_section, "input",
+                                        control={"hint": None, "input_type": input_type}))
             i += 1
             continue
         
