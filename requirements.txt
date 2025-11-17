@@ -1,9 +1,18 @@
 # For application functionality, including PDF and OCR support
 unstructured[all-docs]
 
+# Multi-model extraction dependencies
+python-doctr[torch]  # Document OCR with transformers
+pytesseract          # Python wrapper for Tesseract OCR
+pdfplumber          # PDF text extraction
+ocrmypdf            # OCR for scanned PDFs
+easyocr             # Deep learning OCR
+pdf2image           # Convert PDF to images for OCR models
+pillow              # Image processing
+
 # System dependencies (install via system package manager)
-poppler-utils 
-tesseract-ocr
+# poppler-utils 
+# tesseract-ocr
 
 # For running the test suite
 pytest

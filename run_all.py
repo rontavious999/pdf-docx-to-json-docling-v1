@@ -3,13 +3,16 @@
 run_all.py — Orchestrate Document Extraction ➜ Modento JSON
 
 1) Clears old output (output/ and JSONs/ directories)
-2) Runs unstructured_extract.py (same folder; local extraction using Unstructured library)
+2) Runs multi_model_extract.py or unstructured_extract.py for text extraction
 3) Then runs text_to_modento.py --in output --out JSONs
 4) Validates parity and produces comprehensive report
 
 Usage:
-  python3 run_all.py
-  python3 run_all.py --skip-validation  # Skip parity validation
+  python3 run_all.py                                    # Use default (unstructured)
+  python3 run_all.py --model auto                      # Auto-select best model
+  python3 run_all.py --model pdfplumber                # Use specific model
+  python3 run_all.py --skip-validation                 # Skip parity validation
+  python3 run_all.py --extractor legacy                # Use old unstructured_extract.py
 """
 
 from __future__ import annotations
@@ -28,10 +31,28 @@ def main() -> None:
         action='store_true',
         help='Skip parity validation after conversion'
     )
+    parser.add_argument(
+        '--model',
+        choices=['unstructured', 'doctr', 'tesseract', 'pdfplumber', 'ocrmypdf', 'easyocr', 'auto', 'all'],
+        default='unstructured',
+        help='Extraction model to use (default: unstructured)'
+    )
+    parser.add_argument(
+        '--extractor',
+        choices=['multi', 'legacy'],
+        default='multi',
+        help='Use multi_model_extract.py (multi) or unstructured_extract.py (legacy)'
+    )
     args = parser.parse_args()
     
     script_dir = Path(__file__).resolve().parent
-    extractor = script_dir / "unstructured_extract.py"
+    
+    # Select extractor based on argument
+    if args.extractor == 'multi':
+        extractor = script_dir / "multi_model_extract.py"
+    else:
+        extractor = script_dir / "unstructured_extract.py"
+    
     converter = script_dir / "text_to_modento.py"
     validator = script_dir / "parity_validator.py"
     
@@ -59,8 +80,18 @@ def main() -> None:
         print(f"  ✓ Created fresh {directory.name}/")
 
     # Step 1: Run document extraction (streams stdout/stderr)
-    print(f"[1/4] Running {extractor.name} …")
-    subprocess.run([sys.executable, str(extractor)], cwd=script_dir, check=True)
+    print(f"[1/4] Running {extractor.name} with model={args.model} …")
+    
+    if args.extractor == 'multi':
+        # Use multi-model extractor with specified model
+        subprocess.run([sys.executable, str(extractor), 
+                       "--in", "documents", 
+                       "--out", "output",
+                       "--model", args.model], 
+                      cwd=script_dir, check=True)
+    else:
+        # Use legacy unstructured extractor
+        subprocess.run([sys.executable, str(extractor)], cwd=script_dir, check=True)
 
     # Step 2: Convert text ➜ Modento JSON
     print(f"[2/4] Running {converter.name} …")
