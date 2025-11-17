@@ -625,6 +625,39 @@ class DocumentExtractor:
         
         return results
     
+    def extract_best(self, file_path: str) -> ExtractionResult:
+        """
+        Try ALL available models and pick the one with the best quality score.
+        This is thorough but slow - tests every model to find the best output.
+        """
+        print(f"  🔍 Testing all available models to find best extraction...")
+        results = []
+        
+        for model in self.MODELS:
+            print(f"  🔄 Trying {model}...")
+            result = self.extract_with_model(file_path, model)
+            
+            if result.success:
+                results.append(result)
+                print(f"    ✅ Success: quality score = {result.quality_score:.1f}")
+            else:
+                print(f"    ❌ Failed: {result.error}")
+        
+        if not results:
+            # All models failed
+            return ExtractionResult(
+                model="none",
+                text="",
+                success=False,
+                error="All extraction models failed"
+            )
+        
+        # Pick the best result based on quality score
+        best_result = max(results, key=lambda r: r.quality_score)
+        print(f"  🏆 Selected: {best_result.model} (score: {best_result.quality_score:.1f})")
+        
+        return best_result
+    
     def process_file(self, file_path: str, output_dir: str, model: str = 'unstructured') -> bool:
         """Process a single file and save results"""
         if not self.validate_file(file_path):
@@ -638,11 +671,8 @@ class DocumentExtractor:
         print(f"📄 Processing: {file_path.name}")
         
         if model == 'recommend':
-            # Get recommendation and use ONLY that model (no fallback)
-            recommended_model, reason = self.recommend_model(str(file_path))
-            print(f"  💡 Recommendation: {recommended_model} ({reason})")
-            
-            result = self.extract_with_model(str(file_path), recommended_model)
+            # Try ALL models and pick the best one based on quality metrics
+            result = self.extract_best(str(file_path))
             if result.success:
                 out_path = output_dir / f"{file_path.stem}.txt"
                 with open(out_path, 'w', encoding='utf-8') as f:
@@ -650,7 +680,7 @@ class DocumentExtractor:
                 print(f"✅ Saved: {out_path} (model: {result.model}, quality: {result.quality_score:.1f})")
                 return True
             else:
-                print(f"❌ Extraction failed with {recommended_model}: {result.error}")
+                print(f"❌ All models failed for {file_path.name}")
                 return False
         
         elif model == 'auto':
@@ -769,13 +799,13 @@ Examples:
   # Extract with specific model
   %(prog)s --model unstructured --in documents --out output
   
-  # Get recommendation per file and use only that model
+  # Try all models per file and pick best (thorough but slow)
   %(prog)s --model recommend --in documents --out output
   
-  # Auto-select best model (tries multiple, picks best)
+  # Auto-select best model (tries recommended model, falls back if needed)
   %(prog)s --model auto --in documents --out output
   
-  # Compare all models
+  # Compare all models (saves all outputs)
   %(prog)s --model all --in documents --out output_comparison
   
   # Get model recommendation for a specific file (no extraction)
@@ -791,7 +821,7 @@ Examples:
                        choices=['unstructured', 'doctr', 'tesseract', 'pdfplumber', 
                                'ocrmypdf', 'easyocr', 'recommend', 'auto', 'all'],
                        default='unstructured',
-                       help='Extraction model to use (default: unstructured). Use "recommend" to get recommendation per file and use only that model.')
+                       help='Extraction model to use (default: unstructured). Use "recommend" to try all models and pick best based on quality.')
     parser.add_argument('--recommend', metavar='FILE',
                        help='Get model recommendation for a specific file')
     

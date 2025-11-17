@@ -329,6 +329,69 @@ class TestAutoSelection:
         assert result.quality_score > 70
 
 
+class TestBestSelection:
+    """Test extract_best method that tries all models"""
+    
+    @patch.object(DocumentExtractor, 'extract_with_model')
+    def test_extract_best_picks_highest_quality(self, mock_extract):
+        """Test extract_best picks model with highest quality score"""
+        def extract_side_effect(file_path, model):
+            if model == "unstructured":
+                return ExtractionResult(
+                    model="unstructured",
+                    text="Good text",
+                    success=True,
+                    quality_score=75.0
+                )
+            elif model == "pdfplumber":
+                return ExtractionResult(
+                    model="pdfplumber",
+                    text="Better text",
+                    success=True,
+                    quality_score=85.0
+                )
+            elif model == "easyocr":
+                return ExtractionResult(
+                    model="easyocr",
+                    text="Best text",
+                    success=True,
+                    quality_score=92.0
+                )
+            else:
+                return ExtractionResult(
+                    model=model,
+                    text="",
+                    success=False,
+                    error="Not available"
+                )
+        
+        mock_extract.side_effect = extract_side_effect
+        
+        extractor = DocumentExtractor()
+        result = extractor.extract_best("test.pdf")
+        
+        # Should have selected easyocr (highest quality score)
+        assert result.success is True
+        assert result.model == "easyocr"
+        assert result.quality_score == 92.0
+    
+    @patch.object(DocumentExtractor, 'extract_with_model')
+    def test_extract_best_all_models_fail(self, mock_extract):
+        """Test extract_best when all models fail"""
+        mock_extract.return_value = ExtractionResult(
+            model="test",
+            text="",
+            success=False,
+            error="Model failed"
+        )
+        
+        extractor = DocumentExtractor()
+        result = extractor.extract_best("test.pdf")
+        
+        assert result.success is False
+        assert "All extraction models failed" in result.error
+
+
 class TestComparisonReporting:
     """Test comparison report generation"""
     
@@ -413,18 +476,16 @@ class TestProcessing:
             assert result is True
             assert (output_dir / "test.txt").exists()
     
-    @patch.object(DocumentExtractor, 'recommend_model')
-    @patch.object(DocumentExtractor, 'extract_with_model')
+    @patch.object(DocumentExtractor, 'extract_best')
     @patch.object(DocumentExtractor, 'validate_file')
-    def test_process_file_recommend_mode(self, mock_validate, mock_extract, mock_recommend):
-        """Test processing file with recommend mode"""
+    def test_process_file_recommend_mode(self, mock_validate, mock_extract_best):
+        """Test processing file with recommend mode - tries all models and picks best"""
         mock_validate.return_value = True
-        mock_recommend.return_value = ("pdfplumber", "Digital PDF: pdfplumber is fast")
-        mock_extract.return_value = ExtractionResult(
+        mock_extract_best.return_value = ExtractionResult(
             model="pdfplumber",
-            text="Extracted text from pdfplumber",
+            text="Extracted text from best model",
             success=True,
-            quality_score=88.0
+            quality_score=92.0
         )
         
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -437,10 +498,8 @@ class TestProcessing:
             
             assert result is True
             assert (output_dir / "test.txt").exists()
-            # Verify recommend_model was called
-            mock_recommend.assert_called_once()
-            # Verify extract_with_model was called with the recommended model
-            mock_extract.assert_called_once_with(str(file_path), "pdfplumber")
+            # Verify extract_best was called (tries all models)
+            mock_extract_best.assert_called_once_with(str(file_path))
 
 
 if __name__ == "__main__":

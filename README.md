@@ -123,10 +123,10 @@ Follow these steps to set up and run the project.
     # Use default model (unstructured)
     python3 run_all.py
     
-    # Get recommendation per file and use only that model (recommended)
+    # Try ALL models per file and pick best (thorough but slow - recommended for best quality)
     python3 run_all.py --model recommend
     
-    # Auto-select best model for each document (tries multiple, picks best)
+    # Auto-select best model for each document (smart with fallback)
     python3 run_all.py --model auto
     
     # Use a specific model
@@ -146,16 +146,16 @@ Follow these steps to set up and run the project.
 Use the `multi_model_extract.py` script directly for more control:
 
 ```bash
-# Get recommendation per file and use only that model
+# Try ALL models per file and pick best (thorough but slow)
 python3 multi_model_extract.py --model recommend --in documents --out output
 
-# Extract with automatic model selection (tries multiple, picks best)
+# Extract with automatic model selection (smart with fallback)
 python3 multi_model_extract.py --model auto --in documents --out output
 
 # Extract with specific model
 python3 multi_model_extract.py --model pdfplumber --in documents --out output
 
-# Run all models for comparison
+# Run all models for comparison (saves all outputs)
 python3 multi_model_extract.py --model all --in documents --out output_comparison
 
 # Get model recommendation for a file (without extraction)
@@ -195,8 +195,8 @@ Choose the right model for your use case:
 
 | Model | Best For | Speed | Accuracy | Notes |
 |-------|----------|-------|----------|-------|
-| **recommend** | Production use | Fast-Medium | High | Gets recommendation per file, uses only that model |
-| **auto** | Maximum accuracy | Medium-Slow | Very High | Tries multiple models, picks best result |
+| **recommend** | Best quality | Very Slow | Highest | Tries ALL models, picks best based on quality |
+| **auto** | Balanced | Medium | Very High | Smart selection with fallback |
 | **unstructured** | Complex layouts, forms | Slow | Very High | Default, best for mixed content |
 | **pdfplumber** | Digital PDFs | Fast | High | Only works with text-based PDFs |
 | **easyocr** | Scanned documents | Slow | Very High | Deep learning OCR, best for images |
@@ -205,7 +205,7 @@ Choose the right model for your use case:
 | **ocrmypdf** | Low-quality scans | Slow | High | Preprocessing + OCR |
 | **all** | Quality comparison | Very Slow | N/A | Generates comparison reports |
 
-**Recommendation:** Use `--model recommend` for normal production use. It automatically detects document type and uses the optimal model without the overhead of trying multiple models.
+**Recommendation:** Use `--model recommend` for best quality (tries all models and picks best). It's slow but ensures the highest accuracy. Use `--model auto` for a good balance of speed and quality.
 
 ### Quality Metrics
 
