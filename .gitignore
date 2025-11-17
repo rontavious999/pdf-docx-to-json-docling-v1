@@ -33,3 +33,7 @@ output/*.json
 JSONs/*.json
 JSONs_test/
 *.backup
+
+# Bakeoff test results
+bakeoff_all_results/
+*.zip

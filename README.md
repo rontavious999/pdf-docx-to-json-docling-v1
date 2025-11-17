@@ -1,25 +1,50 @@
-# PDF to JSON Converter with Unstructured for Dental Forms
+# PDF to JSON Converter with Multi-Model Extraction for Dental Forms
 
-This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It uses the Unstructured library for high-accuracy document text extraction and a sophisticated Python script to parse and structure the data.
+This project is a powerful two-step pipeline that automates the conversion of dental patient forms (from PDF or `.docx` files) into a structured, Modento-compliant JSON format. It supports **6 different extraction models** with intelligent heuristics to automatically select the best model for each document.
 
 ## Features
 
-- **Automated Two-Step Pipeline**: A single command orchestrates the entire workflow from PDF to JSON.
-- **High-Accuracy Text Extraction**: Uses the Unstructured library with hi-res strategy for model-based layout detection and table structure inference.
-- **Intelligent Form Parsing**: The script intelligently identifies and parses various form elements like checkboxes, grids, repeating sections, and composite fields.
-- **Data Normalization**: Cleans, normalizes, and structures the extracted data using a predefined form dictionary to ensure consistency.
-- **Modento-Compliant Output**: Generates JSON files that are structured to be compatible with the Modento system.
-- **Debug and Statistics**: Includes a debug mode for detailed logs and generates a `.stats.json` sidecar file for each conversion, providing insights into the process.
+- **Multi-Model Extraction**: Choose from 6 different extraction models or let the system automatically select the best one
+- **Intelligent Heuristics**: Automatically detects document type (scanned vs. digital) and selects optimal extraction model
+- **Quality Scoring**: Evaluates extraction quality and provides confidence metrics
+- **Automated Two-Step Pipeline**: A single command orchestrates the entire workflow from PDF to JSON
+- **High-Accuracy Text Extraction**: Supports multiple extraction strategies for different document types
+- **Intelligent Form Parsing**: The script intelligently identifies and parses various form elements like checkboxes, grids, repeating sections, and composite fields
+- **Data Normalization**: Cleans, normalizes, and structures the extracted data using a predefined form dictionary to ensure consistency
+- **Modento-Compliant Output**: Generates JSON files that are structured to be compatible with the Modento system
+- **Debug and Statistics**: Includes a debug mode for detailed logs and generates a `.stats.json` sidecar file for each conversion
+- **Comparative Analysis**: Run all models side-by-side to compare extraction quality
+
+## Supported Extraction Models
+
+The pipeline supports 6 different extraction models, each optimized for different document types:
+
+1. **unstructured** (default) - ML-based layout detection, best for complex forms
+2. **pdfplumber** - Fast text extraction for digital PDFs
+3. **doctr** - Document OCR with transformer models
+4. **easyocr** - Deep learning OCR, excellent for scanned documents
+5. **tesseract** - Traditional OCR engine, reliable fallback
+6. **ocrmypdf** - OCR preprocessing for scanned PDFs
+
+### Model Selection Heuristics
+
+The system uses intelligent heuristics to recommend the best model:
+
+- **Digital PDFs** (text-based) → `pdfplumber` (fast and accurate)
+- **Scanned PDFs** (image-based) → `easyocr` or `doctr` (high-accuracy OCR)
+- **Word Documents** → `unstructured` (best layout preservation)
+- **Auto mode** → Tries multiple models and selects the best result
 
 ## How It Works
 
 The conversion process is handled by a sequence of scripts orchestrated by `run_all.py`:
 
-1.  **Text Extraction (`unstructured_extract.py`)**:
+1.  **Text Extraction (`multi_model_extract.py`)**:
     - Scans the `documents/` directory for `.pdf` and `.docx` files.
-    - Uses **Unstructured** library for high-accuracy document text extraction.
-    - Leverages hi-res strategy with model-based layout detection for superior accuracy.
-    - Automatically infers table structures to preserve grid layouts.
+    - Supports **6 extraction models**: unstructured, pdfplumber, doctr, easyocr, tesseract, ocrmypdf
+    - Uses **intelligent heuristics** to detect document type and recommend best model
+    - **Auto-selection mode** tries multiple models and picks the best result
+    - Calculates **quality metrics** for each extraction (confidence score, text quality)
     - Saves the extracted plain text into the `output/` directory.
 
 2.  **JSON Conversion (`text_to_modento.py`)**:
@@ -36,7 +61,8 @@ The conversion process is handled by a sequence of scripts orchestrated by `run_
 ├── output/             # Intermediate: Extracted plain text files are stored here
 ├── JSONs/              # Output: Final structured JSON files are saved here
 ├── run_all.py          # Main script to run the entire pipeline
-├── unstructured_extract.py  # Script for local text extraction
+├── multi_model_extract.py     # Multi-model extraction with heuristics
+├── unstructured_extract.py    # Legacy single-model extractor
 ├── text_to_modento.py # Script for parsing text and converting to JSON
 └── dental_form_dictionary.json # Template for standardizing form fields
 ```
@@ -60,16 +86,31 @@ Follow these steps to set up and run the project.
 
 2.  **Install dependencies:**
     ```bash
-    pip install unstructured
+    # Install all dependencies including multi-model support
+    pip install -r requirements.txt
+    ```
+    
+    Or install selectively:
+    ```bash
+    # Core dependency (required)
+    pip install "unstructured[all-docs]"
+    
+    # Additional models (optional, install as needed)
+    pip install pdfplumber              # For digital PDFs
+    pip install python-doctr[torch]     # For advanced OCR
+    pip install easyocr                 # For deep learning OCR
+    pip install pytesseract pillow      # For Tesseract OCR
+    pip install ocrmypdf                # For OCR preprocessing
+    pip install pdf2image               # For PDF to image conversion
     ```
 
-3.  **Optional: Install additional dependencies for specific file types:**
+3.  **System dependencies** (required for some models):
     ```bash
-    # For better PDF support
-    pip install "unstructured[pdf]"
+    # On Ubuntu/Debian:
+    sudo apt-get install poppler-utils tesseract-ocr
     
-    # For better image/OCR support
-    pip install "unstructured[all-docs]"
+    # On macOS:
+    brew install poppler tesseract
     ```
 
 ### Usage
@@ -79,12 +120,51 @@ Follow these steps to set up and run the project.
 2.  **Run the Pipeline**:
     Execute the main script from the root of the project directory.
     ```bash
+    # Use default model (unstructured)
     python3 run_all.py
+    
+    # Try ALL models per file and pick best (thorough but slow - recommended for best quality)
+    python3 run_all.py --model recommend
+    
+    # Auto-select best model for each document (smart with fallback)
+    python3 run_all.py --model auto
+    
+    # Use a specific model
+    python3 run_all.py --model pdfplumber
+    python3 run_all.py --model easyocr
+    
+    # Compare all models (generates comparison reports)
+    python3 run_all.py --model all
     ```
 
 3.  **Check the Output**: The final structured JSON files will be created in the `JSONs/` directory. Each output file will be named after the original input file (e.g., `PatientForm.pdf` -> `PatientForm.modento.json`).
 
-To run the extraction and conversion steps separately:
+### Advanced Usage
+
+#### Multi-Model Extraction
+
+Use the `multi_model_extract.py` script directly for more control:
+
+```bash
+# Try ALL models per file and pick best (thorough but slow)
+python3 multi_model_extract.py --model recommend --in documents --out output
+
+# Extract with automatic model selection (smart with fallback)
+python3 multi_model_extract.py --model auto --in documents --out output
+
+# Extract with specific model
+python3 multi_model_extract.py --model pdfplumber --in documents --out output
+
+# Run all models for comparison (saves all outputs)
+python3 multi_model_extract.py --model all --in documents --out output_comparison
+
+# Get model recommendation for a file (without extraction)
+python3 multi_model_extract.py --recommend documents/form.pdf
+```
+
+#### Legacy Single-Model Extraction
+
+To run the extraction and conversion steps separately with the legacy extractor:
 
 ```bash
 # Step 1: Extract text from documents (default: documents -> output)
@@ -109,7 +189,38 @@ python3 text_to_modento.py --in output --out JSONs --debug
 python3 text_to_modento.py --in output --out JSONs --jobs 4
 ```
 
-**Extraction Strategies:**
+### Model Selection Guide
+
+Choose the right model for your use case:
+
+| Model | Best For | Speed | Accuracy | Notes |
+|-------|----------|-------|----------|-------|
+| **recommend** | Best quality | Very Slow | Highest | Tries ALL models, picks best based on quality |
+| **auto** | Balanced | Medium | Very High | Smart selection with fallback |
+| **unstructured** | Complex layouts, forms | Slow | Very High | Default, best for mixed content |
+| **pdfplumber** | Digital PDFs | Fast | High | Only works with text-based PDFs |
+| **easyocr** | Scanned documents | Slow | Very High | Deep learning OCR, best for images |
+| **doctr** | Scanned forms | Medium | High | Transformer-based OCR |
+| **tesseract** | Simple scans | Fast | Medium | Traditional OCR, good fallback |
+| **ocrmypdf** | Low-quality scans | Slow | High | Preprocessing + OCR |
+| **all** | Quality comparison | Very Slow | N/A | Generates comparison reports |
+
+**Recommendation:** Use `--model recommend` for best quality (tries all models and picks best). It's slow but ensures the highest accuracy. Use `--model auto` for a good balance of speed and quality.
+
+### Quality Metrics
+
+The multi-model extractor calculates quality metrics for each extraction:
+
+- **Confidence Score** (0-100): Overall quality assessment
+- **Character Count**: Total characters extracted
+- **Word Count**: Total words extracted
+- **Alphanumeric Ratio**: Percentage of valid text characters
+- **Structured Content Detection**: Identifies form fields, checkboxes, etc.
+- **Average Word Length**: Helps detect OCR errors
+
+These metrics help the system automatically select the best extraction result.
+
+**Extraction Strategies (legacy unstructured_extract.py):**
 - `hi_res` (default): Best accuracy, uses model-based layout detection
 - `fast`: Faster extraction, lower accuracy
 - `auto`: Automatically choose based on document type
