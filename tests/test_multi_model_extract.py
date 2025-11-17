@@ -412,6 +412,35 @@ class TestProcessing:
             
             assert result is True
             assert (output_dir / "test.txt").exists()
+    
+    @patch.object(DocumentExtractor, 'recommend_model')
+    @patch.object(DocumentExtractor, 'extract_with_model')
+    @patch.object(DocumentExtractor, 'validate_file')
+    def test_process_file_recommend_mode(self, mock_validate, mock_extract, mock_recommend):
+        """Test processing file with recommend mode"""
+        mock_validate.return_value = True
+        mock_recommend.return_value = ("pdfplumber", "Digital PDF: pdfplumber is fast")
+        mock_extract.return_value = ExtractionResult(
+            model="pdfplumber",
+            text="Extracted text from pdfplumber",
+            success=True,
+            quality_score=88.0
+        )
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_path = Path(tmpdir) / "test.pdf"
+            file_path.touch()  # Create empty file
+            output_dir = Path(tmpdir) / "output"
+            
+            extractor = DocumentExtractor()
+            result = extractor.process_file(str(file_path), str(output_dir), "recommend")
+            
+            assert result is True
+            assert (output_dir / "test.txt").exists()
+            # Verify recommend_model was called
+            mock_recommend.assert_called_once()
+            # Verify extract_with_model was called with the recommended model
+            mock_extract.assert_called_once_with(str(file_path), "pdfplumber")
 
 
 if __name__ == "__main__":

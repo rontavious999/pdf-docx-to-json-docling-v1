@@ -637,7 +637,23 @@ class DocumentExtractor:
         
         print(f"📄 Processing: {file_path.name}")
         
-        if model == 'auto':
+        if model == 'recommend':
+            # Get recommendation and use ONLY that model (no fallback)
+            recommended_model, reason = self.recommend_model(str(file_path))
+            print(f"  💡 Recommendation: {recommended_model} ({reason})")
+            
+            result = self.extract_with_model(str(file_path), recommended_model)
+            if result.success:
+                out_path = output_dir / f"{file_path.stem}.txt"
+                with open(out_path, 'w', encoding='utf-8') as f:
+                    f.write(result.text)
+                print(f"✅ Saved: {out_path} (model: {result.model}, quality: {result.quality_score:.1f})")
+                return True
+            else:
+                print(f"❌ Extraction failed with {recommended_model}: {result.error}")
+                return False
+        
+        elif model == 'auto':
             result = self.extract_auto(str(file_path))
             if result.success:
                 out_path = output_dir / f"{file_path.stem}.txt"
@@ -753,13 +769,16 @@ Examples:
   # Extract with specific model
   %(prog)s --model unstructured --in documents --out output
   
-  # Auto-select best model
+  # Get recommendation per file and use only that model
+  %(prog)s --model recommend --in documents --out output
+  
+  # Auto-select best model (tries multiple, picks best)
   %(prog)s --model auto --in documents --out output
   
   # Compare all models
   %(prog)s --model all --in documents --out output_comparison
   
-  # Get model recommendation
+  # Get model recommendation for a specific file (no extraction)
   %(prog)s --recommend documents/form.pdf
         """
     )
@@ -770,9 +789,9 @@ Examples:
                        help='Output directory (default: output)')
     parser.add_argument('--model', 
                        choices=['unstructured', 'doctr', 'tesseract', 'pdfplumber', 
-                               'ocrmypdf', 'easyocr', 'auto', 'all'],
+                               'ocrmypdf', 'easyocr', 'recommend', 'auto', 'all'],
                        default='unstructured',
-                       help='Extraction model to use (default: unstructured)')
+                       help='Extraction model to use (default: unstructured). Use "recommend" to get recommendation per file and use only that model.')
     parser.add_argument('--recommend', metavar='FILE',
                        help='Get model recommendation for a specific file')
     

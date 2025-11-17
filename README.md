@@ -123,7 +123,10 @@ Follow these steps to set up and run the project.
     # Use default model (unstructured)
     python3 run_all.py
     
-    # Auto-select best model for each document
+    # Get recommendation per file and use only that model (recommended)
+    python3 run_all.py --model recommend
+    
+    # Auto-select best model for each document (tries multiple, picks best)
     python3 run_all.py --model auto
     
     # Use a specific model
@@ -143,7 +146,10 @@ Follow these steps to set up and run the project.
 Use the `multi_model_extract.py` script directly for more control:
 
 ```bash
-# Extract with automatic model selection
+# Get recommendation per file and use only that model
+python3 multi_model_extract.py --model recommend --in documents --out output
+
+# Extract with automatic model selection (tries multiple, picks best)
 python3 multi_model_extract.py --model auto --in documents --out output
 
 # Extract with specific model
@@ -152,7 +158,7 @@ python3 multi_model_extract.py --model pdfplumber --in documents --out output
 # Run all models for comparison
 python3 multi_model_extract.py --model all --in documents --out output_comparison
 
-# Get model recommendation for a file
+# Get model recommendation for a file (without extraction)
 python3 multi_model_extract.py --recommend documents/form.pdf
 ```
 
@@ -189,7 +195,8 @@ Choose the right model for your use case:
 
 | Model | Best For | Speed | Accuracy | Notes |
 |-------|----------|-------|----------|-------|
-| **auto** | Unknown document types | Medium | High | Tries multiple models, picks best |
+| **recommend** | Production use | Fast-Medium | High | Gets recommendation per file, uses only that model |
+| **auto** | Maximum accuracy | Medium-Slow | Very High | Tries multiple models, picks best result |
 | **unstructured** | Complex layouts, forms | Slow | Very High | Default, best for mixed content |
 | **pdfplumber** | Digital PDFs | Fast | High | Only works with text-based PDFs |
 | **easyocr** | Scanned documents | Slow | Very High | Deep learning OCR, best for images |
@@ -197,6 +204,8 @@ Choose the right model for your use case:
 | **tesseract** | Simple scans | Fast | Medium | Traditional OCR, good fallback |
 | **ocrmypdf** | Low-quality scans | Slow | High | Preprocessing + OCR |
 | **all** | Quality comparison | Very Slow | N/A | Generates comparison reports |
+
+**Recommendation:** Use `--model recommend` for normal production use. It automatically detects document type and uses the optimal model without the overhead of trying multiple models.
 
 ### Quality Metrics
 

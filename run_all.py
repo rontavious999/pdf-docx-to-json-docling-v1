@@ -9,7 +9,8 @@ run_all.py — Orchestrate Document Extraction ➜ Modento JSON
 
 Usage:
   python3 run_all.py                                    # Use default (unstructured)
-  python3 run_all.py --model auto                      # Auto-select best model
+  python3 run_all.py --model recommend                 # Get recommendation per file, use that model
+  python3 run_all.py --model auto                      # Auto-select best model (tries multiple)
   python3 run_all.py --model pdfplumber                # Use specific model
   python3 run_all.py --skip-validation                 # Skip parity validation
   python3 run_all.py --extractor legacy                # Use old unstructured_extract.py
@@ -33,9 +34,9 @@ def main() -> None:
     )
     parser.add_argument(
         '--model',
-        choices=['unstructured', 'doctr', 'tesseract', 'pdfplumber', 'ocrmypdf', 'easyocr', 'auto', 'all'],
+        choices=['unstructured', 'doctr', 'tesseract', 'pdfplumber', 'ocrmypdf', 'easyocr', 'recommend', 'auto', 'all'],
         default='unstructured',
-        help='Extraction model to use (default: unstructured)'
+        help='Extraction model to use (default: unstructured). Use "recommend" for per-file recommendation.'
     )
     parser.add_argument(
         '--extractor',
