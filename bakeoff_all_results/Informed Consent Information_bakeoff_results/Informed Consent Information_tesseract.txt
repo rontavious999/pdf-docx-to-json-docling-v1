@@ -1,0 +1,124 @@
+--- Page 1 ---
+Informed Consent Information
+
+Tooth No.(s): {{tooth_number}}
+Shade Selection: {{shade_selection}}
+Type of Inlay/Onlay: {{type_of_crown}}
+
+The purpose of this document is to provide written information regarding the risks, benefits, and
+alternatives to the procedure named above. This material serves as a supplement to the
+discussion you have with {{practice_doctor}}. It is important that you fully understand this
+information, so please read this document thoroughly. If you have any questions regarding the
+procedure, ask {{practice_doctor}} prior to signing the consent form.
+
+THE PROCEDURE
+
+I understand that the treatment of dental conditions requiring an inlay/onlay includes certain risks
+and possible unsuccessful results, including the possibility of failure. Even though care and
+diligence are exercised in the treatment of such conditions, there are no promises or guarantees
+of anticipated results or the longevity of the treatment, except the following: I am required to
+regularly maintain my hygiene appointments for { {practice_doctor}} to guarantee inlays/onlays
+for 5 years from the seat date. The 5-year guarantee is for the breakage of inlays/onlays due to
+the beginning of new decay.
+
+Nevertheless, I agree to assume the risks, possible unsuccessful results, and/or failure associated
+with, but not limited to the following:
+
+Reduction of Tooth Structure
+
+In order to replace decayed or otherwise traumatized teeth, it is necessary to modify the existing
+tooth or teeth so that inlays/onlays may be placed upon them. Tooth preparation will be done as
+conservatively as possible.
+
+Injury
+
+During the reduction of tooth structure or adjustments done to temporary restorations, it is
+possible for the tongue, cheek, or other oral tissues to be inadvertently abraded or lacerated (cut).
+In some cases, sutures or additional treatment may be required.
+
+Local Anesthesia
+
+In order to reduce tooth structure without causing undue pain during the procedure, it will be
+necessary to administer a local anesthetic. Such administration may cause reactions or side
+effects which include, but are not limited to, bruising, hematoma, cardiac stimulation, temporary
+or, rarely permanent numbness of the tongue, lips, teeth, jaws, and/or facial tissues, and muscle
+soreness.
+
+
+--- Page 2 ---
+Sensitivity of Teeth
+
+Often, after the preparation of teeth for the reception of an inlay/onlay, the teeth may exhibit
+sensitivity, which can range from mild to severe. This sensitivity may last only for a short period
+of time or may last for much longer periods. If sensitivity is persistent, this office should be
+notified immediately so that all possible causes of the sensitivity may be ascertained.
+
+Post Treatment Risks
+
+Teeth, after being restored with an inlay/onlay, may develop a condition known as pulpitis or
+pulpal degeneration. Usually, this cannot be predetermined. The tooth or teeth may have been
+traumatized from an accident, deep decay, extensive preparation, or other causes. It is often
+necessary to do root canal treatments in these teeth, particularly if teeth remain sensitive for a
+long period of time following placement. Infrequently, the tooth (teeth) may abscess or otherwise
+not heal completely. In this event, periapical surgery or even extraction may be necessary.
+
+Breakage
+
+Inlays/onlays may possibly chip or break. Many factors can contribute to this situation such as
+chewing excessively hard materials, changes in biting forces exerted, traumatic blows to the
+mouth, etc. Unobservable cracks may develop in inlays/onlays from these causes, but they may
+not actually break until chewing soft foods, or for no apparent reason. Breakage or chipping
+seldom occurs due to defective materials or construction unless it occurs soon after placement.
+
+Uncomfortable or Strange Feeling
+
+This may occur because of the differences between natural teeth and artificial replacements.
+Most patients usually become accustomed to this feeling in time. In limited situations, muscle
+soreness or tenderness of the jaw joints (TMJ) may persist for indeterminable periods of time
+following the placement of the inlay/onlay or related dental work.
+
+Esthetics or Appearance
+
+Patients will be given the opportunity to observe the appearance of the inlay/onlay(s) in their
+mouth prior to final cementation. If satisfactory, this fact will be acknowledged by the patient's
+signature on the cementation consent.
+
+Longevity of Inlays/Onlays
+
+There are many variables that determine how long inlays/onlays can be expected to last. Among
+these are some of the factors mentioned in the preceding paragraphs. In addition, general health,
+good oral hygiene, regular dental checkups, diet, etc., can affect longevity. Because of this, no
+guarantees can be made or assumed to be made concerning how long the inlay/onlay will last.
+
+Opening the Bite
+
+In some cases, years of wear on the teeth will create a situation where the patient over closes or
+loses the length of the face. A full mouth reconstruction where all existing teeth are restored with
+inlays/onlays will enable {{practice_doctor}} to reopen the bite to the proper length. As a result,
+the patient may experience some temporary discomfort and the inlays/onlays will be more
+subject to wear and breakage. If a night guard is recommended or made but not worn by the
+patient, there will be an increased risk of breakage or fracture of the porcelain.
+
+
+--- Page 3 ---
+I understand it is my responsibility as the patient to seek attention
+
+from {{practice_doctor}} should any undue or unexpected problems occur. I must diligently
+follow any and all instructions, including scheduling and attending all appointments. Failure to
+keep the cementation appointment can result in the ultimate failure of the inlay/onlay to fit
+properly and an additional fee may be assessed.
+
+CONSENT
+
+Ihave been given the opportunity to ask any questions regarding the nature and purpose of
+needing an inlay/onlay and {{practice_doctor}} has answered my questions to my satisfaction. I
+voluntarily assume any and all possible risks, including the risk of substantial harm, if any,
+which may be associated with any phase of this treatment in hopes of obtaining the desired
+results, which may or may not be achieved. No guarantees or promises have been made to me
+concerning the results. The fee(s) for this service have been explained to me and are satisfactory.
+By signing this form, I am freely giving my consent to allow and
+
+authorize {{practice_doctor}} and/or their associates to render treatment pertaining to
+inlays/onlays and prosthetics considered necessary and/or advisable to my dental conditions,
+including the prescribing and administering of any medications and/or anesthetics deemed
+necessary for my treatment.

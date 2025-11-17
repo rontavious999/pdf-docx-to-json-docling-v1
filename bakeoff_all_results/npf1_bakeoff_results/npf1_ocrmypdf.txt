@@ -1,0 +1,150 @@
+--- Page 1 ---
+Patient Registration
+Last Name First Name
+Sex MorF_ Soc. Sec. #
+Today's Date
+Mi Date of Birth Age
+Please Circle One: Single Married Separated Widow
+Mailing Address State __—s—ss Zip Code
+Email Home Phone ( ) Cell Phone ( )
+Driver's License # Employer
+WorkPhone ( ) Occupation
+Are you a full time student? YesorNo _ If patient is a minor: Mother’s DOB Father’s DOB
+Name of Parent Parent Soc. Sec. #
+Parent Employer Parent Phone ( )
+Person Responsible for Account Relationship
+Emergency Contact Relationship Phone # ( )
+If you are filling this form out on behalf of another person, what is your relationship to that person?
+Name Relationship
+Reason for today’s visit?
+How did you hear about us?
+OO In-home Mailer 0 Social Media OU Insurance
+O) Other Who can we thank for your visit?
+Dental insurance information (Primary Carrier)
+Insured’s Name
+Insured’s Employer
+Insured’s DOB
+Insurance Co
+Insurance Co Address
+Insurance Phone #
+Group # Local #
+Dental History
+On a scale of 1-10, with 10 being the highest rating:
+How important is your dental health to you? 1
+Where would you rate your current dental health? 1
+Where do you want your dental health to be? 1
+What would you like te change about your smile?
+1) color O) Bite OI ChippedTeeth LI Spaces
+Please share the following dates:
+Your last cleaning /
+What is the most important thing to you about your future smile and dental health?
+LJ Crowding
+Your last oral cancer screening
+C1 Practice Website 1 Internet OU Family/Friend/Coworker
+Dental insurance Information Secondary Coverage
+Insured’s Name
+Insured’s Employer
+Insured’s DOB
+Insurance Co
+Insurance Co Address
+Insurance Phone #
+Group # Local #
+5 6 7 8 9. 10
+5 6 7 8 9 10
+5 6 7 8 9 10
+LI Smile Makeover 1 MissingTeeth LJ Whiter Teeth
+/ Your last complete X-rays /
+What is the most important thing to you about your dental visit today?
+Why did you leave your previous dentist?
+Name of your previous dentist
+OCi26
+
+--- Page 2 ---
+Dental H istory Cont. - please mark 6) any of the following conditions that apply to you
+Appearance
+{I Discolored teeth
+{1 Worn teeth
+[3 Misshaped teeth
+L} Crooked teeth
+{} Spaces
+[} Overbite
+{} Flat teeth
+Pain/Discomfort
+{} Sensitivity (hot, cold, sweet)
+{} Pressure
+{} Broken teeth/fillings
+} Worn teeth
+{} Dry Mouth
+Function
+Ed Grinding/Clenching
+C1 Headaches
+C Jaw Joint (TMJ) pain
+EJ Jaw Joint (TMJ) clicking/popping
+[7 Bad Bite
+[J Speech Impediment
+[J Mouth Breathing
+Ld Sore Muscles (neck, shoulders)
+EJ Difficulty Opening or Closing
+Et Difficulty Chewing on either side
+Periodontal (Gum) Health
+[J Bleeding, Swollen, Irritated gums
+fd Bad breath
+CI Loose tipped, shifting teeth
+Ed Previous perio/gum disease
+Habits
+} Thumb sucking
+{J Nail-biting
+{} Cheek/Lip biting
+{} Chewing on ice/foreign objects
+Sleep Pattern or Conditions
+{J Sleep Apnea
+[J Snoring
+{} Daytime Drowsiness
+{3 Bed wetting (for children)
+Social
+Tobacco
+How much How long
+Alcohol Frequency
+Drugs Frequency
+Patient Name (print
+Previous Comfort Options
+[7] Nitrous Oxide
+[J Oral Sedation (Pill)
+LJ IV Sedation
+Please list family history of any
+conditions marked:
+Medical rt istory - Please mark (x} te your response to indicate if you have or have had any of the following
+Cancer Endocrinology Musculoskeletal Respiratory Medical Allergies
+Type [3 Diabetes L4 Arthritis [3 Asthma Ct Antibiotics
+Lt Chemotherapy [-} Hepatitis A/B/C Ed Artificial Joints [} Emphysema (Penicillin/Amoxicillin /Clindamycin)
+Ci Radiation Therapy Ct Jaundice [J Jaw Joint Pain [i Respiratory Problems ;y Opioids
+[7 Sinus Problems
+[3 Sleep Apnea
+[I Kidney Disease L} Rheumatoid Arthritis
+C} Liver Disease
+Cardiovascular (Percocet, Oxycodone, Tylenol 3)
+[1 Angina (chest pain) Neurological (7 Latex
+[3 Artificial Heart Valve Li Thyroid Disease FE] Anxiety Lt Tuberculosis [i Local Anesthetics
+[2 Heart Conditions Gastrointestinal Ci Depression Viral Infections [J] NSAIDs
+[3 Heart Surgery [3 Ulcers (Stomach) LJ Dizziness Li AIDS Other Allergies
+[i High/Low Blood Pressure [ Gastrointestinal Disease (1 Drug/Alcohol Addiction [2 HIV Positive .
+[7 Mitral Valve Prolapse Hematologic/Lymphatic CJ Fainting [3 HPV
+Ci Pacemaker C7} Anemia [J Seizures Women Additional Comments:
+[i Rheumatic Fever [7 Blood Disorders 1 Psychiatric Illness [2 Currently Pregnant
+Lt Scarlet Fever (4 Bruise Easily Ct Nursing
+[i Stroke [7 Excessive Bleeding
+Are you under the care of a physician? Y or N If yes, please explain
+Physician Name Address: Phone{ )
+Have you hac a serious fliness, operation, or hospitalization in the past 5 years? Y or N, If yes please explain
+Are you taking or have you recently taken any prescription or aver the counter medicine(s}? Y or N Ef yes, please list all and why, including
+vitamins, natural or herbal supplements and/or dietary supplements
+Have you ever in the past, or are you now currently taking any medications for Osteapenia/Osteoporosis or Bone Disease?
+if sa, please list medications:
+Have you ever had surgery? If sa, what type:
+Consent:
+The undersigned herehy authorizes Doctor to take x-rays, study modeis, photographs, or any other diagnostic aids deemed appropriate by Doctor to make a thorough
+diagnosis of the patient’s dental needs. | also authorize Doctor to perforrn any and all forms of treatment, medication and therapy that may be indicated. | also understand
+the use of anesthetic agents embodies a certain risk. | have read, understand and agree to the above terms and conditions.
+Signature of Patient/Legal guardian Print Narmne Date Dentist Signature
+For completion by dentist only | Additional Comments
+OCi26
