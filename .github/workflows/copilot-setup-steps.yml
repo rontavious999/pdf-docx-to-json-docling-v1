@@ -31,3 +31,6 @@ jobs:
       
       - name: Install dependencies part 2
         run: sudo apt-get update -qq && sudo apt-get install -y poppler-utils tesseract-ocr
+
+      - name: Install dependencies part 3
+        run: pip install python-doctr[torch] easyocr pytesseract Pillow pdf2image python-magic lxml pdfplumber
