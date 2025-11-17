@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The PDF-to-JSON pipeline is a two-stage document processing system that uses the Unstructured library to convert dental intake forms into structured, Modento-compliant JSON format.
+The PDF-to-JSON pipeline is a two-stage document processing system that supports 6 different extraction models to convert dental intake forms into structured, Modento-compliant JSON format.
 
 ```
 ┌─────────────────┐
@@ -11,14 +11,21 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
 └────────┬────────┘
          │
          ▼
-┌─────────────────────────────────────┐
-│  Stage 1: Text Extraction           │
-│  (unstructured_extract.py)               │
-│                                     │
-│  • Unstructured library             │
-│  • Hi-res strategy (ML-based)       │
-│  • Table structure inference        │
-└────────┬────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  Stage 1: Multi-Model Text Extraction               │
+│  (multi_model_extract.py or unstructured_extract.py)│
+│                                                      │
+│  • 6 extraction models available:                   │
+│    - unstructured (ML-based layout detection)       │
+│    - pdfplumber (fast digital PDF extraction)       │
+│    - doctr (transformer-based OCR)                  │
+│    - easyocr (deep learning OCR)                    │
+│    - tesseract (traditional OCR)                    │
+│    - ocrmypdf (OCR preprocessing)                   │
+│  • Intelligent heuristics for model selection       │
+│  • Quality scoring and auto-selection               │
+│  • Table structure inference                        │
+└────────┬────────────────────────────────────────────┘
          │
          ▼
 ┌─────────────────┐
@@ -29,7 +36,7 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
          ▼
 ┌─────────────────────────────────────┐
 │  Stage 2: Intelligent Parsing       │
-│  (text_to_modento.py)      │
+│  (text_to_modento.py)               │
 │                                     │
 │  • Regex-based pattern matching     │
 │  • Template catalog matching        │
@@ -48,26 +55,50 @@ The PDF-to-JSON pipeline is a two-stage document processing system that uses the
 
 ### Stage 1: Text Extraction
 
-**Script**: `unstructured_extract.py`
+**Scripts**: `multi_model_extract.py` (recommended) or `unstructured_extract.py` (legacy)
 
-**Purpose**: Extract raw text from PDF and DOCX files using the Unstructured library for high-accuracy extraction.
+**Purpose**: Extract raw text from PDF and DOCX files using one of 6 available extraction models with intelligent heuristics for optimal results.
 
 **Process**:
 1. Scan `documents/` directory for `.pdf` and `.docx` files
-2. For each file: Use Unstructured's partition function with hi-res strategy for model-based layout detection
-3. Infer table structures to preserve grid layouts
-4. Save extracted text to `output/` directory as `.txt` files
-5. Handle errors gracefully, continuing with remaining files if one fails
+2. Detect document type (digital vs. scanned) using heuristics
+3. Select optimal extraction model automatically or use specified model:
+   - **unstructured** - ML-based layout detection (default)
+   - **pdfplumber** - Fast extraction for digital PDFs
+   - **doctr** - Transformer-based OCR
+   - **easyocr** - Deep learning OCR for scanned documents
+   - **tesseract** - Traditional OCR engine
+   - **ocrmypdf** - OCR preprocessing for low-quality scans
+4. Extract text using selected model(s)
+5. Calculate quality metrics (confidence score, text quality)
+6. Save extracted text to `output/` directory as `.txt` files
+7. Handle errors gracefully, continuing with remaining files if one fails
 
 **Key Features**:
-- ML-based layout detection for superior accuracy
-- Automatic table structure inference
-- Support for both PDFs and DOCX files
+- **Multi-Model Support**: 6 different extraction models for different document types
+- **Intelligent Selection**: Auto-select best model based on document characteristics
+- **Quality Scoring**: Evaluate extraction quality with confidence metrics
+- **Automatic Fallback**: Try alternative models if primary fails
+- **Comparative Analysis**: Run all models side-by-side for comparison
+- **ML-based Layout Detection**: Superior accuracy for complex forms (unstructured model)
+- **Configurable Strategies**: Choose speed vs. accuracy trade-offs
+
+**Model Selection Modes**:
+- `--model recommend`: Try ALL models and pick the best result (highest quality, slowest)
+- `--model auto`: Smart selection with automatic fallback (balanced)
+- `--model <name>`: Use specific model (e.g., pdfplumber, easyocr)
+- `--model all`: Run all models for comparison (generates reports)
+
+**Legacy Mode**:
+The original `unstructured_extract.py` is still available for backward compatibility:
+- Supports only the unstructured model
 - Configurable extraction strategies (hi_res, fast, auto, ocr_only)
+- Use with `--extractor legacy` flag in run_all.py
 
 **Limitations**:
-- Requires Unstructured library dependencies
+- Some models require additional system dependencies (tesseract-ocr, poppler-utils)
 - Hi-res strategy is slower but more accurate
+- Quality varies by document type - use appropriate model or auto-selection
 
 ### Stage 2: Intelligent Parsing and JSON Generation
 
@@ -230,18 +261,36 @@ Output:
 
 ## Design Decisions
 
-### Why Unstructured Library?
+### Why Multi-Model Extraction?
 
-**Decision**: Use Unstructured library for document text extraction.
+**Decision**: Support 6 different extraction models with intelligent heuristics for automatic selection.
 
 **Rationale**:
-- **Accuracy**: ML-based layout detection provides superior extraction quality
-- **Table Support**: Built-in table structure inference preserves grid layouts
-- **Versatility**: Handles both PDFs and DOCX files with a unified API
-- **Modern Approach**: Leverages state-of-the-art document understanding models
-- **Active Development**: Well-maintained library with regular updates
+- **Versatility**: Different document types benefit from different extraction approaches
+- **Quality**: No single model is best for all document types (digital PDFs vs. scanned forms)
+- **Robustness**: Fallback options when one model fails or produces poor results
+- **Optimization**: Balance speed vs. accuracy based on document characteristics
+- **Comparison**: Evaluate multiple models to select the best extraction
 
-**Trade-off**: Requires additional dependencies but provides significantly better extraction quality.
+**Models Available**:
+1. **unstructured** - Best for complex layouts and mixed content (default)
+2. **pdfplumber** - Fastest for digital, text-based PDFs
+3. **easyocr** - Highest accuracy for scanned documents
+4. **doctr** - Transformer-based OCR for forms
+5. **tesseract** - Traditional OCR, reliable fallback
+6. **ocrmypdf** - Preprocessing for low-quality scans
+
+**Intelligent Selection**: The system uses heuristics to detect document type and recommend the optimal model:
+- Analyzes text content vs. image content ratio
+- Detects scanned vs. digital PDFs
+- Considers document structure and complexity
+- Calculates quality metrics for extracted text
+- Automatically falls back to alternative models if needed
+
+**Trade-offs**: 
+- Requires multiple dependencies for full model support
+- `recommend` mode is slower but ensures highest quality
+- Each model has specific system requirements (some optional)
 
 ### Why Regex-Based Parsing vs. ML Models?
 
@@ -423,36 +472,62 @@ tests/
 - Validate changes before deployment
 - Document expected behavior
 
-### OCR Integration (Priority 1.1)
+### Multi-Model Architecture (Priority 1.1) ✅ **COMPLETED**
 
-Add OCR fallback for scanned PDFs:
+The system now supports 6 extraction models with intelligent selection:
 
+**Implementation**:
 ```python
-# In unstructured_extract.py
-def extract_text(file_path,
-                 strategy="hi_res",
-                 languages="eng",
-                 infer_table_structure=True,
-                 include_page_breaks=False,
-                 hi_res_model_name=None):
-    """High-accuracy extractor using Unstructured library"""
-    elements = partition(
-        filename=str(file_path),
-        strategy=strategy,
-        languages=languages,
-        infer_table_structure=infer_table_structure,
-        include_page_breaks=include_page_breaks
-    )
-    return "\n\n".join(element.text for element in elements if element.text)
+# In multi_model_extract.py
+AVAILABLE_MODELS = ['unstructured', 'pdfplumber', 'doctr', 
+                    'easyocr', 'tesseract', 'ocrmypdf']
+
+def extract_with_model(file_path: Path, model: str) -> ExtractionResult:
+    """Extract text using specified model with graceful fallback"""
+    # Try primary model
+    result = _extract_single_model(file_path, model)
+    
+    # Calculate quality metrics
+    result.quality_score = calculate_quality_score(result.text)
+    
+    return result
+
+def auto_select_model(file_path: Path) -> str:
+    """Use heuristics to recommend best model for document"""
+    doc_type = detect_document_type(file_path)
+    
+    if doc_type == 'scanned':
+        return 'easyocr'  # Best for scanned docs
+    elif doc_type == 'digital':
+        return 'pdfplumber'  # Fastest for digital PDFs
+    else:
+        return 'unstructured'  # Best for complex layouts
 ```
+
+**Features Implemented**:
+- ✅ 6 extraction models with fallback handling
+- ✅ Intelligent document type detection
+- ✅ Quality scoring system (0-100 scale)
+- ✅ Automatic model selection (`--model auto`)
+- ✅ Try-all mode for best quality (`--model recommend`)
+- ✅ Comparative analysis mode (`--model all`)
+- ✅ Backward compatibility with legacy extractor
+
+**Benefits**:
+- Higher accuracy across diverse document types
+- Automatic optimization for document characteristics
+- Graceful degradation when models unavailable
+- Comprehensive quality metrics and reporting
 
 ## Conclusion
 
-The Unstructured-based pipeline architecture is designed for:
-- **Accuracy**: ML-based layout detection for superior extraction quality
-- **Transparency**: Clear extraction strategies and configurable options
-- **Maintainability**: Modern library with active development and support
-- **Extensibility**: Easy to add patterns, sections, and fields
+The multi-model pipeline architecture is designed for:
+- **Accuracy**: Multiple extraction strategies optimized for different document types
+- **Flexibility**: Choose from 6 models or use intelligent auto-selection
+- **Robustness**: Automatic fallback and quality scoring ensure reliable extraction
+- **Transparency**: Clear quality metrics and configurable model selection
+- **Maintainability**: Modular design with independent model implementations
+- **Extensibility**: Easy to add patterns, sections, fields, and new extraction models
 - **Privacy**: Local processing, no external dependencies
 
 The architecture achieves 95%+ field capture accuracy on dental intake forms while remaining general-purpose and form-agnostic.

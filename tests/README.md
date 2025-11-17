@@ -60,6 +60,15 @@ Tests for edge case handling:
 - Inline checkbox detection
 - Various challenging form layouts
 
+### `test_multi_model_extract.py` ✨ **NEW - Multi-Model Extraction**
+Tests for multi-model extraction system:
+- **Quality metrics**: Text quality scoring and confidence calculation
+- **Document type detection**: Scanned vs. digital PDF detection
+- **Model recommendation**: Heuristics-based model selection
+- **Extraction results**: Result handling and error management
+- **Model availability**: Graceful fallback when models unavailable
+- **Comparison mode**: Side-by-side model comparison
+
 ### `test_integration.py` ✨ **NEW - Patch 3**
 End-to-end integration tests for the full pipeline:
 - **PDF extraction**: Tests PDF → text extraction with auto-OCR
@@ -126,12 +135,22 @@ pytest tests/ --cov=text_to_modento --cov-report=term-missing
 
 The test suite now includes:
 - **75 unit tests** covering individual parsing functions
+- **21 multi-model extraction tests** covering quality metrics and model selection
 - **7 integration tests** covering end-to-end workflows
-- **Total: 82 tests** ensuring code quality and catching regressions
+- **Total: 121 tests** ensuring code quality and catching regressions
+
+Test coverage:
+- Text preprocessing and normalization
+- Question parsing and field extraction
+- Template matching and fuzzy search
+- Edge cases (multi-field labels, grids, inline checkboxes)
+- Multi-model extraction (quality scoring, document detection, model selection)
+- Integration testing (PDF/DOCX → text → JSON pipeline)
 
 Integration tests verify:
 - Complete PDF → text → JSON pipeline
 - Complete DOCX → text → JSON pipeline
+- Multi-model extraction with quality metrics
 - OCR fallback for scanned documents
 - Parallel file naming (Patch 1)
 - Error handling for edge cases
