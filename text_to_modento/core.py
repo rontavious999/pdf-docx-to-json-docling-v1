@@ -2806,7 +2806,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Improvement 4: Check for medical conditions grid pattern
         # This detects "Do you have any of the following?" followed by many checkbox lines
+        if debug and i == 72:
+            print(f"  [debug] At line 72, line content: '{line[:80]}'")
         medical_grid = detect_medical_conditions_grid(lines, i, debug)
+        if debug and medical_grid:
+            print(f"  [debug] *** MEDICAL_GRID DETECTED at line {i}: title='{medical_grid['title'][:60]}', options={len(medical_grid['options'])}")
         if medical_grid:
             # Create a multi-select dropdown question with all the conditions
             key = slugify(medical_grid['title'])
