@@ -2556,7 +2556,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     text = correct_date_patterns(text)
     
     # Step 1: Clean headers/footers but DON'T normalize yet (preserves tabs for field splitting)
-    lines = scrub_headers_footers(text)
+    # TEMPORARY FIX: Disable scrub_headers_footers as it's too aggressive and removes Medical History section
+    # lines = scrub_headers_footers(text)
+    lines = text.splitlines()  # Just split, don't scrub for now
     lines = coalesce_soft_wraps(lines)
     
     # Step 2: Split multi-field lines BEFORE normalizing (so tabs are preserved)
@@ -2568,6 +2570,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     
     # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
     lines = [normalize_glyphs_line(x) for x in lines]
+    if debug:
+        print(f"  [debug] after normalize_glyphs_line: {len(lines)} lines")
     
     # Parity Fix: Detect if document is an information sheet (not a form)
     # Information sheets have instructional text but no fillable fields
