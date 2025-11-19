@@ -510,16 +510,18 @@ def scrub_headers_footers(text: str) -> List[str]:
             continue
         
         # Filter out lines with multiple city-state-zip patterns
-        if len(CITY_STATE_ZIP_RE.findall(s)) >= 2:
-            continue
+        # DISABLED: Too aggressive, removes valid form content
+        # if len(CITY_STATE_ZIP_RE.findall(s)) >= 2:
+        #     continue
         
         # Filter out lines that look like multiple office names
         if OFFICE_NAMES_RE.search(s) and len(s) > 80:
             continue
         
-        # Filter out lines with multiple zip codes
-        if len(re.findall(r'\b\d{5}\b', s)) >= 2:
-            continue
+        # Filter out lines with multiple zip codes  
+        # DISABLED: Too aggressive, removes valid form content
+        # if len(re.findall(r'\b\d{5}\b', s)) >= 2:
+        #     continue
         
         # Archivev8 Fix 2: Enhanced Header/Business Information Filtering
         # Get the line index for top-of-document check

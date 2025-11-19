@@ -2556,7 +2556,9 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     text = correct_date_patterns(text)
     
     # Step 1: Clean headers/footers but DON'T normalize yet (preserves tabs for field splitting)
-    lines = scrub_headers_footers(text)
+    # TEMPORARY FIX: Disable scrub_headers_footers as it's too aggressive and removes Medical History section
+    # lines = scrub_headers_footers(text)
+    lines = text.splitlines()  # Just split, don't scrub for now
     lines = coalesce_soft_wraps(lines)
     
     # Step 2: Split multi-field lines BEFORE normalizing (so tabs are preserved)
@@ -2568,6 +2570,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
     
     # Step 3: NOW normalize glyphs (after field splitting, so tabs don't get lost)
     lines = [normalize_glyphs_line(x) for x in lines]
+    if debug:
+        print(f"  [debug] after normalize_glyphs_line: {len(lines)} lines")
     
     # Parity Fix: Detect if document is an information sheet (not a form)
     # Information sheets have instructional text but no fillable fields
@@ -2615,13 +2619,20 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         # Return empty questions list - this is not a form to be filled
         return []
 
+    if debug:
+        print(f"  [debug] Starting main loop with {len(lines)} lines")
+        
     questions: List[Question] = []
     cur_section = "General"
     seen_signature = False
     insurance_scope: Optional[str] = None  # "__primary" / "__secondary"
 
     i = 0
+    lines_skipped_tracker = []  # Track where we skip lines for debugging
+    max_i_reached = 0  # Track maximum line number reached
     while i < len(lines):
+        if i > max_i_reached:
+            max_i_reached = i
         raw = lines[i]
         line = collapse_spaced_caps(raw.strip())
         
@@ -2793,6 +2804,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
                             grid_question = parse_multicolumn_checkbox_grid(lines, multicolumn_grid, debug)
                             if grid_question:
                                 questions.append(grid_question)
+                                if debug:
+                                    print(f"  [debug] multicolumn_grid consumed lines {i} to {max(multicolumn_grid['data_lines'])}")
                                 i = max(multicolumn_grid['data_lines']) + 1
                                 continue
                         elif debug:
@@ -2806,7 +2819,11 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
 
         # Improvement 4: Check for medical conditions grid pattern
         # This detects "Do you have any of the following?" followed by many checkbox lines
+        if debug and i == 72:
+            print(f"  [debug] At line 72, line content: '{line[:80]}'")
         medical_grid = detect_medical_conditions_grid(lines, i, debug)
+        if debug and medical_grid:
+            print(f"  [debug] *** MEDICAL_GRID DETECTED at line {i}: title='{medical_grid['title'][:60]}', options={len(medical_grid['options'])}")
         if medical_grid:
             # Create a multi-select dropdown question with all the conditions
             key = slugify(medical_grid['title'])
@@ -3007,6 +3024,8 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             questions.extend(table_questions)
             
             # Skip past the table
+            if debug:
+                print(f"  [debug] table consumed lines {i} to {max(table_info['data_lines'])}")
             i = max(table_info['data_lines']) + 1
             continue
 
@@ -3769,7 +3788,7 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
             joined = " ".join(collapse_spaced_caps(x).strip() for x in para)
             if len(joined) > 250 and joined.count(".") >= 2:
                 if debug:
-                    print(f"  [debug] capturing long paragraph as terms: len={len(joined)}, periods={joined.count('.')}")
+                    print(f"  [debug] capturing long paragraph as terms: len={len(joined)}, periods={joined.count('.')}, lines {i} to {k-1}")
                 chunks: List[List[str]] = []; cur: List[str] = []
                 for s in para:
                     if is_heading(s.strip()) and cur:
@@ -3985,8 +4004,13 @@ def parse_to_questions(text: str, debug: bool=False) -> List[Question]:
         if insurance_scope and "insurance" in cur_section.lower() and not key.endswith((PRIMARY_SUFFIX, SECONDARY_SUFFIX)) and key in {"ssn","insurance_id_number"}:
             key = f"{key}{insurance_scope}"
         questions.append(Question(key, cleaned_title, cur_section, qtype, control=ctrl))
+        if debug and i > 65 and i < 75:
+            print(f"  [debug] processed line {i} as regular field, incrementing to {i+1}")
         i += 1
 
+    if debug:
+        print(f"  [debug] Loop ended. max_i_reached={max_i_reached}, total_lines={len(lines)}")
+        
     # Final sanitation & signature rule
     def is_instructional_text(text: str) -> bool:
         """
