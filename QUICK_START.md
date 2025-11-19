@@ -46,10 +46,23 @@ python3 validate_improvements.py
 
 ### Run the Pipeline
 ```bash
-# Full pipeline (extraction + conversion)
+# Full pipeline with default model (unstructured)
 python3 run_all.py
 
-# Or step by step:
+# Full pipeline with best quality (tries all models, picks best)
+python3 run_all.py --model recommend
+
+# Full pipeline with auto-selection (smart with fallback)
+python3 run_all.py --model auto
+
+# Full pipeline with specific model
+python3 run_all.py --model pdfplumber
+
+# Or step by step with multi-model extraction:
+python3 multi_model_extract.py --model auto --in documents --out output
+python3 text_to_modento.py --in output --out JSONs --debug
+
+# Or step by step with legacy extractor:
 python3 unstructured_extract.py --strategy fast
 python3 text_to_modento.py --in output --out JSONs --debug
 ```
